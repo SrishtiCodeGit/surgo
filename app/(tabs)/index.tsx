@@ -46,7 +46,7 @@ const MOCK_TASKS: Task[] = [
     userId: MOCK_USER_ID,
     title: 'Drink 2L of water',
     dueDate: toDateString(new Date()),
-    estimatedMinutes: 0,
+    estimatedMinutes: 10,
     aiGenerated: false,
     isStretchTask: false,
   },

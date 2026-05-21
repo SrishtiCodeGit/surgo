@@ -1,5 +1,4 @@
 import '../global.css';
-import { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { ThemeProvider, useTheme } from '@/context/ThemeContext';
@@ -14,16 +13,6 @@ function RootLayoutInner() {
       <StatusBar style={theme.key === 'hardcore' ? 'light' : 'dark'} />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="goal/[id]"
-          options={{
-            headerShown: true,
-            headerTitle: 'Goal',
-            headerStyle: { backgroundColor: theme.colors.background },
-            headerTintColor: theme.colors.text,
-          }}
-        />
       </Stack>
     </>
   );

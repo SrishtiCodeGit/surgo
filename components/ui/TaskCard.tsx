@@ -52,7 +52,7 @@ export function TaskCard({ task, onComplete }: TaskCardProps) {
         >
           {task.title}
         </Text>
-        {task.estimatedMinutes && !isCompleted && (
+        {task.estimatedMinutes > 0 && !isCompleted && (
           <Text style={{ color: theme.colors.textMuted }} className="text-xs mt-0.5">
             ~{task.estimatedMinutes} min
           </Text>
