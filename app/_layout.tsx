@@ -13,6 +13,16 @@ function RootLayoutInner() {
       <StatusBar style={theme.key === 'hardcore' ? 'light' : 'dark'} />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="goal/[id]"
+          options={{
+            headerShown: true,
+            headerTitle: 'Goal',
+            headerStyle: { backgroundColor: theme.colors.background },
+            headerTintColor: theme.colors.primary,
+            headerBackTitle: 'Back',
+          }}
+        />
       </Stack>
     </>
   );
