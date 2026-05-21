@@ -178,7 +178,7 @@ export default function GoalDetailScreen() {
                     <Text style={{ color: theme.colors.text, fontSize: 14, fontWeight: '600', textDecorationLine: isCompleted ? 'line-through' : 'none' }}>
                       {task.title}
                     </Text>
-                    {task.estimatedMinutes > 0 && !isCompleted && (
+                    {(task.estimatedMinutes ?? 0) > 0 && !isCompleted && (
                       <Text style={{ color: theme.colors.textMuted, fontSize: 11 }}>~{task.estimatedMinutes} min</Text>
                     )}
                   </View>

@@ -71,10 +71,14 @@ export interface Goal {
   description?: string;
   category: GoalCategory;
   targetDate: string; // ISO date
-  metric?: string;    // e.g. "Run 5km", "Save $5000"
-  progress: number;   // 0–100
+  metric?: string;           // e.g. "Run 5km", "Save $5000"
+  progress: number;          // 0–100
   isActive: boolean;
   createdAt: string;
+  minutesPerDay?: number;    // daily time commitment
+  overview?: string;         // AI coaching overview
+  achievabilityNote?: string;
+  timeBreakdown?: string;
 }
 
 export interface Milestone {
@@ -156,4 +160,12 @@ export interface AIGoalBreakdown {
   milestones: AIMilestone[];
   weekTasks: AIWeekTask[];
   todayTask: AITodayTask;
+}
+
+// Extended goal model to store time-per-day
+export interface GoalMeta {
+  minutesPerDay: number;
+  overview?: string;
+  achievabilityNote?: string;
+  timeBreakdown?: string;
 }
