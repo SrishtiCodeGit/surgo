@@ -1,41 +1,50 @@
 import { AIGoalBreakdown, ThemeKey } from '@/types';
 
-const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
-const MODEL = 'claude-3-5-haiku-20241022';
+// ─── Gemini API ───────────────────────────────────────────────────────────────
+const GEMINI_API_URL =
+  'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+const MODEL = 'gemini-1.5-flash';
 
 function getApiKey(): string {
-  const key = process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY;
-  if (!key) throw new Error('Missing EXPO_PUBLIC_ANTHROPIC_API_KEY');
+  const key = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
+  if (!key) throw new Error('Missing EXPO_PUBLIC_GEMINI_API_KEY');
   return key;
 }
 
-async function callClaude(
+async function callAI(
   systemPrompt: string,
   userMessage: string,
   maxTokens = 2048,
 ): Promise<string> {
-  const response = await fetch(ANTHROPIC_API_URL, {
+  const apiKey = getApiKey();
+  const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': getApiKey(),
-      'anthropic-version': '2023-06-01',
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: MODEL,
-      max_tokens: maxTokens,
-      system: systemPrompt,
-      messages: [{ role: 'user', content: userMessage }],
+      system_instruction: {
+        parts: [{ text: systemPrompt }],
+      },
+      contents: [
+        { role: 'user', parts: [{ text: userMessage }] },
+      ],
+      generationConfig: {
+        maxOutputTokens: maxTokens,
+        temperature: 0.7,
+      },
     }),
   });
 
   if (!response.ok) {
     const err = await response.text();
-    throw new Error(`Claude API error ${response.status}: ${err}`);
+    throw new Error(`Gemini API error ${response.status}: ${err}`);
   }
 
   const data = await response.json();
-  return data.content[0].text as string;
+  const text: string = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+  if (!text) throw new Error('Empty response from Gemini');
+
+  // Strip markdown code fences if Gemini wraps JSON in them
+  return text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
 }
 
 // ─── Tone helper ──────────────────────────────────────────────────────────────
@@ -86,8 +95,6 @@ export interface GoalAnalysis {
 }
 
 // ─── MAIN: Deep goal analysis + task generation ───────────────────────────────
-// This is the primary function called during goal creation.
-// It returns a full coaching plan + tasks in one shot.
 
 export async function analyzeGoal(
   goalTitle: string,
@@ -151,7 +158,7 @@ Rules:
 - All tasks must be matched to ${pace} pace: ${pace === 'hardcore' ? 'challenging, high volume, no rest days' : pace === 'soft' ? 'gentle, sustainable, with built-in recovery' : 'consistent, realistic, progressively harder each day'}
 - Tasks on days 2–7 should build on day 1 — progressive, not repetitive`;
 
-  const raw = await callClaude(system, user, 3000);
+  const raw = await callAI(system, user, 3000);
 
   try {
     return JSON.parse(raw) as GoalAnalysis;
@@ -194,7 +201,7 @@ Adjust tomorrow. Rules:
 
 Return ONLY: { "tasks": [{ "title": "string", "estimatedMinutes": 30 }] }`;
 
-  const raw = await callClaude(system, user);
+  const raw = await callAI(system, user);
   try { return JSON.parse(raw); }
   catch { throw new Error('Failed to parse tomorrow tasks: ' + raw); }
 }
@@ -219,7 +226,7 @@ Streak: ${currentStreak} days · Pace: ${pace}
 
 Return: { "review": "string", "nextWeekFocus": "string" }`;
 
-  const raw = await callClaude(system, user);
+  const raw = await callAI(system, user);
   try { return JSON.parse(raw); }
   catch { throw new Error('Failed to parse weekly review: ' + raw); }
 }
@@ -239,34 +246,23 @@ Max 2 sentences. Personal and punchy. No emojis — just words.`;
   const user = `Goal: "${goalTitle}" · Task: "${todayTask}" · Streak: ${currentStreak} days · Pace: ${pace}
 Write a 1–2 sentence morning message.`;
 
-  return callClaude(system, user, 256);
+  return callAI(system, user, 256);
 }
 
 // ─── Nightly Review Analysis ─────────────────────────────────────────────────
-// Called after user submits their end-of-day check-in.
-// Returns honest feedback, updated ETA, difficulty change, tomorrow's plan.
 
 export type DifficultyRating = 'too_easy' | 'just_right' | 'too_hard';
 export type DifficultyChange = 'reduce' | 'maintain' | 'increase';
 
 export interface NightlyAnalysis {
-  // Honest AI feedback about today
   feedback: string;
-
-  // Should the plan be adjusted?
   difficultyChange: DifficultyChange;
   difficultyReason: string;
-
-  // Updated ETA
-  newEtaDays: number;             // revised days from today to reach goal
-  etaChangeDays: number;          // positive = longer, negative = shorter
-  etaReason: string;              // why ETA changed (or didn't)
-
-  // Tomorrow
-  tomorrowFocus: string;          // one sentence on what to focus on
-  tomorrowMinutes: number;        // adjusted daily minutes for tomorrow
-
-  // Theme-matched closing line
+  newEtaDays: number;
+  etaChangeDays: number;
+  etaReason: string;
+  tomorrowFocus: string;
+  tomorrowMinutes: number;
   closingLine: string;
 }
 
@@ -276,8 +272,8 @@ export async function generateNightlyAnalysis({
   daysElapsed,
   tasksCompletedToday,
   tasksTotalToday,
-  overallCompletionRate,   // 0–100, all-time
-  hecticRating,            // 1 (easy) – 5 (overwhelmed)
+  overallCompletionRate,
+  hecticRating,
   difficultyRating,
   userNote,
   minutesPerDay,
@@ -342,7 +338,7 @@ Analyse honestly and return this JSON:
   "closingLine": "One ${pace === 'hardcore' ? 'tough, no-excuses' : pace === 'soft' ? 'warm, gentle' : 'honest, motivating'} closing line to end the day on."
 }`;
 
-  const raw = await callClaude(system, user, 1500);
+  const raw = await callAI(system, user, 1500);
   try {
     return JSON.parse(raw) as NightlyAnalysis;
   } catch {

@@ -85,7 +85,7 @@ export default function GoalsScreen() {
   // ── Step 2 → Analyzing ────────────────────────────────────────────────────
 
   const handleAnalyze = async () => {
-    const apiKey = process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY;
+    const apiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
     if (!apiKey) {
       // No API key — skip to review with placeholder data
       setAnalysis(buildPlaceholderAnalysis());

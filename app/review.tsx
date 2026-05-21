@@ -78,7 +78,7 @@ export default function NightlyReviewScreen() {
   const handleSubmit = async () => {
     setStep('analyzing');
 
-    const apiKey = process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY;
+    const apiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
 
     let result: NightlyAnalysis;
 
