@@ -242,6 +242,114 @@ Write a 1–2 sentence morning message.`;
   return callClaude(system, user, 256);
 }
 
+// ─── Nightly Review Analysis ─────────────────────────────────────────────────
+// Called after user submits their end-of-day check-in.
+// Returns honest feedback, updated ETA, difficulty change, tomorrow's plan.
+
+export type DifficultyRating = 'too_easy' | 'just_right' | 'too_hard';
+export type DifficultyChange = 'reduce' | 'maintain' | 'increase';
+
+export interface NightlyAnalysis {
+  // Honest AI feedback about today
+  feedback: string;
+
+  // Should the plan be adjusted?
+  difficultyChange: DifficultyChange;
+  difficultyReason: string;
+
+  // Updated ETA
+  newEtaDays: number;             // revised days from today to reach goal
+  etaChangeDays: number;          // positive = longer, negative = shorter
+  etaReason: string;              // why ETA changed (or didn't)
+
+  // Tomorrow
+  tomorrowFocus: string;          // one sentence on what to focus on
+  tomorrowMinutes: number;        // adjusted daily minutes for tomorrow
+
+  // Theme-matched closing line
+  closingLine: string;
+}
+
+export async function generateNightlyAnalysis({
+  goalTitle,
+  originalDeadlineDays,
+  daysElapsed,
+  tasksCompletedToday,
+  tasksTotalToday,
+  overallCompletionRate,   // 0–100, all-time
+  hecticRating,            // 1 (easy) – 5 (overwhelmed)
+  difficultyRating,
+  userNote,
+  minutesPerDay,
+  currentStreak,
+  pace,
+}: {
+  goalTitle: string;
+  originalDeadlineDays: number;
+  daysElapsed: number;
+  tasksCompletedToday: number;
+  tasksTotalToday: number;
+  overallCompletionRate: number;
+  hecticRating: number;
+  difficultyRating: DifficultyRating;
+  userNote: string;
+  minutesPerDay: number;
+  currentStreak: number;
+  pace: ThemeKey;
+}): Promise<NightlyAnalysis> {
+
+  const daysRemaining = originalDeadlineDays - daysElapsed;
+  const todayRate = tasksTotalToday > 0
+    ? Math.round((tasksCompletedToday / tasksTotalToday) * 100) : 0;
+
+  const system = `You are a personal goal coach inside the Surgo app doing an end-of-day review.
+${toneLine(pace)}
+Be GENUINELY honest — if someone is struggling, tell them clearly and reduce their load.
+If they're coasting, challenge them more. Never give empty validation.
+You must respond with ONLY valid JSON — no markdown, no code fences.`;
+
+  const user = `Goal: "${goalTitle}"
+Original deadline: ${originalDeadlineDays} days total (${daysElapsed} elapsed, ${daysRemaining} remaining)
+Time committed: ${minutesPerDay} minutes/day
+Current streak: ${currentStreak} days
+
+TODAY'S REPORT:
+- Tasks done: ${tasksCompletedToday}/${tasksTotalToday} (${todayRate}%)
+- All-time completion rate: ${overallCompletionRate}%
+- How hectic was today (1=easy, 5=overwhelmed): ${hecticRating}/5
+- Task difficulty: ${difficultyRating === 'too_hard' ? 'Too hard — struggled' : difficultyRating === 'too_easy' ? 'Too easy — could do more' : 'Just right'}
+- User's own note: "${userNote || 'No note added'}"
+
+Analyse honestly and return this JSON:
+
+{
+  "feedback": "2-3 sentences of GENUINE feedback. If hectic≥4 or difficulty=too_hard consistently, say so clearly. If they're doing great, acknowledge it. If they're underperforming, be direct about it. Match the ${pace} tone.",
+
+  "difficultyChange": "${difficultyRating === 'too_hard' || hecticRating >= 4 ? '"reduce" is likely right but decide based on full picture' : difficultyRating === 'too_easy' ? '"increase" is likely right' : '"maintain" is likely right'}",
+
+  "difficultyReason": "One sentence explaining why you're recommending this change (or no change).",
+
+  "newEtaDays": <integer: revised days from TODAY to reach the goal. If they're behind pace, add days. If ahead, subtract. Base this on: current completion rate vs expected rate. If completion rate is ${overallCompletionRate}% but should be ${Math.round((daysElapsed / originalDeadlineDays) * 100)}% at this point, extrapolate honestly. Min 1.>,
+
+  "etaChangeDays": <integer: newEtaDays minus ${daysRemaining}. Positive = goal takes longer, negative = ahead of schedule>,
+
+  "etaReason": "One specific sentence explaining the ETA change. Use real numbers.",
+
+  "tomorrowFocus": "One sharp sentence: what should they focus on tomorrow and why.",
+
+  "tomorrowMinutes": <integer: adjusted minutes for tomorrow. If reducing difficulty, lower by 10-30%. If increasing, raise by 10-20%. Otherwise keep at ${minutesPerDay}. Min 10.>,
+
+  "closingLine": "One ${pace === 'hardcore' ? 'tough, no-excuses' : pace === 'soft' ? 'warm, gentle' : 'honest, motivating'} closing line to end the day on."
+}`;
+
+  const raw = await callClaude(system, user, 1500);
+  try {
+    return JSON.parse(raw) as NightlyAnalysis;
+  } catch {
+    throw new Error('Failed to parse nightly analysis: ' + raw.slice(0, 200));
+  }
+}
+
 // ─── Legacy wrapper (kept for backward compat) ────────────────────────────────
 
 export async function generateGoalBreakdown(

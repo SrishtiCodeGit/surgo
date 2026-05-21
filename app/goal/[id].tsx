@@ -9,6 +9,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useTheme } from '@/context/ThemeContext';
 import { useGoalStore } from '@/stores/goalStore';
+import { toDateString } from '@/lib/streak';
 
 export default function GoalDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -43,6 +44,16 @@ export default function GoalDetailScreen() {
   const daysLeft = Math.max(0, Math.ceil(
     (new Date(goal.targetDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24),
   ));
+
+  // ETA tracking
+  const etaShift = goal.totalEtaShiftDays ?? 0;
+  const updatedEta = goal.updatedEtaDays ?? daysLeft;
+  const hasReview = goal.lastReviewDate != null;
+  const etaColor =
+    etaShift < 0 ? theme.colors.success
+    : etaShift > 0 ? theme.colors.danger
+    : theme.colors.textMuted;
+  const today = toDateString(new Date());
 
   const handleDelete = () => {
     Alert.alert(
@@ -102,7 +113,72 @@ export default function GoalDetailScreen() {
           <View style={{ backgroundColor: theme.colors.border, height: 6, borderRadius: 3 }}>
             <View style={{ backgroundColor: theme.colors.primary, height: 6, borderRadius: 3, width: `${goal.progress}%` }} />
           </View>
+
+          {/* ETA tracker */}
+          {hasReview && (
+            <View style={{ marginTop: 14, paddingTop: 14, borderTopWidth: 1, borderTopColor: theme.colors.border }}>
+              <Text style={{ color: theme.colors.textMuted, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>
+                AI ETA Tracker
+              </Text>
+              <View style={{ flexDirection: 'row', gap: 10 }}>
+                <View style={{ flex: 1, backgroundColor: theme.colors.surfaceAlt, borderRadius: 10, padding: 10, alignItems: 'center' }}>
+                  <Text style={{ color: theme.colors.textMuted, fontSize: 10, fontWeight: '600', marginBottom: 4 }}>ORIGINAL</Text>
+                  <Text style={{ color: theme.colors.text, fontSize: 18, fontWeight: '800' }}>{daysLeft}d</Text>
+                  <Text style={{ color: theme.colors.textMuted, fontSize: 10 }}>deadline</Text>
+                </View>
+                <View style={{ flex: 1, backgroundColor: etaColor + '15', borderRadius: 10, padding: 10, alignItems: 'center', borderWidth: 1, borderColor: etaColor + '40' }}>
+                  <Text style={{ color: etaColor, fontSize: 10, fontWeight: '600', marginBottom: 4 }}>AI ESTIMATE</Text>
+                  <Text style={{ color: etaColor, fontSize: 18, fontWeight: '800' }}>{updatedEta}d</Text>
+                  <Text style={{ color: etaColor, fontSize: 10 }}>to goal</Text>
+                </View>
+                <View style={{ flex: 1, backgroundColor: theme.colors.surfaceAlt, borderRadius: 10, padding: 10, alignItems: 'center' }}>
+                  <Text style={{ color: theme.colors.textMuted, fontSize: 10, fontWeight: '600', marginBottom: 4 }}>SHIFT</Text>
+                  <Text style={{ color: etaColor, fontSize: 18, fontWeight: '800' }}>
+                    {etaShift === 0 ? '—' : etaShift > 0 ? `+${etaShift}d` : `${etaShift}d`}
+                  </Text>
+                  <Text style={{ color: etaColor, fontSize: 10 }}>
+                    {etaShift < 0 ? 'ahead' : etaShift > 0 ? 'behind' : 'on track'}
+                  </Text>
+                </View>
+              </View>
+              {goal.lastReviewDate && (
+                <Text style={{ color: theme.colors.textMuted, fontSize: 11, marginTop: 8 }}>
+                  Last review: {new Date(goal.lastReviewDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                </Text>
+              )}
+            </View>
+          )}
         </View>
+
+        {/* Nightly Review shortcut */}
+        <TouchableOpacity
+          onPress={() => router.push(`/review?goalId=${goal.id}`)}
+          style={{
+            backgroundColor: theme.colors.surface,
+            borderColor: theme.colors.border,
+            borderWidth: 1,
+            borderRadius: 14,
+            padding: 14,
+            marginBottom: 20,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 12,
+          }}
+          activeOpacity={0.8}
+        >
+          <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: theme.colors.primaryLight, alignItems: 'center', justifyContent: 'center' }}>
+            <Text style={{ fontSize: 20 }}>🌙</Text>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: theme.colors.text, fontWeight: '700', fontSize: 14 }}>Nightly Review</Text>
+            <Text style={{ color: theme.colors.textMuted, fontSize: 12 }}>
+              {goal.lastReviewDate === today
+                ? '✓ Done for today'
+                : 'Rate today · Get AI feedback · Update ETA'}
+            </Text>
+          </View>
+          <Text style={{ color: theme.colors.primary, fontSize: 18 }}>→</Text>
+        </TouchableOpacity>
 
         {/* Milestones */}
         {goalMilestones.length > 0 && (

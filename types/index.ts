@@ -75,10 +75,14 @@ export interface Goal {
   progress: number;          // 0–100
   isActive: boolean;
   createdAt: string;
-  minutesPerDay?: number;    // daily time commitment
-  overview?: string;         // AI coaching overview
+  minutesPerDay?: number;      // daily time commitment
+  overview?: string;           // AI coaching overview
   achievabilityNote?: string;
   timeBreakdown?: string;
+  // ETA tracking — updated by nightly reviews
+  updatedEtaDays?: number;     // revised days-to-goal from today
+  lastReviewDate?: string;     // "YYYY-MM-DD"
+  totalEtaShiftDays?: number;  // cumulative shift (positive = behind, negative = ahead)
 }
 
 export interface Milestone {
@@ -124,6 +128,30 @@ export interface Streak {
   freezeCardsAvailable: number;
   totalCheckIns: number;
   history: StreakDay[];
+}
+
+// ─── Nightly Review ───────────────────────────────────────────────────────────
+
+export type DifficultyRating = 'too_easy' | 'just_right' | 'too_hard';
+
+export interface NightlyReview {
+  id: string;
+  goalId: string;
+  date: string;                    // "YYYY-MM-DD"
+  hecticRating: number;            // 1–5
+  difficultyRating: DifficultyRating;
+  userNote: string;
+  tasksCompleted: number;
+  tasksTotal: number;
+  // AI response
+  aiFeedback: string;
+  aiDifficultyChange: 'reduce' | 'maintain' | 'increase';
+  aiNewEtaDays: number;
+  aiEtaChangeDays: number;
+  aiEtaReason: string;
+  aiTomorrowFocus: string;
+  aiTomorrowMinutes: number;
+  aiClosingLine: string;
 }
 
 // ─── Daily Log ────────────────────────────────────────────────────────────────

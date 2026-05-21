@@ -228,6 +228,46 @@ export default function TodayScreen() {
             </Text>
           </View>
         )}
+
+        {/* ── Nightly Review button ────────────────────────────────────────── */}
+        {goals.length > 0 && (
+          <View style={{ marginTop: 20 }}>
+            <Text style={{ color: theme.colors.textMuted, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>
+              End-of-day
+            </Text>
+            {goals.filter((g) => g.isActive).map((goal) => (
+              <TouchableOpacity
+                key={goal.id}
+                onPress={() => router.push(`/review?goalId=${goal.id}`)}
+                style={{
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.border,
+                  borderWidth: 1,
+                  borderRadius: 14,
+                  padding: 14,
+                  marginBottom: 10,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 12,
+                }}
+                activeOpacity={0.8}
+              >
+                <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: theme.colors.primaryLight, alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={{ fontSize: 18 }}>🌙</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: theme.colors.text, fontWeight: '700', fontSize: 14 }}>
+                    Nightly Review
+                  </Text>
+                  <Text style={{ color: theme.colors.textMuted, fontSize: 12, marginTop: 1 }} numberOfLines={1}>
+                    {goal.title}
+                  </Text>
+                </View>
+                <Text style={{ color: theme.colors.primary, fontSize: 18 }}>→</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );

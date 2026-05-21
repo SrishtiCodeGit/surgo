@@ -23,6 +23,16 @@ function RootLayoutInner() {
             headerBackTitle: 'Back',
           }}
         />
+        <Stack.Screen
+          name="review"
+          options={{
+            headerShown: true,
+            headerTitle: 'Nightly Review',
+            headerStyle: { backgroundColor: theme.colors.background },
+            headerTintColor: theme.colors.primary,
+            headerBackTitle: 'Back',
+          }}
+        />
       </Stack>
     </>
   );

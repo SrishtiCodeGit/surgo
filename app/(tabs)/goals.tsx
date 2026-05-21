@@ -236,6 +236,17 @@ export default function GoalsScreen() {
             const daysLeft = Math.max(0, Math.ceil(
               (new Date(goal.targetDate).getTime() - Date.now()) / 86400000,
             ));
+            // ETA shift display
+            const etaShift = goal.totalEtaShiftDays ?? 0;
+            const hasReview = goal.lastReviewDate != null;
+            const etaColor =
+              etaShift < 0 ? theme.colors.success
+              : etaShift > 0 ? theme.colors.danger
+              : theme.colors.textMuted;
+            const etaLabel =
+              etaShift < 0 ? `${Math.abs(etaShift)}d ahead` :
+              etaShift > 0 ? `+${etaShift}d behind` : 'on track';
+
             return (
               <TouchableOpacity
                 key={goal.id}
@@ -256,7 +267,14 @@ export default function GoalsScreen() {
                       {goal.minutesPerDay ? ` · ${goal.minutesPerDay} min/day` : ''}
                     </Text>
                   </View>
-                  <Text style={{ color: theme.colors.primary, fontWeight: '800', fontSize: 16 }}>{goal.progress}%</Text>
+                  <View style={{ alignItems: 'flex-end', gap: 4 }}>
+                    <Text style={{ color: theme.colors.primary, fontWeight: '800', fontSize: 16 }}>{goal.progress}%</Text>
+                    {hasReview && (
+                      <View style={{ backgroundColor: etaColor + '20', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }}>
+                        <Text style={{ color: etaColor, fontSize: 10, fontWeight: '700' }}>{etaLabel}</Text>
+                      </View>
+                    )}
+                  </View>
                 </View>
                 <View style={{ backgroundColor: theme.colors.border, height: 4, borderRadius: 2 }}>
                   <View style={{ backgroundColor: theme.colors.primary, height: 4, borderRadius: 2, width: `${goal.progress}%` }} />
