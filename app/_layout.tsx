@@ -1,12 +1,23 @@
 import '../global.css';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useState } from 'react';
 import { ThemeProvider, useTheme } from '@/context/ThemeContext';
+import { AnimatedSplash } from '@/components/ui/AnimatedSplash';
 
 function RootLayoutInner() {
   const { theme, isLoaded } = useTheme();
+  const [splashDone, setSplashDone] = useState(false);
 
-  if (!isLoaded) return null;
+  // Show animated splash while theme loads or splash hasn't finished
+  if (!isLoaded || !splashDone) {
+    return (
+      <>
+        <StatusBar style="dark" />
+        <AnimatedSplash onFinish={() => setSplashDone(true)} />
+      </>
+    );
+  }
 
   return (
     <>
