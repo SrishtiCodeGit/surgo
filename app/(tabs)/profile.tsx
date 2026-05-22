@@ -19,9 +19,9 @@ export default function ProfileScreen() {
   const [showHardcoreSplash, setShowHardcoreSplash] = useState(false);
 
   const handleThemeSelect = (key: ThemeKey) => {
-    setTheme(key);
     if (key === 'soft')     setShowSoftSplash(true);
     if (key === 'hardcore') setShowHardcoreSplash(true);
+    setTheme(key);
   };
 
   return (

@@ -123,22 +123,23 @@ function AnimatedEmber({ xf, size, delay, duration }: typeof EMBERS[0]) {
   const opacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    const loop = Animated.loop(
+    const runCycle = () => {
+      ty.setValue(0);
+      opacity.setValue(0);
       Animated.sequence([
         Animated.delay(delay),
         Animated.parallel([
-          Animated.timing(ty, { toValue: -(height * 0.58), duration, useNativeDriver: true }),
-          Animated.sequence([
-            Animated.timing(opacity, { toValue: 1, duration: duration * 0.15, useNativeDriver: true }),
-            Animated.delay(duration * 0.20),
-            Animated.timing(opacity, { toValue: 0, duration: duration * 0.65, useNativeDriver: true }),
-          ]),
+          Animated.timing(ty,      { toValue: -(height * 0.58), duration, useNativeDriver: true }),
+          Animated.timing(opacity, { toValue: 1, duration: Math.floor(duration * 0.20), useNativeDriver: true }),
         ]),
-        Animated.timing(ty, { toValue: 0, duration: 0, useNativeDriver: true }),
-      ])
-    );
-    loop.start();
-    return () => loop.stop();
+      ]).start(({ finished }) => {
+        if (finished) {
+          Animated.timing(opacity, { toValue: 0, duration: 200, useNativeDriver: true }).start(() => runCycle());
+        }
+      });
+    };
+    runCycle();
+    return () => { ty.stopAnimation(); opacity.stopAnimation(); };
   }, []);
 
   return (
