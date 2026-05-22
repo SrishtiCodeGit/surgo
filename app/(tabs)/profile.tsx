@@ -1,8 +1,10 @@
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useState } from 'react';
 import { useTheme } from '@/context/ThemeContext';
 import { themes, themeKeys } from '@/lib/theme';
 import { ThemeKey } from '@/types';
+import { AnimatedSplash } from '@/components/ui/AnimatedSplash';
 
 const SETTINGS_ROWS = [
   { icon: '🔔', label: 'Notification Time', value: '9:00 AM' },
@@ -12,9 +14,19 @@ const SETTINGS_ROWS = [
 
 export default function ProfileScreen() {
   const { theme, themeKey, setTheme } = useTheme();
+  const [showSoftSplash, setShowSoftSplash] = useState(false);
+
+  const handleThemeSelect = (key: ThemeKey) => {
+    setTheme(key);
+    if (key === 'soft') setShowSoftSplash(true);
+  };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      {/* Soft mode celebration overlay */}
+      <Modal visible={showSoftSplash} animationType="fade" statusBarTranslucent>
+        <AnimatedSplash onFinish={() => setShowSoftSplash(false)} />
+      </Modal>
       <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 48 }}>
 
         {/* ── Header ─────────────────────────────────────────────────────── */}
@@ -132,7 +144,7 @@ export default function ProfileScreen() {
             return (
               <TouchableOpacity
                 key={key}
-                onPress={() => setTheme(key as ThemeKey)}
+                onPress={() => handleThemeSelect(key as ThemeKey)}
                 style={{
                   backgroundColor: theme.colors.surface,
                   borderColor: theme.colors.border,
