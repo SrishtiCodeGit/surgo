@@ -1,9 +1,9 @@
 import { AIGoalBreakdown, ThemeKey } from '@/types';
 
 // ─── Gemini API ───────────────────────────────────────────────────────────────
+const GEMINI_MODEL = 'gemini-2.0-flash';
 const GEMINI_API_URL =
-  'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
-const MODEL = 'gemini-1.5-flash';
+  `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
 function getApiKey(): string {
   const key = process.env.EXPO_PUBLIC_GEMINI_API_KEY;

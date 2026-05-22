@@ -118,9 +118,18 @@ export default function GoalsScreen() {
       setStep('review');
     } catch (err) {
       console.error(err);
+      const msg = String(err);
+      const isQuota   = msg.includes('429') || msg.includes('quota') || msg.includes('RESOURCE_EXHAUSTED');
+      const isInvalid = msg.includes('401') || msg.includes('403') || msg.includes('API_KEY');
+      const isModel   = msg.includes('404') || msg.includes('not found');
+      const detail =
+        isQuota   ? 'Your Gemini API key has hit its daily limit. Generate a new key at aistudio.google.com/apikey and update .env.local.' :
+        isInvalid ? 'Your Gemini API key is invalid or restricted. Check EXPO_PUBLIC_GEMINI_API_KEY in .env.local.' :
+        isModel   ? 'The Gemini model is unavailable. Check lib/claude.ts.' :
+        msg.slice(0, 180);
       setAnalysis(buildPlaceholderAnalysis());
       setStep('review');
-      Alert.alert('AI unavailable', 'Using a basic plan. Add your Anthropic API key for full AI coaching.');
+      Alert.alert('AI unavailable — basic plan used', detail);
     }
   };
 
