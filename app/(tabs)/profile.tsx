@@ -6,6 +6,7 @@ import { themes, themeKeys } from '@/lib/theme';
 import { ThemeKey } from '@/types';
 import { AnimatedSplash } from '@/components/ui/AnimatedSplash';
 import { HardcoreAnimatedSplash } from '@/components/ui/HardcoreAnimatedSplash';
+import { BalancedAnimatedSplash } from '@/components/ui/BalancedAnimatedSplash';
 
 const SETTINGS_ROWS = [
   { icon: '🔔', label: 'Notification Time', value: '9:00 AM' },
@@ -15,12 +16,14 @@ const SETTINGS_ROWS = [
 
 export default function ProfileScreen() {
   const { theme, themeKey, setTheme } = useTheme();
-  const [showSoftSplash,     setShowSoftSplash]     = useState(false);
-  const [showHardcoreSplash, setShowHardcoreSplash] = useState(false);
+  const [showSoftSplash,      setShowSoftSplash]      = useState(false);
+  const [showHardcoreSplash,  setShowHardcoreSplash]  = useState(false);
+  const [showBalancedSplash,  setShowBalancedSplash]  = useState(false);
 
   const handleThemeSelect = (key: ThemeKey) => {
     if (key === 'soft')     setShowSoftSplash(true);
     if (key === 'hardcore') setShowHardcoreSplash(true);
+    if (key === 'balanced') setShowBalancedSplash(true);
     setTheme(key);
   };
 
@@ -33,6 +36,10 @@ export default function ProfileScreen() {
       {/* Hardcore mode intro */}
       <Modal visible={showHardcoreSplash} animationType="fade" statusBarTranslucent>
         <HardcoreAnimatedSplash onFinish={() => setShowHardcoreSplash(false)} />
+      </Modal>
+      {/* Balanced mode intro */}
+      <Modal visible={showBalancedSplash} animationType="fade" statusBarTranslucent>
+        <BalancedAnimatedSplash onFinish={() => setShowBalancedSplash(false)} />
       </Modal>
       <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 48 }}>
 
