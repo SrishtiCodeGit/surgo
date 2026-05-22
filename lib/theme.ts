@@ -1,27 +1,27 @@
 import { Theme, ThemeKey } from '@/types';
 
 // ─── Soft "Bloom" ─────────────────────────────────────────────────────────────
-// Warm amethyst + coral. Feels like a calm morning journal.
+// Warm yellow + baby pink. Feels like a gentle sunrise.
 
 const softTheme: Theme = {
   key: 'soft',
   name: 'Soft',
   tagline: 'Rise softly, grow surely 🌸',
   colors: {
-    background: '#FDFAF6',      // creamy warm white
+    background: '#FFFDF5',      // barely-yellow warm white
     surface: '#FFFFFF',
-    surfaceAlt: '#F5EDFA',      // very light lavender tint
-    primary: '#9C72BF',         // amethyst purple
-    primaryLight: '#EEE0FA',    // pale lavender
-    accent: '#EE9374',          // warm coral
-    text: '#1E1228',            // deep purple-black
-    textMuted: '#917EA0',       // muted purple-grey
+    surfaceAlt: '#FFF5F8',      // barely-pink blush
+    primary: '#F0B429',         // warm golden yellow
+    primaryLight: '#FFF8E0',    // pale yellow
+    accent: '#F4A8C4',          // baby pink
+    text: '#2D1B10',            // warm deep brown
+    textMuted: '#9E7888',       // dusty mauve (yellow-pink mid)
     textInverse: '#FFFFFF',
-    border: '#ECE2F2',          // light lavender border
+    border: '#FFE8F2',          // soft pink border
     success: '#5CB88A',         // sage green
     warning: '#E8A84A',         // warm amber
     danger: '#D96878',          // rose-danger
-    streakFire: '#EE9374',      // coral flame
+    streakFire: '#F0B429',      // golden yellow flame
   },
   tone: {
     greeting: 'Good morning',
