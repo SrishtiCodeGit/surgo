@@ -9,119 +9,146 @@ interface StreakBadgeProps {
   onFreezePress?: () => void;
 }
 
-export function StreakBadge({
-  count,
-  state,
-  freezeCards,
-  onFreezePress,
-}: StreakBadgeProps) {
+export function StreakBadge({ count, state, freezeCards, onFreezePress }: StreakBadgeProps) {
   const { theme } = useTheme();
 
-  const isActive  = state === 'active';
-  const isAtRisk  = state === 'at_risk';
-  const isGrace   = state === 'grace';
-  const isBroken  = state === 'broken';
+  const isActive = state === 'active';
+  const isAtRisk = state === 'at_risk';
+  const isGrace  = state === 'grace';
+  const isBroken = state === 'broken';
 
-  const bgColor =
+  const accentColor =
     isActive  ? theme.colors.primary :
     isAtRisk  ? theme.colors.warning :
     isBroken  ? theme.colors.danger  :
-    theme.colors.surfaceAlt;
+    theme.colors.border;
 
-  const fgColor =
-    isActive  ? theme.colors.textInverse :
-    isAtRisk  ? '#1a1a1a' :
-    isBroken  ? '#ffffff' :
-    theme.colors.text;
+  const statusDot =
+    isActive  ? theme.colors.success :
+    isAtRisk  ? theme.colors.warning :
+    isBroken  ? theme.colors.danger  :
+    theme.colors.textMuted;
 
-  const subLabel =
-    isActive  ? 'Checked in today ✓' :
-    isAtRisk  ? 'Check in before midnight!' :
-    isGrace   ? 'Freeze used — protected ❄️' :
+  const statusTag =
+    isActive  ? 'ACTIVE'   :
+    isAtRisk  ? 'AT RISK'  :
+    isGrace   ? 'PROTECTED':
+    isBroken  ? 'BROKEN'   :
+    'INACTIVE';
+
+  const statusLabel =
+    isActive  ? 'Checked in today' :
+    isAtRisk  ? 'Check in before midnight' :
+    isGrace   ? 'Rest day used — streak safe' :
     isBroken  ? 'Start fresh today' :
-    'Start your streak today';
-
-  const iconBg = (isActive || isBroken)
-    ? 'rgba(255,255,255,0.18)'
-    : isAtRisk
-    ? 'rgba(0,0,0,0.10)'
-    : theme.colors.primaryLight;
+    'Begin your streak';
 
   return (
     <View
       style={{
-        backgroundColor: bgColor,
-        borderRadius: 20,
-        paddingHorizontal: 18,
-        paddingVertical: 16,
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 16,
-        marginBottom: 20,
-        shadowColor: bgColor,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: isActive ? 0.35 : 0,
-        shadowRadius: 12,
-        elevation: 4,
+        backgroundColor: theme.colors.surface,
+        borderRadius: 18,
+        borderWidth: 1,
+        borderColor: theme.colors.border,
+        overflow: 'hidden',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.06,
+        shadowRadius: 8,
+        elevation: 2,
       }}
     >
-      {/* Emoji circle */}
-      <View
-        style={{
-          width: 52,
-          height: 52,
-          borderRadius: 26,
-          backgroundColor: iconBg,
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <Text style={{ fontSize: 26 }}>{theme.emoji.streak}</Text>
-      </View>
+      {/* Thin accent line at top — colour signals streak state */}
+      <View style={{ height: 3, backgroundColor: accentColor }} />
 
-      {/* Text */}
-      <View style={{ flex: 1 }}>
-        <Text
-          style={{
-            color: fgColor,
-            fontSize: 22,
-            fontWeight: '800',
-            letterSpacing: -0.4,
-            lineHeight: 26,
-          }}
-        >
-          {count === 0 ? 'Day 1 awaits' : `${count} day${count === 1 ? '' : 's'}`}
-        </Text>
-        <Text
-          style={{
-            color: fgColor,
-            opacity: 0.72,
-            fontSize: 12,
-            fontWeight: '600',
-            marginTop: 3,
-          }}
-        >
-          {subLabel}
-        </Text>
-      </View>
+      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 18, paddingVertical: 14, gap: 0 }}>
 
-      {/* Freeze button (only when at risk + cards available) */}
-      {isAtRisk && freezeCards > 0 && onFreezePress && (
-        <TouchableOpacity
-          onPress={onFreezePress}
-          style={{
-            backgroundColor: 'rgba(255,255,255,0.28)',
-            paddingHorizontal: 12,
-            paddingVertical: 8,
-            borderRadius: 12,
-          }}
-          activeOpacity={0.75}
-        >
-          <Text style={{ color: '#1a1a1a', fontSize: 12, fontWeight: '700' }}>
-            ❄️ {freezeCards}
+        {/* Big streak number */}
+        <View style={{ minWidth: 72 }}>
+          <Text
+            style={{
+              color: theme.colors.text,
+              fontSize: 44,
+              fontWeight: '900',
+              letterSpacing: -2,
+              lineHeight: 46,
+            }}
+          >
+            {count === 0 ? '—' : count}
           </Text>
-        </TouchableOpacity>
-      )}
+          <Text
+            style={{
+              color: theme.colors.textMuted,
+              fontSize: 10,
+              fontWeight: '700',
+              letterSpacing: 2,
+              textTransform: 'uppercase',
+              marginTop: 1,
+            }}
+          >
+            {count === 1 ? 'Day' : 'Days'} streak
+          </Text>
+        </View>
+
+        {/* Divider */}
+        <View
+          style={{
+            width: 1,
+            height: 42,
+            backgroundColor: theme.colors.border,
+            marginHorizontal: 18,
+          }}
+        />
+
+        {/* Status */}
+        <View style={{ flex: 1 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 5 }}>
+            <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: statusDot }} />
+            <Text
+              style={{
+                color: statusDot,
+                fontSize: 10,
+                fontWeight: '800',
+                letterSpacing: 1.5,
+                textTransform: 'uppercase',
+              }}
+            >
+              {statusTag}
+            </Text>
+          </View>
+          <Text style={{ color: theme.colors.text, fontSize: 13, fontWeight: '600', lineHeight: 18 }}>
+            {statusLabel}
+          </Text>
+        </View>
+
+        {/* Freeze button — minimal, text-only */}
+        {isAtRisk && freezeCards > 0 && onFreezePress && (
+          <TouchableOpacity
+            onPress={onFreezePress}
+            style={{
+              borderWidth: 1,
+              borderColor: theme.colors.border,
+              paddingHorizontal: 10,
+              paddingVertical: 7,
+              borderRadius: 10,
+              marginLeft: 8,
+            }}
+            activeOpacity={0.7}
+          >
+            <Text
+              style={{
+                color: theme.colors.textMuted,
+                fontSize: 10,
+                fontWeight: '800',
+                letterSpacing: 1,
+                textTransform: 'uppercase',
+              }}
+            >
+              Freeze · {freezeCards}
+            </Text>
+          </TouchableOpacity>
+        )}
+      </View>
     </View>
   );
 }

@@ -11,16 +11,16 @@ import { BalancedAnimatedSplash } from '@/components/ui/BalancedAnimatedSplash';
 import { MascotFaceIcon } from '@/components/ui/MascotFaceIcon';
 
 const SETTINGS_ROWS = [
-  { icon: '🔔', label: 'Notification Time', value: '9:00 AM' },
-  { icon: '👤', label: 'Account',            value: '' },
-  { icon: 'ℹ️',  label: 'About Surgo',        value: 'v1.0' },
+  { label: 'Notification Time', value: '9:00 AM' },
+  { label: 'Account',           value: ''        },
+  { label: 'About Surgo',       value: 'v1.0'   },
 ];
 
 export default function ProfileScreen() {
   const { theme, themeKey, setTheme } = useTheme();
-  const [showSoftSplash,      setShowSoftSplash]      = useState(false);
-  const [showHardcoreSplash,  setShowHardcoreSplash]  = useState(false);
-  const [showBalancedSplash,  setShowBalancedSplash]  = useState(false);
+  const [showSoftSplash,     setShowSoftSplash]     = useState(false);
+  const [showHardcoreSplash, setShowHardcoreSplash] = useState(false);
+  const [showBalancedSplash, setShowBalancedSplash] = useState(false);
 
   const handleThemeSelect = (key: ThemeKey) => {
     if (key === 'soft')     setShowSoftSplash(true);
@@ -31,76 +31,72 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      {/* Soft mode celebration overlay */}
       <Modal visible={showSoftSplash} animationType="fade" statusBarTranslucent>
         <AnimatedSplash onFinish={() => { setShowSoftSplash(false); router.replace('/(tabs)'); }} />
       </Modal>
-      {/* Hardcore mode intro */}
       <Modal visible={showHardcoreSplash} animationType="fade" statusBarTranslucent>
         <HardcoreAnimatedSplash onFinish={() => { setShowHardcoreSplash(false); router.replace('/(tabs)'); }} />
       </Modal>
-      {/* Balanced mode intro */}
       <Modal visible={showBalancedSplash} animationType="fade" statusBarTranslucent>
         <BalancedAnimatedSplash onFinish={() => { setShowBalancedSplash(false); router.replace('/(tabs)'); }} />
       </Modal>
-      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 48 }}>
 
-        {/* ── Header ─────────────────────────────────────────────────────── */}
-        <View style={{ marginBottom: 32 }}>
-          <Text style={{ color: theme.colors.text, fontSize: 30, fontWeight: '800', letterSpacing: -0.5 }}>
+      <ScrollView contentContainerStyle={{ padding: 22, paddingBottom: 56 }}>
+
+        {/* ── Header ────────────────────────────────────────────────────────── */}
+        <View style={{ marginBottom: 28 }}>
+          <Text
+            style={{
+              color: theme.colors.text,
+              fontSize: 32,
+              fontWeight: '900',
+              letterSpacing: -0.8,
+            }}
+          >
             Profile
           </Text>
           <Text style={{ color: theme.colors.textMuted, fontSize: 14, marginTop: 4 }}>
-            Customise your Surgo experience
+            Your Surgo identity
           </Text>
         </View>
 
-        {/* ── Active theme hero ───────────────────────────────────────────── */}
+        {/* ── Active theme hero ─────────────────────────────────────────────── */}
         <View
           style={{
             backgroundColor: theme.colors.primary,
-            borderRadius: 24,
-            padding: 22,
-            marginBottom: 20,
-            shadowColor: theme.colors.primary,
-            shadowOffset: { width: 0, height: 6 },
-            shadowOpacity: 0.4,
-            shadowRadius: 16,
-            elevation: 6,
+            borderRadius: 22,
+            padding: 20,
+            marginBottom: 14,
+            overflow: 'hidden',
           }}
         >
+          {/* Label */}
           <Text
             style={{
               color: theme.colors.textInverse,
-              fontSize: 11,
-              fontWeight: '700',
+              fontSize: 10,
+              fontWeight: '800',
               textTransform: 'uppercase',
-              letterSpacing: 2,
-              marginBottom: 12,
-              opacity: 0.7,
+              letterSpacing: 2.5,
+              opacity: 0.65,
+              marginBottom: 14,
             }}
           >
-            Current vibe
+            Active mode
           </Text>
 
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 14 }}>
-            <View
-              style={{
-                width: 56,
-                height: 56,
-                borderRadius: 28,
-                overflow: 'hidden',
-              }}
-            >
-              <MascotFaceIcon variant={themeKey} size={56} />
+          {/* Mascot + name */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 16 }}>
+            <View style={{ width: 54, height: 54, borderRadius: 27, overflow: 'hidden' }}>
+              <MascotFaceIcon variant={themeKey} size={54} />
             </View>
             <View style={{ flex: 1 }}>
               <Text
                 style={{
                   color: theme.colors.textInverse,
-                  fontSize: 22,
-                  fontWeight: '800',
-                  letterSpacing: -0.4,
+                  fontSize: 24,
+                  fontWeight: '900',
+                  letterSpacing: -0.5,
                 }}
               >
                 {theme.name}
@@ -108,9 +104,10 @@ export default function ProfileScreen() {
               <Text
                 style={{
                   color: theme.colors.textInverse,
-                  opacity: 0.75,
+                  opacity: 0.70,
                   fontSize: 13,
                   marginTop: 2,
+                  fontWeight: '500',
                 }}
               >
                 {theme.tagline}
@@ -118,42 +115,43 @@ export default function ProfileScreen() {
             </View>
           </View>
 
-          {/* Color swatches */}
-          <View style={{ flexDirection: 'row', gap: 8 }}>
+          {/* Colour swatches */}
+          <View style={{ flexDirection: 'row', gap: 6 }}>
             {[theme.colors.accent, theme.colors.success, theme.colors.warning, theme.colors.streakFire].map((c, i) => (
               <View
                 key={i}
                 style={{
-                  width: 32,
-                  height: 6,
-                  borderRadius: 3,
+                  flex: 1,
+                  height: 4,
+                  borderRadius: 2,
                   backgroundColor: c,
-                  opacity: 0.85,
+                  opacity: 0.80,
                 }}
               />
             ))}
           </View>
         </View>
 
-        {/* ── Theme Picker ────────────────────────────────────────────────── */}
+        {/* ── Section label ─────────────────────────────────────────────────── */}
         <Text
           style={{
             color: theme.colors.textMuted,
-            fontSize: 11,
-            fontWeight: '700',
+            fontSize: 10,
+            fontWeight: '800',
             textTransform: 'uppercase',
-            letterSpacing: 2,
-            marginBottom: 14,
+            letterSpacing: 2.5,
+            marginBottom: 12,
+            marginTop: 18,
           }}
         >
-          Switch vibe
+          Switch mode
         </Text>
 
-        <View style={{ gap: 12, marginBottom: 36 }}>
+        {/* ── Theme cards ───────────────────────────────────────────────────── */}
+        <View style={{ gap: 10, marginBottom: 36 }}>
           {themeKeys.map((key) => {
             const t = themes[key];
-            const isActive = themeKey === key;
-            if (isActive) return null; // active one shown as hero above
+            if (themeKey === key) return null;
 
             return (
               <TouchableOpacity
@@ -162,88 +160,66 @@ export default function ProfileScreen() {
                 style={{
                   backgroundColor: theme.colors.surface,
                   borderColor: theme.colors.border,
-                  borderWidth: 1.5,
-                  borderRadius: 20,
+                  borderWidth: 1,
+                  borderRadius: 18,
                   padding: 16,
                   flexDirection: 'row',
                   alignItems: 'center',
                   gap: 14,
-                  shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: 0.05,
-                  shadowRadius: 8,
-                  elevation: 2,
                 }}
-                activeOpacity={0.75}
+                activeOpacity={0.72}
               >
-                {/* Mascot face icon */}
-                <View
-                  style={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 24,
-                    overflow: 'hidden',
-                  }}
-                >
+                {/* Mascot face */}
+                <View style={{ width: 48, height: 48, borderRadius: 24, overflow: 'hidden' }}>
                   <MascotFaceIcon variant={key as ThemeKey} size={48} />
                 </View>
 
-                {/* Text + swatches */}
+                {/* Name + tagline */}
                 <View style={{ flex: 1 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 5 }}>
-                    <Text
-                      style={{
-                        color: theme.colors.text,
-                        fontSize: 16,
-                        fontWeight: '800',
-                      }}
-                    >
-                      {t.name}
-                    </Text>
-                    {/* Mini color dots */}
-                    {[t.colors.primary, t.colors.accent, t.colors.success].map((c, i) => (
-                      <View
-                        key={i}
-                        style={{
-                          width: 8,
-                          height: 8,
-                          borderRadius: 4,
-                          backgroundColor: c,
-                        }}
-                      />
-                    ))}
-                  </View>
-                  <Text style={{ color: theme.colors.textMuted, fontSize: 12 }}>
+                  <Text
+                    style={{
+                      color: theme.colors.text,
+                      fontSize: 16,
+                      fontWeight: '800',
+                      letterSpacing: -0.2,
+                      marginBottom: 3,
+                    }}
+                  >
+                    {t.name}
+                  </Text>
+                  <Text style={{ color: theme.colors.textMuted, fontSize: 12, fontWeight: '500' }}>
                     {t.tagline}
                   </Text>
                 </View>
 
-                <View
-                  style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: 16,
-                    backgroundColor: t.colors.primaryLight,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Text style={{ color: t.colors.primary, fontSize: 16 }}>→</Text>
+                {/* Colour dots only — no arrow button */}
+                <View style={{ gap: 5 }}>
+                  {[t.colors.primary, t.colors.accent, t.colors.success].map((c, i) => (
+                    <View
+                      key={i}
+                      style={{
+                        width: 7,
+                        height: 7,
+                        borderRadius: 3.5,
+                        backgroundColor: c,
+                      }}
+                    />
+                  ))}
                 </View>
               </TouchableOpacity>
             );
           })}
         </View>
 
-        {/* ── Settings ────────────────────────────────────────────────────── */}
+        {/* ── Settings ──────────────────────────────────────────────────────── */}
         <Text
           style={{
             color: theme.colors.textMuted,
-            fontSize: 11,
-            fontWeight: '700',
+            fontSize: 10,
+            fontWeight: '800',
             textTransform: 'uppercase',
-            letterSpacing: 2,
-            marginBottom: 14,
+            letterSpacing: 2.5,
+            marginBottom: 12,
           }}
         >
           Settings
@@ -252,7 +228,7 @@ export default function ProfileScreen() {
         <View
           style={{
             backgroundColor: theme.colors.surface,
-            borderRadius: 20,
+            borderRadius: 18,
             borderColor: theme.colors.border,
             borderWidth: 1,
             overflow: 'hidden',
@@ -266,30 +242,37 @@ export default function ProfileScreen() {
                 alignItems: 'center',
                 paddingHorizontal: 18,
                 paddingVertical: 16,
-                gap: 14,
                 borderBottomWidth: i < SETTINGS_ROWS.length - 1 ? 1 : 0,
                 borderBottomColor: theme.colors.border,
               }}
               activeOpacity={0.65}
             >
-              <Text style={{ fontSize: 18, width: 24, textAlign: 'center' }}>{row.icon}</Text>
               <Text style={{ color: theme.colors.text, fontSize: 15, fontWeight: '600', flex: 1 }}>
                 {row.label}
               </Text>
               {row.value ? (
-                <Text style={{ color: theme.colors.textMuted, fontSize: 13 }}>{row.value}</Text>
+                <Text style={{ color: theme.colors.textMuted, fontSize: 13, marginRight: 8 }}>
+                  {row.value}
+                </Text>
               ) : null}
-              <Text style={{ color: theme.colors.textMuted, fontSize: 18 }}>›</Text>
+              <Text style={{ color: theme.colors.textMuted, fontSize: 20, lineHeight: 20 }}>›</Text>
             </TouchableOpacity>
           ))}
         </View>
 
-        {/* ── Footer ──────────────────────────────────────────────────────── */}
-        <View style={{ alignItems: 'center', marginTop: 36 }}>
-          <Text style={{ color: theme.colors.primary, fontSize: 13, fontWeight: '800', letterSpacing: 3 }}>
+        {/* ── Footer ────────────────────────────────────────────────────────── */}
+        <View style={{ alignItems: 'center', marginTop: 40 }}>
+          <Text
+            style={{
+              color: theme.colors.primary,
+              fontSize: 12,
+              fontWeight: '900',
+              letterSpacing: 5,
+            }}
+          >
             SURGO
           </Text>
-          <Text style={{ color: theme.colors.textMuted, fontSize: 11, marginTop: 4 }}>
+          <Text style={{ color: theme.colors.textMuted, fontSize: 11, marginTop: 5, letterSpacing: 0.5 }}>
             Rise every day
           </Text>
         </View>
