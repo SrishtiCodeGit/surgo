@@ -8,16 +8,16 @@ const softTheme: Theme = {
   name: 'Soft',
   tagline: 'Rise softly, grow surely 🌸',
   colors: {
-    background: '#FFFDF5',      // barely-yellow warm white
+    background: '#FFFFFF',      // pure white
     surface: '#FFFFFF',
-    surfaceAlt: '#FFF5F8',      // barely-pink blush
+    surfaceAlt: '#FFF5F8',      // barely-pink for accent surfaces
     primary: '#F0B429',         // warm golden yellow
     primaryLight: '#FFF8E0',    // pale yellow
     accent: '#F4A8C4',          // baby pink
-    text: '#2D1B10',            // warm deep brown
-    textMuted: '#9E7888',       // dusty mauve (yellow-pink mid)
+    text: '#1A1A1A',            // near-black — cleaner on white
+    textMuted: '#9E7888',       // dusty mauve
     textInverse: '#FFFFFF',
-    border: '#FFE8F2',          // soft pink border
+    border: '#EFEFEF',          // neutral light gray border
     success: '#5CB88A',         // sage green
     warning: '#E8A84A',         // warm amber
     danger: '#D96878',          // rose-danger
@@ -49,16 +49,16 @@ const balancedTheme: Theme = {
   name: 'Balanced',
   tagline: 'Consistent action builds empires ⚡',
   colors: {
-    background: '#F5F7FF',      // barely blue white
+    background: '#FFFFFF',      // pure white
     surface: '#FFFFFF',
-    surfaceAlt: '#EBF0FF',      // light indigo tint
+    surfaceAlt: '#F0F2FF',      // barely-blue for accent surfaces
     primary: '#4F46E5',         // rich indigo
     primaryLight: '#E6E5FF',    // pale indigo
     accent: '#06B6D4',          // electric cyan
-    text: '#0A0F2E',            // near-black with deep blue
+    text: '#1A1A1A',            // near-black — cleaner on white
     textMuted: '#6272A4',       // blue-grey
     textInverse: '#FFFFFF',
-    border: '#DCDEFF',          // pale indigo border
+    border: '#EFEFEF',          // neutral light gray border
     success: '#10B981',         // emerald
     warning: '#F59E0B',         // amber
     danger: '#EF4444',          // red
