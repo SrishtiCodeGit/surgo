@@ -33,13 +33,15 @@ const EMBERS = Array.from({ length: 14 }, (_, i) => ({
 // ─── Flame SVG shape ──────────────────────────────────────────────────────────
 
 function FlameSVG({ w, h, id }: { w: number; h: number; id: string }) {
+  // cx is the horizontal centre of the SVG — all coords stay within [0, w]
+  const cx = w / 2;
   const hw = w / 2;
   const d = [
-    `M 0 ${h}`,
-    `C ${-hw} ${h * 0.72}  ${-hw * 0.88} ${h * 0.46}  ${-hw * 0.22} ${h * 0.28}`,
-    `Q ${-hw * 0.08} ${h * 0.13}  0 0`,
-    `Q ${hw * 0.08} ${h * 0.13}  ${hw * 0.22} ${h * 0.28}`,
-    `C ${hw * 0.88} ${h * 0.46}  ${hw} ${h * 0.72}  0 ${h}`,
+    `M ${cx} ${h}`,
+    `C ${cx - hw} ${h * 0.72}  ${cx - hw * 0.88} ${h * 0.46}  ${cx - hw * 0.22} ${h * 0.28}`,
+    `Q ${cx - hw * 0.08} ${h * 0.13}  ${cx} 0`,
+    `Q ${cx + hw * 0.08} ${h * 0.13}  ${cx + hw * 0.22} ${h * 0.28}`,
+    `C ${cx + hw * 0.88} ${h * 0.46}  ${cx + hw} ${h * 0.72}  ${cx} ${h}`,
     'Z',
   ].join(' ');
 
