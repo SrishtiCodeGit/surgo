@@ -1,13 +1,13 @@
 import { AIGoalBreakdown, ThemeKey } from '@/types';
 
-// ─── Gemini API ───────────────────────────────────────────────────────────────
-const GEMINI_MODEL = 'gemini-2.0-flash';
-const GEMINI_API_URL =
-  `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+// ─── Groq API (free tier — no card required) ──────────────────────────────────
+// Model: llama-3.3-70b-versatile — smarter than gemini-2.0-flash, 14,400 req/day free
+const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
+const GROQ_MODEL   = 'llama-3.3-70b-versatile';
 
 function getApiKey(): string {
-  const key = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
-  if (!key) throw new Error('Missing EXPO_PUBLIC_GEMINI_API_KEY');
+  const key = process.env.EXPO_PUBLIC_GROQ_API_KEY;
+  if (!key) throw new Error('Missing EXPO_PUBLIC_GROQ_API_KEY');
   return key;
 }
 
@@ -17,33 +17,33 @@ async function callAI(
   maxTokens = 2048,
 ): Promise<string> {
   const apiKey = getApiKey();
-  const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
+  const response = await fetch(GROQ_API_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+    },
     body: JSON.stringify({
-      system_instruction: {
-        parts: [{ text: systemPrompt }],
-      },
-      contents: [
-        { role: 'user', parts: [{ text: userMessage }] },
+      model: GROQ_MODEL,
+      messages: [
+        { role: 'system',  content: systemPrompt },
+        { role: 'user',    content: userMessage  },
       ],
-      generationConfig: {
-        maxOutputTokens: maxTokens,
-        temperature: 0.7,
-      },
+      max_tokens:  maxTokens,
+      temperature: 0.7,
     }),
   });
 
   if (!response.ok) {
     const err = await response.text();
-    throw new Error(`Gemini API error ${response.status}: ${err}`);
+    throw new Error(`Groq API error ${response.status}: ${err}`);
   }
 
   const data = await response.json();
-  const text: string = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
-  if (!text) throw new Error('Empty response from Gemini');
+  const text: string = data.choices?.[0]?.message?.content ?? '';
+  if (!text) throw new Error('Empty response from Groq');
 
-  // Strip markdown code fences if Gemini wraps JSON in them
+  // Strip markdown code fences if model wraps JSON in them
   return text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
 }
 

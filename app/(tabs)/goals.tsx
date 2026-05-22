@@ -98,7 +98,7 @@ export default function GoalsScreen() {
   // ── Step 2 → Analyzing ────────────────────────────────────────────────────
 
   const handleAnalyze = async () => {
-    const apiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
+    const apiKey = process.env.EXPO_PUBLIC_GROQ_API_KEY;
     if (!apiKey) {
       // No API key — skip to review with placeholder data
       setAnalysis(buildPlaceholderAnalysis());
@@ -119,13 +119,11 @@ export default function GoalsScreen() {
     } catch (err) {
       console.error(err);
       const msg = String(err);
-      const isQuota   = msg.includes('429') || msg.includes('quota') || msg.includes('RESOURCE_EXHAUSTED');
-      const isInvalid = msg.includes('401') || msg.includes('403') || msg.includes('API_KEY');
-      const isModel   = msg.includes('404') || msg.includes('not found');
+      const isQuota   = msg.includes('429') || msg.includes('quota') || msg.includes('rate_limit');
+      const isInvalid = msg.includes('401') || msg.includes('403') || msg.includes('invalid_api_key');
       const detail =
-        isQuota   ? 'Your Gemini API key has hit its daily limit. Generate a new key at aistudio.google.com/apikey and update .env.local.' :
-        isInvalid ? 'Your Gemini API key is invalid or restricted. Check EXPO_PUBLIC_GEMINI_API_KEY in .env.local.' :
-        isModel   ? 'The Gemini model is unavailable. Check lib/claude.ts.' :
+        isQuota   ? 'Groq free tier limit hit — resets in minutes. Try again shortly. (console.groq.com to check)' :
+        isInvalid ? 'Groq API key is invalid. Check EXPO_PUBLIC_GROQ_API_KEY in .env.local.' :
         msg.slice(0, 180);
       setAnalysis(buildPlaceholderAnalysis());
       setStep('review');
