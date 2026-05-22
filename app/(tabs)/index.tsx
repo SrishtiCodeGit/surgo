@@ -14,13 +14,14 @@ import { useStreakStore } from '@/stores/streakStore';
 import { useGoalStore } from '@/stores/goalStore';
 import { StreakBadge } from '@/components/ui/StreakBadge';
 import { TaskCard } from '@/components/ui/TaskCard';
+import { WelcomeMascot } from '@/components/ui/WelcomeMascot';
 import { getMilestoneQuote, getTodaysQuote } from '@/lib/quotes';
 import { toDateString } from '@/lib/streak';
 
 const USER_ID = 'local';
 
 export default function TodayScreen() {
-  const { theme } = useTheme();
+  const { theme, themeKey } = useTheme();
 
   const {
     streak, isLoaded: streakLoaded,
@@ -101,64 +102,119 @@ export default function TodayScreen() {
     : hour < 18 ? 'Good afternoon'
     : 'Good evening';
 
+  const dateStr = now.toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+  });
+
   const isLoading = !streakLoaded || !goalsLoaded;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <ScrollView
-        contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
+        contentContainerStyle={{ padding: 20, paddingBottom: 48 }}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} />
         }
       >
-        {/* ── Header ──────────────────────────────────────────────────────── */}
-        <View style={{ marginBottom: 28 }}>
-          {/* Date row */}
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <Text style={{ color: theme.colors.textMuted, fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1.5 }}>
-              {now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+
+        {/* ── SURGO wordmark ───────────────────────────────────────────────── */}
+        <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 8 }}>
+          <View style={{ backgroundColor: theme.colors.primaryLight, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 }}>
+            <Text style={{ color: theme.colors.primary, fontWeight: '900', fontSize: 11, letterSpacing: 2.5 }}>
+              SURGO
             </Text>
-            <View style={{ backgroundColor: theme.colors.primaryLight, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 }}>
-              <Text style={{ color: theme.colors.primary, fontWeight: '900', fontSize: 11, letterSpacing: 2.5 }}>
-                SURGO
-              </Text>
-            </View>
           </View>
+        </View>
 
-          {/* Greeting */}
-          <Text style={{ color: theme.colors.text, fontSize: 32, fontWeight: '800', letterSpacing: -0.5, lineHeight: 38, marginBottom: 20 }}>
-            {greeting} 👋
-          </Text>
+        {/* ── Companion hero ───────────────────────────────────────────────── */}
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: theme.colors.surface,
+            borderRadius: 24,
+            borderColor: theme.colors.border,
+            borderWidth: 1,
+            paddingHorizontal: 18,
+            paddingVertical: 20,
+            marginBottom: 16,
+            gap: 16,
+            shadowColor: theme.colors.primary,
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.10,
+            shadowRadius: 12,
+            elevation: 3,
+          }}
+        >
+          {/* Mascot */}
+          <WelcomeMascot themeKey={themeKey} size={110} />
 
-          {/* Streak card */}
-          {streakLoaded && (
+          {/* Greeting text */}
+          <View style={{ flex: 1 }}>
+            <Text
+              style={{
+                color: theme.colors.textMuted,
+                fontSize: 11,
+                fontWeight: '700',
+                textTransform: 'uppercase',
+                letterSpacing: 1.8,
+                marginBottom: 6,
+              }}
+            >
+              {dateStr}
+            </Text>
+            <Text
+              style={{
+                color: theme.colors.text,
+                fontSize: 26,
+                fontWeight: '800',
+                letterSpacing: -0.5,
+                lineHeight: 30,
+              }}
+            >
+              {greeting}
+            </Text>
+            <Text
+              style={{
+                color: theme.colors.primary,
+                fontSize: 13,
+                fontWeight: '700',
+                marginTop: 8,
+                letterSpacing: 0.2,
+              }}
+            >
+              {theme.tone.taskMotivation}
+            </Text>
+          </View>
+        </View>
+
+        {/* ── Streak badge ─────────────────────────────────────────────────── */}
+        {streakLoaded && (
+          <View style={{ marginBottom: 20 }}>
             <StreakBadge
               count={currentStreak}
               state={currentState}
               freezeCards={freezeCards}
               onFreezePress={handleFreezePress}
             />
-          )}
-        </View>
-
-        {/* ── Motivation card ──────────────────────────────────────────────── */}
-        <View style={{
-          backgroundColor: theme.colors.surfaceAlt,
-          borderLeftColor: theme.colors.primary,
-          borderLeftWidth: 4,
-          borderRadius: 14,
-          paddingHorizontal: 16,
-          paddingVertical: 14,
-          marginBottom: 28,
-        }}>
-          <Text style={{ color: theme.colors.text, fontSize: 14, fontWeight: '700', lineHeight: 21 }}>
-            {theme.tone.taskMotivation}
-          </Text>
-        </View>
+          </View>
+        )}
 
         {/* ── No goals yet ─────────────────────────────────────────────────── */}
         {!isLoading && goals.length === 0 && (
-          <View style={{ backgroundColor: theme.colors.surface, borderColor: theme.colors.border, borderWidth: 1, borderRadius: 16, padding: 28, alignItems: 'center' }}>
+          <View
+            style={{
+              backgroundColor: theme.colors.surface,
+              borderColor: theme.colors.border,
+              borderWidth: 1,
+              borderRadius: 20,
+              padding: 28,
+              alignItems: 'center',
+              marginBottom: 16,
+            }}
+          >
             <Text style={{ fontSize: 36, marginBottom: 12 }}>{theme.emoji.goal}</Text>
             <Text style={{ color: theme.colors.text, fontSize: 17, fontWeight: '700', marginBottom: 8, textAlign: 'center' }}>
               No goals yet
@@ -170,16 +226,24 @@ export default function TodayScreen() {
               onPress={() => router.push('/(tabs)/goals')}
               style={{ backgroundColor: theme.colors.primary, paddingHorizontal: 20, paddingVertical: 12, borderRadius: 12 }}
             >
-              <Text style={{ color: theme.colors.textInverse, fontWeight: '700' }}>
-                + Add a Goal
-              </Text>
+              <Text style={{ color: theme.colors.textInverse, fontWeight: '700' }}>+ Add a Goal</Text>
             </TouchableOpacity>
           </View>
         )}
 
         {/* ── No tasks today (but has goals) ──────────────────────────────── */}
         {!isLoading && goals.length > 0 && todaysTasks.length === 0 && (
-          <View style={{ backgroundColor: theme.colors.surface, borderColor: theme.colors.border, borderWidth: 1, borderRadius: 16, padding: 24, alignItems: 'center' }}>
+          <View
+            style={{
+              backgroundColor: theme.colors.surface,
+              borderColor: theme.colors.border,
+              borderWidth: 1,
+              borderRadius: 20,
+              padding: 24,
+              alignItems: 'center',
+              marginBottom: 16,
+            }}
+          >
             <Text style={{ fontSize: 32, marginBottom: 10 }}>✅</Text>
             <Text style={{ color: theme.colors.text, fontSize: 16, fontWeight: '700', textAlign: 'center' }}>
               No tasks scheduled for today
@@ -193,15 +257,19 @@ export default function TodayScreen() {
         {/* ── Task list ────────────────────────────────────────────────────── */}
         {todaysTasks.length > 0 && (
           <>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            {/* Header row */}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
               <Text style={{ color: theme.colors.text, fontSize: 18, fontWeight: '800', letterSpacing: -0.3 }}>
                 Today's Tasks
               </Text>
-              {/* Done pill */}
-              <View style={{
-                backgroundColor: allDone ? theme.colors.success + '22' : theme.colors.surfaceAlt,
-                paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10,
-              }}>
+              <View
+                style={{
+                  backgroundColor: allDone ? theme.colors.success + '22' : theme.colors.surfaceAlt,
+                  paddingHorizontal: 10,
+                  paddingVertical: 5,
+                  borderRadius: 10,
+                }}
+              >
                 <Text style={{ color: allDone ? theme.colors.success : theme.colors.textMuted, fontSize: 12, fontWeight: '700' }}>
                   {completedCount}/{totalCount} done
                 </Text>
@@ -209,7 +277,7 @@ export default function TodayScreen() {
             </View>
 
             {/* Progress bar */}
-            <View style={{ backgroundColor: theme.colors.border, height: 6, borderRadius: 3, marginBottom: 16, overflow: 'hidden' }}>
+            <View style={{ backgroundColor: theme.colors.border, height: 6, borderRadius: 3, marginBottom: 14, overflow: 'hidden' }}>
               <View
                 style={{
                   backgroundColor: allDone ? theme.colors.success : theme.colors.primary,
@@ -230,7 +298,18 @@ export default function TodayScreen() {
         {allDone && currentState !== 'active' && (
           <TouchableOpacity
             onPress={handleCheckIn}
-            style={{ backgroundColor: theme.colors.primary, marginTop: 20, paddingVertical: 16, borderRadius: 14, alignItems: 'center' }}
+            style={{
+              backgroundColor: theme.colors.primary,
+              marginTop: 20,
+              paddingVertical: 16,
+              borderRadius: 14,
+              alignItems: 'center',
+              shadowColor: theme.colors.primary,
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.35,
+              shadowRadius: 12,
+              elevation: 4,
+            }}
             activeOpacity={0.85}
           >
             <Text style={{ color: theme.colors.textInverse, fontSize: 16, fontWeight: '800' }}>
@@ -240,7 +319,17 @@ export default function TodayScreen() {
         )}
 
         {currentState === 'active' && (
-          <View style={{ backgroundColor: theme.colors.success + '20', borderColor: theme.colors.success, borderWidth: 1, marginTop: 20, paddingVertical: 14, borderRadius: 14, alignItems: 'center' }}>
+          <View
+            style={{
+              backgroundColor: theme.colors.success + '20',
+              borderColor: theme.colors.success,
+              borderWidth: 1,
+              marginTop: 20,
+              paddingVertical: 14,
+              borderRadius: 14,
+              alignItems: 'center',
+            }}
+          >
             <Text style={{ color: theme.colors.success, fontSize: 15, fontWeight: '700' }}>
               ✓ Checked in for today!
             </Text>
@@ -280,11 +369,13 @@ export default function TodayScreen() {
                 }}
                 activeOpacity={0.8}
               >
-                <View style={{
-                  width: 44, height: 44, borderRadius: 22,
-                  backgroundColor: theme.colors.primaryLight,
-                  alignItems: 'center', justifyContent: 'center',
-                }}>
+                <View
+                  style={{
+                    width: 44, height: 44, borderRadius: 22,
+                    backgroundColor: theme.colors.primaryLight,
+                    alignItems: 'center', justifyContent: 'center',
+                  }}
+                >
                   <Text style={{ fontSize: 22 }}>🌙</Text>
                 </View>
                 <View style={{ flex: 1 }}>
@@ -295,17 +386,20 @@ export default function TodayScreen() {
                     {goal.title}
                   </Text>
                 </View>
-                <View style={{
-                  backgroundColor: theme.colors.primaryLight,
-                  width: 32, height: 32, borderRadius: 16,
-                  alignItems: 'center', justifyContent: 'center',
-                }}>
+                <View
+                  style={{
+                    backgroundColor: theme.colors.primaryLight,
+                    width: 32, height: 32, borderRadius: 16,
+                    alignItems: 'center', justifyContent: 'center',
+                  }}
+                >
                   <Text style={{ color: theme.colors.primary, fontSize: 16, fontWeight: '700' }}>→</Text>
                 </View>
               </TouchableOpacity>
             ))}
           </View>
         )}
+
       </ScrollView>
     </SafeAreaView>
   );
