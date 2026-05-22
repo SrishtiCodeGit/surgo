@@ -4,49 +4,68 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef, useState } from 'react';
 import { Audio } from 'expo-av';
 import { ThemeProvider, useTheme } from '@/context/ThemeContext';
+import { AnimatedSplash }         from '@/components/ui/AnimatedSplash';
 import { BalancedAnimatedSplash } from '@/components/ui/BalancedAnimatedSplash';
+import { HardcoreAnimatedSplash } from '@/components/ui/HardcoreAnimatedSplash';
+import { ThemeKey } from '@/types';
 
-// ─── Play launch sound (works even on silent mode) ────────────────────────────
+// ─── Theme-matched sounds ─────────────────────────────────────────────────────
 
-async function playLaunchSound() {
+const SOUNDS: Record<ThemeKey, ReturnType<typeof require>> = {
+  soft:     require('../assets/soft.mp3'),
+  balanced: require('../assets/balanced.mp3'),
+  hardcore: require('../assets/hardcore.mp3'),
+};
+
+// ─── Play the sound that matches the current theme ────────────────────────────
+
+async function playLaunchSound(themeKey: ThemeKey) {
   try {
     await Audio.setAudioModeAsync({
       playsInSilentModeIOS: true,
       staysActiveInBackground: false,
     });
     const { sound } = await Audio.Sound.createAsync(
-      require('../assets/open.mp3'),
+      SOUNDS[themeKey],
       { shouldPlay: true, volume: 1.0 },
     );
-    // Unload after 6s — safely covers the 3.6s intro
+    // Unload after 6s — safely covers the longest intro (3.6s)
     setTimeout(() => sound.unloadAsync().catch(() => {}), 6000);
   } catch {
     // Silently ignore — sound is non-critical
   }
 }
 
+// ─── Splash picker ────────────────────────────────────────────────────────────
+
+function ThemeSplash({ themeKey, onFinish }: { themeKey: ThemeKey; onFinish: () => void }) {
+  if (themeKey === 'soft')     return <AnimatedSplash         onFinish={onFinish} />;
+  if (themeKey === 'hardcore') return <HardcoreAnimatedSplash onFinish={onFinish} />;
+  return                              <BalancedAnimatedSplash  onFinish={onFinish} />;
+}
+
 // ─── Inner layout (has access to theme) ──────────────────────────────────────
 
 function RootLayoutInner() {
-  const { theme, isLoaded } = useTheme();
+  const { theme, themeKey, isLoaded } = useTheme();
   const [showIntro, setShowIntro] = useState(true);
   const soundStarted = useRef(false);
 
   useEffect(() => {
     if (isLoaded && !soundStarted.current) {
       soundStarted.current = true;
-      playLaunchSound();
+      playLaunchSound(themeKey);
     }
   }, [isLoaded]);
 
   if (!isLoaded) return null;
 
-  // ── Show branded splash intro on every app open ──
+  // ── Show the theme-matched splash on every app open ──
   if (showIntro) {
     return (
       <>
-        <StatusBar style="light" />
-        <BalancedAnimatedSplash onFinish={() => setShowIntro(false)} />
+        <StatusBar style={themeKey === 'soft' ? 'dark' : 'light'} />
+        <ThemeSplash themeKey={themeKey} onFinish={() => setShowIntro(false)} />
       </>
     );
   }
