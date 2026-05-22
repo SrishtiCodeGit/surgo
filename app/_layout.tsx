@@ -9,17 +9,12 @@ import { ThemeProvider, useTheme } from '@/context/ThemeContext';
 
 async function playLaunchSound() {
   try {
-    await Audio.setAudioModeAsync({ playsInSilentModeIOS: false });
     const { sound } = await Audio.Sound.createAsync(
       require('../assets/open.mp3'),
       { shouldPlay: true, volume: 0.7 },
     );
-    // Unload after playback to free memory
-    sound.setOnPlaybackStatusUpdate((status) => {
-      if (status.isLoaded && status.didJustFinish) {
-        sound.unloadAsync();
-      }
-    });
+    // Unload after 5s — enough for any short chime
+    setTimeout(() => sound.unloadAsync().catch(() => {}), 5000);
   } catch {
     // Silently ignore — sound is non-critical
   }
