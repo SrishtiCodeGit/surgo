@@ -190,47 +190,47 @@ function SurgoMascot({ size }: { size: number }) {
   return (
     <Svg width={s} height={s}>
       <Defs>
-        {/* Body: bright pink highlight → deep amethyst */}
+        {/* Body: bright yellow highlight → rich golden → deep amber */}
         <SvgRadialGrad id="mBody" cx="30%" cy="22%" r="78%">
-          <Stop offset="0%"   stopColor="#FFD8F0" />
-          <Stop offset="32%"  stopColor="#EE80C8" />
-          <Stop offset="100%" stopColor="#7A2A96" />
+          <Stop offset="0%"   stopColor="#FFF5A0" />
+          <Stop offset="35%"  stopColor="#F5C030" />
+          <Stop offset="100%" stopColor="#C07800" />
         </SvgRadialGrad>
 
         {/* Belly lighter oval */}
         <SvgRadialGrad id="mBelly" cx="50%" cy="65%" r="55%">
-          <Stop offset="0%"   stopColor="#FFF0FA" stopOpacity="0.72" />
-          <Stop offset="100%" stopColor="#FFF0FA" stopOpacity="0"    />
+          <Stop offset="0%"   stopColor="#FFFFF0" stopOpacity="0.72" />
+          <Stop offset="100%" stopColor="#FFFFF0" stopOpacity="0"    />
         </SvgRadialGrad>
 
-        {/* Iris: lavender → deep violet */}
+        {/* Iris: warm amber → deep brown */}
         <SvgRadialGrad id="mIris" cx="28%" cy="24%" r="72%">
-          <Stop offset="0%"   stopColor="#E0C8FF" />
-          <Stop offset="100%" stopColor="#5C1AAA" />
+          <Stop offset="0%"   stopColor="#FFD080" />
+          <Stop offset="100%" stopColor="#5A2800" />
         </SvgRadialGrad>
 
-        {/* Arms: medium pink sphere */}
+        {/* Arms: bright yellow sphere */}
         <SvgRadialGrad id="mArm" cx="28%" cy="24%" r="72%">
-          <Stop offset="0%"   stopColor="#F8B8E4" />
-          <Stop offset="100%" stopColor="#BB44CC" />
+          <Stop offset="0%"   stopColor="#FFE870" />
+          <Stop offset="100%" stopColor="#C07200" />
         </SvgRadialGrad>
 
-        {/* Feet: deeper purple sphere */}
+        {/* Feet: deeper golden sphere */}
         <SvgRadialGrad id="mFoot" cx="30%" cy="25%" r="70%">
-          <Stop offset="0%"   stopColor="#D8A8F8" />
-          <Stop offset="100%" stopColor="#6018A0" />
+          <Stop offset="0%"   stopColor="#FFD840" />
+          <Stop offset="100%" stopColor="#A05C00" />
         </SvgRadialGrad>
 
         {/* Ear bumps */}
         <SvgRadialGrad id="mEar" cx="30%" cy="25%" r="70%">
-          <Stop offset="0%"   stopColor="#F8B0E0" />
-          <Stop offset="100%" stopColor="#CC55CC" />
+          <Stop offset="0%"   stopColor="#FFE870" />
+          <Stop offset="100%" stopColor="#C07800" />
         </SvgRadialGrad>
 
         {/* Ground shadow */}
         <SvgRadialGrad id="mGnd" cx="50%" cy="50%" r="50%">
-          <Stop offset="0%"   stopColor="rgba(140,50,180,0.22)" />
-          <Stop offset="100%" stopColor="rgba(140,50,180,0)"    />
+          <Stop offset="0%"   stopColor="rgba(180,120,0,0.22)" />
+          <Stop offset="100%" stopColor="rgba(180,120,0,0)"    />
         </SvgRadialGrad>
       </Defs>
 
@@ -248,8 +248,8 @@ function SurgoMascot({ size }: { size: number }) {
       <Circle cx={cx - bRx*0.50} cy={bCy - bRy*0.88} r={s*0.068} fill="url(#mEar)" />
       <Circle cx={cx + bRx*0.50} cy={bCy - bRy*0.88} r={s*0.068} fill="url(#mEar)" />
       {/* Ear inner (inner colour lighter) */}
-      <Ellipse cx={cx - bRx*0.50} cy={bCy - bRy*0.91} rx={s*0.032} ry={s*0.028} fill="#FFCCE8" opacity="0.7" />
-      <Ellipse cx={cx + bRx*0.50} cy={bCy - bRy*0.91} rx={s*0.032} ry={s*0.028} fill="#FFCCE8" opacity="0.7" />
+      <Ellipse cx={cx - bRx*0.50} cy={bCy - bRy*0.91} rx={s*0.032} ry={s*0.028} fill="#FFF5A0" opacity="0.7" />
+      <Ellipse cx={cx + bRx*0.50} cy={bCy - bRy*0.91} rx={s*0.032} ry={s*0.028} fill="#FFF5A0" opacity="0.7" />
 
       {/* Body */}
       <Ellipse cx={cx} cy={bCy} rx={bRx} ry={bRy} fill="url(#mBody)" />
@@ -282,16 +282,16 @@ function SurgoMascot({ size }: { size: number }) {
 
       {/* ── Face ── */}
       {/* Blush cheeks */}
-      <Ellipse cx={eyeLx - eR*0.62} cy={bCy + bRy*0.06} rx={eR*0.80} ry={eR*0.50} fill="#FF9CC8" opacity="0.68" />
-      <Ellipse cx={eyeRx + eR*0.62} cy={bCy + bRy*0.06} rx={eR*0.80} ry={eR*0.50} fill="#FF9CC8" opacity="0.68" />
+      <Ellipse cx={eyeLx - eR*0.62} cy={bCy + bRy*0.06} rx={eR*0.80} ry={eR*0.50} fill="#FFAA30" opacity="0.55" />
+      <Ellipse cx={eyeRx + eR*0.62} cy={bCy + bRy*0.06} rx={eR*0.80} ry={eR*0.50} fill="#FFAA30" opacity="0.55" />
       {/* Blush dots */}
-      <Circle cx={eyeLx - eR*0.30} cy={bCy + bRy*0.10} r={s*0.016} fill="#FF80B8" opacity="0.55" />
-      <Circle cx={eyeRx + eR*0.30} cy={bCy + bRy*0.10} r={s*0.016} fill="#FF80B8" opacity="0.55" />
+      <Circle cx={eyeLx - eR*0.30} cy={bCy + bRy*0.10} r={s*0.016} fill="#FF9010" opacity="0.50" />
+      <Circle cx={eyeRx + eR*0.30} cy={bCy + bRy*0.10} r={s*0.016} fill="#FF9010" opacity="0.50" />
 
       {/* Smile */}
       <Path
         d={`M ${cx - s*0.145} ${bCy + bRy*0.22} Q ${cx} ${bCy + bRy*0.43} ${cx + s*0.145} ${bCy + bRy*0.22}`}
-        stroke="#8030A8"
+        stroke="#8A5000"
         strokeWidth={s * 0.023}
         fill="none"
         strokeLinecap="round"
