@@ -1,34 +1,34 @@
 import { Theme, ThemeKey } from '@/types';
 
-// ─── Soft Theme ───────────────────────────────────────────────────────────────
-// Warm, gentle, encouraging. Pastel palette. You're doing amazing.
+// ─── Soft "Bloom" ─────────────────────────────────────────────────────────────
+// Warm amethyst + coral. Feels like a calm morning journal.
 
 const softTheme: Theme = {
   key: 'soft',
   name: 'Soft',
-  tagline: 'Gentle progress, every day',
+  tagline: 'Rise softly, grow surely 🌸',
   colors: {
-    background: '#faf7f2',
-    surface: '#ffffff',
-    surfaceAlt: '#f0ebe3',
-    primary: '#8b9e7a',        // sage green
-    primaryLight: '#d4e3c9',
-    accent: '#e8a598',         // blush
-    text: '#3d3530',
-    textMuted: '#9e8f85',
-    textInverse: '#ffffff',
-    border: '#e8e0d8',
-    success: '#7fb97a',
-    warning: '#e8c07a',
-    danger: '#e8957a',
-    streakFire: '#e8a598',
+    background: '#FDFAF6',      // creamy warm white
+    surface: '#FFFFFF',
+    surfaceAlt: '#F5EDFA',      // very light lavender tint
+    primary: '#9C72BF',         // amethyst purple
+    primaryLight: '#EEE0FA',    // pale lavender
+    accent: '#EE9374',          // warm coral
+    text: '#1E1228',            // deep purple-black
+    textMuted: '#917EA0',       // muted purple-grey
+    textInverse: '#FFFFFF',
+    border: '#ECE2F2',          // light lavender border
+    success: '#5CB88A',         // sage green
+    warning: '#E8A84A',         // warm amber
+    danger: '#D96878',          // rose-danger
+    streakFire: '#EE9374',      // coral flame
   },
   tone: {
     greeting: 'Good morning',
-    taskMotivation: 'Take it one step at a time 🌿',
-    streakCongrats: 'Look at you showing up! That\'s beautiful. 🌸',
-    streakWarning: 'Hey, your goal is still waiting for you — no pressure, just a reminder 💛',
-    streakBroken: 'That\'s okay. Every day is a fresh start. Let\'s go again 🌱',
+    taskMotivation: 'Take it one gentle step at a time 🌿',
+    streakCongrats: 'Look at you showing up — that\'s everything. 🌸',
+    streakWarning: 'Your goal is still waiting — no pressure, just a kind nudge 💛',
+    streakBroken: 'That\'s okay. Every single day is a fresh start. Let\'s bloom again 🌱',
     freezeUsed: 'Rest day saved ❄️ — your streak is safe. Back at it tomorrow!',
     weeklyReviewTone: 'gentle, warm, encouraging, like a kind mentor',
     aiPace: 'soft',
@@ -41,36 +41,36 @@ const softTheme: Theme = {
   },
 };
 
-// ─── Balanced Theme ───────────────────────────────────────────────────────────
-// Clean, honest, motivating. Indigo + amber. Real talk with a supportive edge.
+// ─── Balanced "Focus" ─────────────────────────────────────────────────────────
+// Rich indigo + cyan. Clean, sharp, premium productivity.
 
 const balancedTheme: Theme = {
   key: 'balanced',
   name: 'Balanced',
-  tagline: 'Consistent action builds empires',
+  tagline: 'Consistent action builds empires ⚡',
   colors: {
-    background: '#f8f9ff',
-    surface: '#ffffff',
-    surfaceAlt: '#f0f2ff',
-    primary: '#6366f1',        // indigo
-    primaryLight: '#c7d2fe',
-    accent: '#f59e0b',         // amber
-    text: '#1e1b4b',
-    textMuted: '#6b7280',
-    textInverse: '#ffffff',
-    border: '#e0e7ff',
-    success: '#10b981',
-    warning: '#f59e0b',
-    danger: '#ef4444',
-    streakFire: '#f59e0b',
+    background: '#F5F7FF',      // barely blue white
+    surface: '#FFFFFF',
+    surfaceAlt: '#EBF0FF',      // light indigo tint
+    primary: '#4F46E5',         // rich indigo
+    primaryLight: '#E6E5FF',    // pale indigo
+    accent: '#06B6D4',          // electric cyan
+    text: '#0A0F2E',            // near-black with deep blue
+    textMuted: '#6272A4',       // blue-grey
+    textInverse: '#FFFFFF',
+    border: '#DCDEFF',          // pale indigo border
+    success: '#10B981',         // emerald
+    warning: '#F59E0B',         // amber
+    danger: '#EF4444',          // red
+    streakFire: '#F59E0B',      // amber flame
   },
   tone: {
     greeting: 'Morning',
     taskMotivation: 'Keep your momentum going ⚡',
     streakCongrats: 'Streak extended. You\'re building something real. 💪',
-    streakWarning: 'Day\'s not over yet — get one task done and protect that streak.',
-    streakBroken: 'Streak reset. That\'s information, not failure. Start over stronger.',
-    freezeUsed: 'Freeze card used ❄️ — streak protected. Don\'t make it a habit.',
+    streakWarning: 'Day\'s not over — get one task done and protect that streak.',
+    streakBroken: 'Streak reset. That\'s data, not failure. Start over stronger.',
+    freezeUsed: 'Freeze used ❄️ — streak protected. Don\'t make it a habit.',
     weeklyReviewTone: 'honest, balanced, like a smart mentor who tells it straight',
     aiPace: 'balanced',
   },
@@ -82,36 +82,36 @@ const balancedTheme: Theme = {
   },
 };
 
-// ─── Hardcore Theme ───────────────────────────────────────────────────────────
-// Dark, sharp, zero excuses. Black + red. You said you wanted this.
+// ─── Hardcore "Obsidian" ──────────────────────────────────────────────────────
+// Near-black + vivid red. Zero mercy. Premium dark-mode energy.
 
 const hardcoreTheme: Theme = {
   key: 'hardcore',
   name: 'Hardcore',
-  tagline: 'No excuses. Full speed.',
+  tagline: 'No excuses. Full send. 🔥',
   colors: {
-    background: '#0a0a0a',
-    surface: '#141414',
-    surfaceAlt: '#1f1f1f',
-    primary: '#ef4444',        // red
-    primaryLight: '#7f1d1d',
-    accent: '#facc15',         // yellow
-    text: '#f5f5f5',
-    textMuted: '#6b6b6b',
-    textInverse: '#0a0a0a',
-    border: '#2a2a2a',
-    success: '#22c55e',
-    warning: '#facc15',
-    danger: '#ef4444',
-    streakFire: '#ef4444',
+    background: '#080808',
+    surface: '#111111',
+    surfaceAlt: '#1A1A1A',
+    primary: '#FF3B30',         // vivid red
+    primaryLight: '#2D0B08',    // dark red background tint
+    accent: '#FFD60A',          // sharp gold
+    text: '#F2F2F2',
+    textMuted: '#505050',
+    textInverse: '#080808',
+    border: '#1E1E1E',
+    success: '#30D158',         // bright green
+    warning: '#FFD60A',         // gold
+    danger: '#FF453A',          // bright danger
+    streakFire: '#FF6308',      // orange-red flame
   },
   tone: {
     greeting: 'WAKE UP',
     taskMotivation: 'NO EXCUSES. GET IT DONE. 🔥',
-    streakCongrats: 'Streak. You showed up. That\'s what winners do. Keep going.',
-    streakWarning: 'Midnight is coming. You haven\'t done a thing. Fix it. NOW.',
+    streakCongrats: 'Streak. You showed up. Winners do that. Keep going.',
+    streakWarning: 'Midnight is coming. You haven\'t done a thing. Fix that. NOW.',
     streakBroken: 'Streak broken. You chose comfort over growth. Don\'t let it happen again.',
-    freezeUsed: 'Freeze used. That\'s your pass. One. Don\'t waste it twice.',
+    freezeUsed: 'Freeze used. That\'s your pass. Don\'t waste it twice.',
     weeklyReviewTone: 'blunt, no-nonsense, drill sergeant energy, zero sugarcoating',
     aiPace: 'hardcore',
   },

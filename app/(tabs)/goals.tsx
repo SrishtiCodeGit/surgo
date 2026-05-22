@@ -18,6 +18,19 @@ import { GoalCategory } from '@/types';
 import { analyzeGoal, GoalAnalysis } from '@/lib/claude';
 import { toDateString } from '@/lib/streak';
 
+// ─── Category accent colours ──────────────────────────────────────────────────
+
+const CATEGORY_COLORS: Record<GoalCategory, string> = {
+  fitness:       '#F97316',
+  career:        '#6366F1',
+  learning:      '#0EA5E9',
+  finance:       '#22C55E',
+  health:        '#EC4899',
+  relationships: '#F43F5E',
+  creativity:    '#A855F7',
+  other:         '#94A3B8',
+};
+
 // ─── Config ───────────────────────────────────────────────────────────────────
 
 const CATEGORIES: { key: GoalCategory; label: string; emoji: string }[] = [
@@ -233,6 +246,7 @@ export default function GoalsScreen() {
           {goals.map((goal) => {
             const goalTasks = tasks.filter((t) => t.goalId === goal.id);
             const cat = CATEGORIES.find((c) => c.key === goal.category);
+            const catColor = CATEGORY_COLORS[goal.category] ?? theme.colors.primary;
             const daysLeft = Math.max(0, Math.ceil(
               (new Date(goal.targetDate).getTime() - Date.now()) / 86400000,
             ));
@@ -247,6 +261,8 @@ export default function GoalsScreen() {
               etaShift < 0 ? `${Math.abs(etaShift)}d ahead` :
               etaShift > 0 ? `+${etaShift}d behind` : 'on track';
 
+            const completedTasks = goalTasks.filter((t) => !!t.completedAt).length;
+
             return (
               <TouchableOpacity
                 key={goal.id}
@@ -255,29 +271,72 @@ export default function GoalsScreen() {
                   { text: 'Cancel', style: 'cancel' },
                   { text: 'Delete', style: 'destructive', onPress: () => deleteGoal(goal.id) },
                 ])}
-                style={{ backgroundColor: theme.colors.surface, borderColor: theme.colors.border, borderWidth: 1, borderRadius: 16, padding: 16, marginBottom: 12 }}
+                style={{
+                  backgroundColor: theme.colors.surface,
+                  borderRadius: 20,
+                  marginBottom: 14,
+                  overflow: 'hidden',
+                  flexDirection: 'row',
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 3 },
+                  shadowOpacity: 0.07,
+                  shadowRadius: 10,
+                  elevation: 3,
+                  borderWidth: 1,
+                  borderColor: theme.colors.border,
+                }}
                 activeOpacity={0.8}
               >
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-                  <Text style={{ fontSize: 24, marginRight: 10 }}>{cat?.emoji}</Text>
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ color: theme.colors.text, fontSize: 16, fontWeight: '700' }}>{goal.title}</Text>
-                    <Text style={{ color: theme.colors.textMuted, fontSize: 12, marginTop: 2 }}>
-                      {daysLeft} days left · {goalTasks.length} tasks
-                      {goal.minutesPerDay ? ` · ${goal.minutesPerDay} min/day` : ''}
-                    </Text>
+                {/* Category colour bar */}
+                <View style={{ width: 5, backgroundColor: catColor }} />
+
+                {/* Card content */}
+                <View style={{ flex: 1, padding: 16 }}>
+                  {/* Top row */}
+                  <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 12 }}>
+                    {/* Emoji pill */}
+                    <View style={{
+                      width: 42, height: 42, borderRadius: 12,
+                      backgroundColor: catColor + '18',
+                      alignItems: 'center', justifyContent: 'center',
+                      marginRight: 12,
+                    }}>
+                      <Text style={{ fontSize: 22 }}>{cat?.emoji}</Text>
+                    </View>
+
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ color: theme.colors.text, fontSize: 16, fontWeight: '700', lineHeight: 22 }} numberOfLines={2}>
+                        {goal.title}
+                      </Text>
+                      <Text style={{ color: theme.colors.textMuted, fontSize: 12, marginTop: 3 }}>
+                        {daysLeft}d left · {completedTasks}/{goalTasks.length} tasks
+                        {goal.minutesPerDay ? ` · ${goal.minutesPerDay} min/day` : ''}
+                      </Text>
+                    </View>
+
+                    {/* Progress + ETA badge */}
+                    <View style={{ alignItems: 'flex-end', gap: 5, marginLeft: 8 }}>
+                      <Text style={{ color: catColor, fontWeight: '800', fontSize: 17 }}>
+                        {goal.progress}%
+                      </Text>
+                      {hasReview && (
+                        <View style={{ backgroundColor: etaColor + '22', paddingHorizontal: 7, paddingVertical: 3, borderRadius: 7 }}>
+                          <Text style={{ color: etaColor, fontSize: 10, fontWeight: '700' }}>{etaLabel}</Text>
+                        </View>
+                      )}
+                    </View>
                   </View>
-                  <View style={{ alignItems: 'flex-end', gap: 4 }}>
-                    <Text style={{ color: theme.colors.primary, fontWeight: '800', fontSize: 16 }}>{goal.progress}%</Text>
-                    {hasReview && (
-                      <View style={{ backgroundColor: etaColor + '20', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }}>
-                        <Text style={{ color: etaColor, fontSize: 10, fontWeight: '700' }}>{etaLabel}</Text>
-                      </View>
-                    )}
+
+                  {/* Progress bar */}
+                  <View style={{ backgroundColor: theme.colors.border, height: 5, borderRadius: 3 }}>
+                    <View style={{
+                      backgroundColor: catColor,
+                      height: 5,
+                      borderRadius: 3,
+                      width: `${goal.progress}%`,
+                      opacity: 0.85,
+                    }} />
                   </View>
-                </View>
-                <View style={{ backgroundColor: theme.colors.border, height: 4, borderRadius: 2 }}>
-                  <View style={{ backgroundColor: theme.colors.primary, height: 4, borderRadius: 2, width: `${goal.progress}%` }} />
                 </View>
               </TouchableOpacity>
             );

@@ -112,21 +112,25 @@ export default function TodayScreen() {
         }
       >
         {/* ── Header ──────────────────────────────────────────────────────── */}
-        <View style={{ marginBottom: 24 }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-            <Text style={{ color: theme.colors.textMuted, fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1.5 }}>
+        <View style={{ marginBottom: 28 }}>
+          {/* Date row */}
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <Text style={{ color: theme.colors.textMuted, fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1.5 }}>
               {now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
             </Text>
-            <Text style={{ color: theme.colors.primary, fontWeight: '900', fontSize: 15, letterSpacing: 3 }}>
-              SURGO
-            </Text>
+            <View style={{ backgroundColor: theme.colors.primaryLight, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 }}>
+              <Text style={{ color: theme.colors.primary, fontWeight: '900', fontSize: 11, letterSpacing: 2.5 }}>
+                SURGO
+              </Text>
+            </View>
           </View>
 
-          <Text style={{ color: theme.colors.text, fontSize: 28, fontWeight: '800', marginBottom: 16 }}>
+          {/* Greeting */}
+          <Text style={{ color: theme.colors.text, fontSize: 32, fontWeight: '800', letterSpacing: -0.5, lineHeight: 38, marginBottom: 20 }}>
             {greeting} 👋
           </Text>
 
-          {/* Streak badge */}
+          {/* Streak card */}
           {streakLoaded && (
             <StreakBadge
               count={currentStreak}
@@ -137,9 +141,17 @@ export default function TodayScreen() {
           )}
         </View>
 
-        {/* ── Motivation line ──────────────────────────────────────────────── */}
-        <View style={{ backgroundColor: theme.colors.surfaceAlt, borderLeftColor: theme.colors.primary, borderLeftWidth: 3, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, marginBottom: 24 }}>
-          <Text style={{ color: theme.colors.text, fontSize: 13, fontWeight: '600' }}>
+        {/* ── Motivation card ──────────────────────────────────────────────── */}
+        <View style={{
+          backgroundColor: theme.colors.surfaceAlt,
+          borderLeftColor: theme.colors.primary,
+          borderLeftWidth: 4,
+          borderRadius: 14,
+          paddingHorizontal: 16,
+          paddingVertical: 14,
+          marginBottom: 28,
+        }}>
+          <Text style={{ color: theme.colors.text, fontSize: 14, fontWeight: '700', lineHeight: 21 }}>
             {theme.tone.taskMotivation}
           </Text>
         </View>
@@ -181,21 +193,27 @@ export default function TodayScreen() {
         {/* ── Task list ────────────────────────────────────────────────────── */}
         {todaysTasks.length > 0 && (
           <>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <Text style={{ color: theme.colors.text, fontSize: 17, fontWeight: '800' }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <Text style={{ color: theme.colors.text, fontSize: 18, fontWeight: '800', letterSpacing: -0.3 }}>
                 Today's Tasks
               </Text>
-              <Text style={{ color: theme.colors.textMuted, fontSize: 13 }}>
-                {completedCount}/{totalCount} done
-              </Text>
+              {/* Done pill */}
+              <View style={{
+                backgroundColor: allDone ? theme.colors.success + '22' : theme.colors.surfaceAlt,
+                paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10,
+              }}>
+                <Text style={{ color: allDone ? theme.colors.success : theme.colors.textMuted, fontSize: 12, fontWeight: '700' }}>
+                  {completedCount}/{totalCount} done
+                </Text>
+              </View>
             </View>
 
             {/* Progress bar */}
-            <View style={{ backgroundColor: theme.colors.border, height: 5, borderRadius: 3, marginBottom: 16 }}>
+            <View style={{ backgroundColor: theme.colors.border, height: 6, borderRadius: 3, marginBottom: 16, overflow: 'hidden' }}>
               <View
                 style={{
                   backgroundColor: allDone ? theme.colors.success : theme.colors.primary,
-                  height: 5,
+                  height: 6,
                   borderRadius: 3,
                   width: `${totalCount > 0 ? (completedCount / totalCount) * 100 : 0}%`,
                 }}
@@ -229,12 +247,17 @@ export default function TodayScreen() {
           </View>
         )}
 
-        {/* ── Nightly Review button ────────────────────────────────────────── */}
-        {goals.length > 0 && (
-          <View style={{ marginTop: 20 }}>
-            <Text style={{ color: theme.colors.textMuted, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>
-              End-of-day
-            </Text>
+        {/* ── Nightly Review section ───────────────────────────────────────── */}
+        {goals.filter((g) => g.isActive).length > 0 && (
+          <View style={{ marginTop: 28 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+              <View style={{ flex: 1, height: 1, backgroundColor: theme.colors.border }} />
+              <Text style={{ color: theme.colors.textMuted, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1.5 }}>
+                End of day
+              </Text>
+              <View style={{ flex: 1, height: 1, backgroundColor: theme.colors.border }} />
+            </View>
+
             {goals.filter((g) => g.isActive).map((goal) => (
               <TouchableOpacity
                 key={goal.id}
@@ -242,28 +265,43 @@ export default function TodayScreen() {
                 style={{
                   backgroundColor: theme.colors.surface,
                   borderColor: theme.colors.border,
-                  borderWidth: 1,
-                  borderRadius: 14,
-                  padding: 14,
+                  borderWidth: 1.5,
+                  borderRadius: 18,
+                  padding: 16,
                   marginBottom: 10,
                   flexDirection: 'row',
                   alignItems: 'center',
-                  gap: 12,
+                  gap: 14,
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.05,
+                  shadowRadius: 8,
+                  elevation: 2,
                 }}
                 activeOpacity={0.8}
               >
-                <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: theme.colors.primaryLight, alignItems: 'center', justifyContent: 'center' }}>
-                  <Text style={{ fontSize: 18 }}>🌙</Text>
+                <View style={{
+                  width: 44, height: 44, borderRadius: 22,
+                  backgroundColor: theme.colors.primaryLight,
+                  alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <Text style={{ fontSize: 22 }}>🌙</Text>
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ color: theme.colors.text, fontWeight: '700', fontSize: 14 }}>
+                  <Text style={{ color: theme.colors.text, fontWeight: '700', fontSize: 15 }}>
                     Nightly Review
                   </Text>
-                  <Text style={{ color: theme.colors.textMuted, fontSize: 12, marginTop: 1 }} numberOfLines={1}>
+                  <Text style={{ color: theme.colors.textMuted, fontSize: 12, marginTop: 2 }} numberOfLines={1}>
                     {goal.title}
                   </Text>
                 </View>
-                <Text style={{ color: theme.colors.primary, fontSize: 18 }}>→</Text>
+                <View style={{
+                  backgroundColor: theme.colors.primaryLight,
+                  width: 32, height: 32, borderRadius: 16,
+                  alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <Text style={{ color: theme.colors.primary, fontSize: 16, fontWeight: '700' }}>→</Text>
+                </View>
               </TouchableOpacity>
             ))}
           </View>
