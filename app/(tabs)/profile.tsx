@@ -7,6 +7,7 @@ import { ThemeKey } from '@/types';
 import { AnimatedSplash } from '@/components/ui/AnimatedSplash';
 import { HardcoreAnimatedSplash } from '@/components/ui/HardcoreAnimatedSplash';
 import { BalancedAnimatedSplash } from '@/components/ui/BalancedAnimatedSplash';
+import { MascotFaceIcon } from '@/components/ui/MascotFaceIcon';
 
 const SETTINGS_ROWS = [
   { icon: '🔔', label: 'Notification Time', value: '9:00 AM' },
@@ -87,12 +88,10 @@ export default function ProfileScreen() {
                 width: 56,
                 height: 56,
                 borderRadius: 28,
-                backgroundColor: 'rgba(255,255,255,0.18)',
-                alignItems: 'center',
-                justifyContent: 'center',
+                overflow: 'hidden',
               }}
             >
-              <Text style={{ fontSize: 28 }}>{theme.emoji.streak}</Text>
+              <MascotFaceIcon variant={themeKey} size={56} />
             </View>
             <View style={{ flex: 1 }}>
               <Text
@@ -176,18 +175,16 @@ export default function ProfileScreen() {
                 }}
                 activeOpacity={0.75}
               >
-                {/* Emoji */}
+                {/* Mascot face icon */}
                 <View
                   style={{
                     width: 48,
                     height: 48,
                     borderRadius: 24,
-                    backgroundColor: t.colors.primaryLight,
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                    overflow: 'hidden',
                   }}
                 >
-                  <Text style={{ fontSize: 24 }}>{t.emoji.streak}</Text>
+                  <MascotFaceIcon variant={key as ThemeKey} size={48} />
                 </View>
 
                 {/* Text + swatches */}
