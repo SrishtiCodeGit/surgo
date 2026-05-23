@@ -9,12 +9,13 @@ import { Theme } from '@/types';
 function IconToday({ color }: { color: string }) {
   return (
     <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
-      {/* Calendar with a checkmark */}
-      <Rect x="3" y="4" width="18" height="17" rx="3" stroke={color} strokeWidth="1.8" />
-      <Path d="M8 2 L8 6" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
-      <Path d="M16 2 L16 6" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
-      <Path d="M3 9 L21 9" stroke={color} strokeWidth="1.6" />
-      <Path d="M8.5 14.5 L11 17 L15.5 12.5" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      {/* Calendar body — drawn with Path instead of Rect */}
+      <Path d="M3 7a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7z"
+        stroke={color} strokeWidth="1.8" />
+      <Path d="M8 2v4" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
+      <Path d="M16 2v4" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
+      <Path d="M3 9h18" stroke={color} strokeWidth="1.6" />
+      <Path d="M8.5 14.5L11 17l4.5-4.5" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
     </Svg>
   );
 }
