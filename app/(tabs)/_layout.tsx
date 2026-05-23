@@ -44,12 +44,26 @@ function IconProgress({ color }: { color: string }) {
 function IconProfile({ color }: { color: string }) {
   return (
     <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
-      {/* Person silhouette */}
       <Circle cx="12" cy="8" r="4" stroke={color} strokeWidth="1.8" />
       <Path
         d="M4 20 C4 16.13 7.58 13 12 13 C16.42 13 20 16.13 20 20"
         stroke={color} strokeWidth="1.8" strokeLinecap="round"
       />
+    </Svg>
+  );
+}
+
+function IconChat({ color }: { color: string }) {
+  return (
+    <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+      {/* Speech bubble with sparkle dots */}
+      <Path
+        d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+        stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+      />
+      <Circle cx="9"  cy="10" r="1" fill={color} />
+      <Circle cx="12" cy="10" r="1" fill={color} />
+      <Circle cx="15" cy="10" r="1" fill={color} />
     </Svg>
   );
 }
@@ -148,6 +162,17 @@ export default function TabLayout() {
           tabBarIcon: ({ color, focused }) => (
             <TabIcon focused={focused} theme={theme}>
               <IconProgress color={color} />
+            </TabIcon>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="chat"
+        options={{
+          title: 'Surgo',
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon focused={focused} theme={theme}>
+              <IconChat color={color} />
             </TabIcon>
           ),
         }}
