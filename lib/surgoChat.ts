@@ -164,6 +164,93 @@ TASK RULES:
 - NEVER output anything except the JSON object`;
 }
 
+// ─── Diet plan ───────────────────────────────────────────────────────────────
+
+import { DietPlanCache, MealSuggestion } from '@/stores/dietStore';
+
+export async function getDietPlan(
+  goalTitles:  string[],
+  knownFacts:  string,
+  themeKey:    ThemeKey,
+  todayDate:   string,
+): Promise<DietPlanCache> {
+  const apiKey = process.env.EXPO_PUBLIC_GROQ_API_KEY;
+  if (!apiKey) throw new Error('Missing EXPO_PUBLIC_GROQ_API_KEY');
+
+  const goalsLine = goalTitles.length > 0
+    ? `User's goals: ${goalTitles.join(' | ')}`
+    : 'User has no specific goals yet — suggest a balanced, healthy plan.';
+
+  const factsLine = knownFacts
+    ? `Known about user:\n${knownFacts}`
+    : 'No personal data stored yet — use sensible defaults (1800 kcal, balanced macros).';
+
+  const prompt = `You are Surgo, a personal AI nutritionist. Build a personalised one-day meal plan.
+
+${goalsLine}
+${factsLine}
+
+Calculate an appropriate daily calorie target based on the user's data.
+If weight/height/age are missing, use 1800 kcal as default.
+If goal is weight loss: slight deficit (~300-400 kcal below maintenance).
+If goal is muscle gain: slight surplus (~200-300 kcal above maintenance).
+
+Respond ONLY with this exact JSON (no text before or after):
+{
+  "date": "${todayDate}",
+  "calorieTarget": 1800,
+  "tip": "One short personalised nutrition tip based on their goal.",
+  "breakfast": {
+    "name": "Meal name",
+    "description": "Brief 1-line description of what it is",
+    "calories": 400,
+    "protein": 20,
+    "carbs": 45,
+    "fat": 10
+  },
+  "lunch": {
+    "name": "Meal name",
+    "description": "Brief 1-line description",
+    "calories": 550,
+    "protein": 35,
+    "carbs": 55,
+    "fat": 14
+  },
+  "dinner": {
+    "name": "Meal name",
+    "description": "Brief 1-line description",
+    "calories": 500,
+    "protein": 30,
+    "carbs": 45,
+    "fat": 15
+  },
+  "snack": {
+    "name": "Snack name",
+    "description": "Brief 1-line description",
+    "calories": 200,
+    "protein": 8,
+    "carbs": 20,
+    "fat": 8
+  }
+}`;
+
+  const res = await fetch(GROQ_API_URL, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+    body: JSON.stringify({
+      model:           GROQ_MODEL,
+      messages:        [{ role: 'user', content: prompt }],
+      max_tokens:      600,
+      temperature:     0.6,
+      response_format: { type: 'json_object' },
+    }),
+  });
+
+  if (!res.ok) throw new Error(`Groq diet ${res.status}`);
+  const data = await res.json();
+  return JSON.parse(data.choices?.[0]?.message?.content ?? '{}') as DietPlanCache;
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 export async function chatWithSurgo(

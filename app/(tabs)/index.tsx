@@ -7,7 +7,7 @@ import {
   Alert,
   RefreshControl,
 } from 'react-native';
-import Svg, { Circle, Path } from 'react-native-svg';
+import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useEffect, useState, useCallback } from 'react';
@@ -162,6 +162,18 @@ export default function TodayScreen() {
 
           {/* Right-side icons */}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 18 }}>
+            {/* Progress icon */}
+            <TouchableOpacity
+              onPress={() => router.push('/(tabs)/progress')}
+              activeOpacity={0.72}
+            >
+              <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+                <Rect x="3"  y="13" width="4" height="8" rx="1.5" fill={theme.colors.textMuted} opacity="0.5" />
+                <Rect x="10" y="9"  width="4" height="12" rx="1.5" fill={theme.colors.textMuted} opacity="0.7" />
+                <Rect x="17" y="4"  width="4" height="17" rx="1.5" fill={theme.colors.textMuted} />
+              </Svg>
+            </TouchableOpacity>
+
             <BellIcon unread={unreadCount()} onPress={handleBellPress} />
 
             {/* Profile avatar / icon */}

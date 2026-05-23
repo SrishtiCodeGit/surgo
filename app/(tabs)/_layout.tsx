@@ -1,6 +1,6 @@
 import { Tabs } from 'expo-router';
 import { View } from 'react-native';
-import Svg, { Path, Circle, Rect } from 'react-native-svg';
+import Svg, { Path, Circle } from 'react-native-svg';
 import { useTheme } from '@/context/ThemeContext';
 import { Theme } from '@/types';
 
@@ -30,13 +30,14 @@ function IconGoals({ color }: { color: string }) {
   );
 }
 
-function IconProgress({ color }: { color: string }) {
+function IconDiet({ color }: { color: string }) {
   return (
     <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
-      {/* Bar chart — 3 bars rising */}
-      <Rect x="3"  y="13" width="4.5" height="8" rx="1.5" fill={color} opacity="0.55" />
-      <Rect x="9.75"  y="9"  width="4.5" height="12" rx="1.5" fill={color} opacity="0.75" />
-      <Rect x="16.5" y="4"  width="4.5" height="17" rx="1.5" fill={color} />
+      {/* Fork */}
+      <Path d="M8 2v4M8 10v10" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
+      <Path d="M6 2v3a2 2 0 0 0 4 0V2" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      {/* Knife */}
+      <Path d="M16 2c0 0 2 2.5 2 6s-2 5-2 5v9" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
     </Svg>
   );
 }
@@ -156,14 +157,20 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="progress"
+        name="diet"
         options={{
-          title: 'Progress',
+          title: 'Diet',
           tabBarIcon: ({ color, focused }) => (
             <TabIcon focused={focused} theme={theme}>
-              <IconProgress color={color} />
+              <IconDiet color={color} />
             </TabIcon>
           ),
+        }}
+      />
+      <Tabs.Screen
+        name="progress"
+        options={{
+          href: null,  // accessed via icon on Today tab
         }}
       />
       <Tabs.Screen
