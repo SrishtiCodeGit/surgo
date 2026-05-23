@@ -3,7 +3,7 @@ import {
   TextInput, KeyboardAvoidingView, Platform,
   Alert, ActivityIndicator,
 } from 'react-native';
-import Svg, { Path, Circle, Rect } from 'react-native-svg';
+import Svg, { Path, Circle } from 'react-native-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useEffect, useState } from 'react';
 import { useTheme } from '@/context/ThemeContext';

@@ -7,7 +7,7 @@ import {
   Alert,
   RefreshControl,
 } from 'react-native';
-import Svg, { Circle, Path, Rect } from 'react-native-svg';
+import Svg, { Circle, Path } from 'react-native-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useEffect, useState, useCallback } from 'react';
@@ -168,9 +168,9 @@ export default function TodayScreen() {
               activeOpacity={0.72}
             >
               <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
-                <Rect x="3"  y="13" width="4" height="8" rx="1.5" fill={theme.colors.textMuted} opacity="0.5" />
-                <Rect x="10" y="9"  width="4" height="12" rx="1.5" fill={theme.colors.textMuted} opacity="0.7" />
-                <Rect x="17" y="4"  width="4" height="17" rx="1.5" fill={theme.colors.textMuted} />
+                <Path d="M3 21V13" stroke={theme.colors.textMuted} strokeWidth="3.5" strokeLinecap="round" opacity={0.5} />
+                <Path d="M10 21V9"  stroke={theme.colors.textMuted} strokeWidth="3.5" strokeLinecap="round" opacity={0.7} />
+                <Path d="M17 21V4" stroke={theme.colors.textMuted} strokeWidth="3.5" strokeLinecap="round" />
               </Svg>
             </TouchableOpacity>
 
