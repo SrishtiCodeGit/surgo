@@ -21,45 +21,46 @@ const SETTINGS_ROWS = [
   { label: 'About Surgo',       value: 'v1.0'   },
 ];
 
-// ─── Inline editable field ────────────────────────────────────────────────────
+// ─── Single row: read-only or editable depending on parent mode ──────────────
 
 function Field({
-  label, value, placeholder, onSave, keyboardType = 'default', multiline = false,
+  label, value, draft, editing, placeholder,
+  onChangeDraft, keyboardType = 'default', multiline = false, locked = false,
 }: {
   label: string;
   value: string;
+  draft: string;
+  editing: boolean;
   placeholder: string;
-  onSave: (v: string) => void;
+  onChangeDraft: (v: string) => void;
   keyboardType?: 'default' | 'email-address' | 'numeric';
   multiline?: boolean;
+  locked?: boolean;
 }) {
   const { theme } = useTheme();
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft]     = useState(value);
-
-  useEffect(() => { setDraft(value); }, [value]);
-
-  const commit = () => { setEditing(false); onSave(draft.trim()); };
+  const showInput = editing && !locked;
 
   return (
-    <View
-      style={{
-        paddingHorizontal: 16,
-        paddingVertical: 13,
-        borderBottomWidth: 1,
-        borderBottomColor: theme.colors.border,
-      }}
-    >
-      <Text style={{ color: theme.colors.textMuted, fontSize: 10, fontWeight: '700', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 4 }}>
-        {label}
-      </Text>
-      {editing ? (
+    <View style={{ paddingHorizontal: 16, paddingVertical: 13, borderBottomWidth: 1, borderBottomColor: theme.colors.border }}>
+      {/* Label row */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+        <Text style={{ color: theme.colors.textMuted, fontSize: 10, fontWeight: '700', letterSpacing: 1.5, textTransform: 'uppercase' }}>
+          {label}
+        </Text>
+        {locked && (
+          <Svg width={10} height={10} viewBox="0 0 24 24" fill="none">
+            <Path d="M19 11H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2z"
+              stroke={theme.colors.textMuted} strokeWidth="2" />
+            <Path d="M7 11V7a5 5 0 0 1 10 0v4"
+              stroke={theme.colors.textMuted} strokeWidth="2" strokeLinecap="round" />
+          </Svg>
+        )}
+      </View>
+
+      {showInput ? (
         <TextInput
-          autoFocus
           value={draft}
-          onChangeText={setDraft}
-          onBlur={commit}
-          onSubmitEditing={commit}
+          onChangeText={onChangeDraft}
           keyboardType={keyboardType}
           multiline={multiline}
           placeholder={placeholder}
@@ -69,20 +70,18 @@ function Field({
             fontSize: 15,
             fontWeight: '600',
             paddingVertical: 0,
-            minHeight: multiline ? 56 : undefined,
+            minHeight: multiline ? 60 : undefined,
           }}
         />
       ) : (
-        <TouchableOpacity onPress={() => setEditing(true)} activeOpacity={0.7}>
-          <Text style={{
-            color: value ? theme.colors.text : theme.colors.textMuted,
-            fontSize: 15,
-            fontWeight: value ? '600' : '400',
-            fontStyle: value ? 'normal' : 'italic',
-          }}>
-            {value || placeholder}
-          </Text>
-        </TouchableOpacity>
+        <Text style={{
+          color: value ? theme.colors.text : theme.colors.textMuted,
+          fontSize: 15,
+          fontWeight: value ? '600' : '400',
+          fontStyle: (!value && !locked) ? 'italic' : 'normal',
+        }}>
+          {value || placeholder}
+        </Text>
       )}
     </View>
   );
@@ -96,7 +95,36 @@ export default function ProfileScreen() {
   const [showHardcoreSplash, setShowHardcoreSplash] = useState(false);
   const [showBalancedSplash, setShowBalancedSplash] = useState(false);
 
+  // ── Details edit mode ────────────────────────────────────────────────────
+  const [editingDetails, setEditingDetails] = useState(false);
+  const [draft, setDraft] = useState({ name: '', surgoName: '', age: '', bio: '' });
+
   useEffect(() => { if (!isLoaded) load(); }, []);
+
+  // Sync drafts whenever profile loads or changes
+  useEffect(() => {
+    setDraft({
+      name:      profile.name,
+      surgoName: profile.surgoName,
+      age:       profile.age,
+      bio:       profile.bio,
+    });
+  }, [profile]);
+
+  const startEditing = () => {
+    setDraft({ name: profile.name, surgoName: profile.surgoName, age: profile.age, bio: profile.bio });
+    setEditingDetails(true);
+  };
+
+  const submitDetails = async () => {
+    await save({
+      name:      draft.name.trim(),
+      surgoName: draft.surgoName.trim(),
+      age:       draft.age.trim(),
+      bio:       draft.bio.trim(),
+    });
+    setEditingDetails(false);
+  };
 
   const handleThemeSelect = (key: ThemeKey) => {
     if (key === 'soft')     setShowSoftSplash(true);
@@ -334,54 +362,58 @@ export default function ProfileScreen() {
         </View>
 
         {/* ── Personal details ──────────────────────────────────────────────── */}
-        <Text
-          style={{
-            color: theme.colors.textMuted,
-            fontSize: 10,
-            fontWeight: '800',
-            textTransform: 'uppercase',
-            letterSpacing: 2.5,
-            marginBottom: 12,
-          }}
-        >
-          Your Details
-        </Text>
+        {/* Section header row: label + pen icon */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <Text style={{ color: theme.colors.textMuted, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 2.5 }}>
+            Your Details
+          </Text>
+          {!editingDetails && (
+            <TouchableOpacity
+              onPress={startEditing}
+              activeOpacity={0.7}
+              style={{
+                flexDirection: 'row', alignItems: 'center', gap: 5,
+                backgroundColor: theme.colors.primaryLight,
+                paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8,
+              }}
+            >
+              <Svg width={12} height={12} viewBox="0 0 24 24" fill="none">
+                <Path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
+                  stroke={theme.colors.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                <Path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
+                  stroke={theme.colors.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </Svg>
+              <Text style={{ color: theme.colors.primary, fontSize: 11, fontWeight: '800', letterSpacing: 0.5 }}>Edit</Text>
+            </TouchableOpacity>
+          )}
+        </View>
 
         <View
           style={{
             backgroundColor: theme.colors.surface,
             borderRadius: 18,
-            borderWidth: 1,
-            borderColor: theme.colors.border,
+            borderWidth: editingDetails ? 1.5 : 1,
+            borderColor: editingDetails ? theme.colors.primary + '60' : theme.colors.border,
             marginBottom: 32,
             overflow: 'hidden',
           }}
         >
-          {/* Avatar row */}
+          {/* Avatar row — always tappable */}
           <TouchableOpacity
             onPress={pickPhoto}
             activeOpacity={0.75}
             style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 14,
+              flexDirection: 'row', alignItems: 'center', gap: 14,
               padding: 16,
-              borderBottomWidth: 1,
-              borderBottomColor: theme.colors.border,
+              borderBottomWidth: 1, borderBottomColor: theme.colors.border,
             }}
           >
-            {/* Avatar circle */}
-            <View
-              style={{
-                width: 64, height: 64, borderRadius: 32,
-                backgroundColor: theme.colors.primaryLight,
-                borderWidth: 2,
-                borderColor: theme.colors.primary + '40',
-                overflow: 'hidden',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
+            <View style={{
+              width: 64, height: 64, borderRadius: 32,
+              backgroundColor: theme.colors.primaryLight,
+              borderWidth: 2, borderColor: theme.colors.primary + '40',
+              overflow: 'hidden', alignItems: 'center', justifyContent: 'center',
+            }}>
               {profile.photoUri ? (
                 <Image source={{ uri: profile.photoUri }} style={{ width: 64, height: 64 }} />
               ) : (
@@ -402,7 +434,6 @@ export default function ProfileScreen() {
               </Text>
             </View>
 
-            {/* Camera icon */}
             <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: theme.colors.surfaceAlt, alignItems: 'center', justifyContent: 'center' }}>
               <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
                 <Path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"
@@ -412,14 +443,37 @@ export default function ProfileScreen() {
             </View>
           </TouchableOpacity>
 
-          {/* Editable fields */}
-          <Field label="Full Name"     value={profile.name}      placeholder="e.g. Alex Johnson"      onSave={v => save({ name: v })} />
-          <Field label="Surgo Name"    value={profile.surgoName} placeholder="Your Surgo nickname"    onSave={v => save({ surgoName: v })} />
-          <Field label="Age"           value={profile.age}       placeholder="e.g. 24"               onSave={v => save({ age: v })}       keyboardType="numeric" />
-          <Field label="Email"         value={profile.email}     placeholder="you@example.com"        onSave={v => save({ email: v })}     keyboardType="email-address" />
-          <View style={{ borderBottomWidth: 0 }}>
-            <Field label="Bio / Goals"   value={profile.bio}       placeholder="What drives you…"      onSave={v => save({ bio: v })}       multiline />
-          </View>
+          {/* Fields — read-only by default, editable when editingDetails */}
+          <Field label="Full Name"   value={profile.name}      draft={draft.name}      editing={editingDetails} placeholder="e.g. Alex Johnson"   onChangeDraft={v => setDraft(d => ({ ...d, name: v }))} />
+          <Field label="Surgo Name"  value={profile.surgoName} draft={draft.surgoName} editing={editingDetails} placeholder="Your Surgo nickname"  onChangeDraft={v => setDraft(d => ({ ...d, surgoName: v }))} />
+          <Field label="Age"         value={profile.age}       draft={draft.age}       editing={editingDetails} placeholder="e.g. 24"              onChangeDraft={v => setDraft(d => ({ ...d, age: v }))}       keyboardType="numeric" />
+          {/* Email — always locked, never editable */}
+          <Field label="Email"       value={profile.email}     draft={profile.email}   editing={false}          placeholder="you@example.com"      onChangeDraft={() => {}} keyboardType="email-address" locked />
+          <Field label="Bio / Goals" value={profile.bio}       draft={draft.bio}       editing={editingDetails} placeholder="What drives you…"     onChangeDraft={v => setDraft(d => ({ ...d, bio: v }))}       multiline />
+
+          {/* Looks Good button — only shown in edit mode */}
+          {editingDetails && (
+            <TouchableOpacity
+              onPress={submitDetails}
+              activeOpacity={0.85}
+              style={{
+                margin: 14,
+                backgroundColor: theme.colors.primary,
+                borderRadius: 14,
+                paddingVertical: 14,
+                alignItems: 'center',
+                shadowColor: theme.colors.primary,
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.30,
+                shadowRadius: 10,
+                elevation: 4,
+              }}
+            >
+              <Text style={{ color: theme.colors.textInverse, fontSize: 15, fontWeight: '800', letterSpacing: 0.3 }}>
+                ✓  Looks Good
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* ── Settings ──────────────────────────────────────────────────────── */}
