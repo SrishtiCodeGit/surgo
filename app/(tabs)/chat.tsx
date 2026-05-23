@@ -1,16 +1,17 @@
 import {
   View, Text, TextInput, TouchableOpacity,
   ScrollView, KeyboardAvoidingView, Platform,
-  ActivityIndicator, Image,
+  ActivityIndicator, Image, Animated, Alert,
 } from 'react-native';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useEffect, useRef, useState } from 'react';
+import { Audio } from 'expo-av';
 import { useTheme } from '@/context/ThemeContext';
 import { useGoalStore } from '@/stores/goalStore';
 import { useProfileStore } from '@/stores/profileStore';
 import { WelcomeMascot } from '@/components/ui/WelcomeMascot';
-import { chatWithSurgo, ApiTurn, SurgoAction } from '@/lib/surgoChat';
+import { chatWithSurgo, transcribeAudio, ApiTurn, SurgoAction } from '@/lib/surgoChat';
 import { toDateString } from '@/lib/streak';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -143,9 +144,28 @@ export default function ChatScreen() {
   const [messages, setMessages] = useState<ChatMsg[]>([
     { id: 'welcome', role: 'surgo', text: WELCOME[themeKey] ?? WELCOME.balanced },
   ]);
-  const [input, setInput]   = useState('');
-  const [loading, setLoading] = useState(false);
+  const [input,       setInput]       = useState('');
+  const [loading,     setLoading]     = useState(false);
+  const [recording,   setRecording]   = useState<Audio.Recording | null>(null);
+  const [micState,    setMicState]    = useState<'idle' | 'recording' | 'transcribing'>('idle');
   const scrollRef = useRef<ScrollView>(null);
+
+  // Pulsing animation for recording indicator
+  const pulse = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    if (micState === 'recording') {
+      const loop = Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulse, { toValue: 1.35, duration: 600, useNativeDriver: true }),
+          Animated.timing(pulse, { toValue: 1.00, duration: 600, useNativeDriver: true }),
+        ])
+      );
+      loop.start();
+      return () => loop.stop();
+    } else {
+      pulse.setValue(1);
+    }
+  }, [micState]);
 
   useEffect(() => { if (!isLoaded) load(); }, []);
   useEffect(() => { if (!profileLoaded) loadProfile(); }, []);
@@ -164,20 +184,83 @@ export default function ChatScreen() {
       .filter(m => m.id !== 'welcome')
       .map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.text }));
 
-  const send = async () => {
+  const send = () => {
     const text = input.trim();
-    if (!text || loading) return;
+    if (!text) return;
+    setInput('');
+    sendText(text);
+  };
+
+  // ── Mic handlers ────────────────────────────────────────────────────────────
+
+  const startRecording = async () => {
+    try {
+      const { granted } = await Audio.requestPermissionsAsync();
+      if (!granted) {
+        Alert.alert('Mic permission needed', 'Allow microphone access to talk to Surgo.');
+        return;
+      }
+      await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
+      const { recording: rec } = await Audio.Recording.createAsync(
+        Audio.RecordingOptionsPresets.HIGH_QUALITY
+      );
+      setRecording(rec);
+      setMicState('recording');
+    } catch (e) {
+      Alert.alert('Could not start recording', String(e));
+    }
+  };
+
+  const stopAndTranscribe = async () => {
+    if (!recording) return;
+    setMicState('transcribing');
+    try {
+      await recording.stopAndUnloadAsync();
+      await Audio.setAudioModeAsync({ allowsRecordingIOS: false });
+      const uri = recording.getURI();
+      setRecording(null);
+
+      if (!uri) throw new Error('No audio captured');
+
+      const text = await transcribeAudio(uri);
+      if (text) {
+        // Put transcription in input box — user sees it and it auto-sends
+        setInput(text);
+        setMicState('idle');
+        // Auto-send after short delay so user sees what was heard
+        setTimeout(() => {
+          sendText(text);
+          setInput('');
+        }, 900);
+      } else {
+        setMicState('idle');
+        Alert.alert('Nothing heard', 'Surgo couldn\'t catch that. Try again.');
+      }
+    } catch (e) {
+      setMicState('idle');
+      setRecording(null);
+      Alert.alert('Transcription failed', 'Check your internet and try again.');
+    }
+  };
+
+  const handleMicPress = () => {
+    if (micState === 'idle')      startRecording();
+    else if (micState === 'recording') stopAndTranscribe();
+  };
+
+  // ── Core send (accepts explicit text so mic can call it) ────────────────────
+
+  const sendText = async (text: string) => {
+    if (!text.trim() || loading) return;
 
     const userMsg: ChatMsg = { id: uid(), role: 'user', text };
     setMessages(prev => [...prev, userMsg]);
-    setInput('');
     setLoading(true);
 
     try {
       const history = buildHistory();
       const res = await chatWithSurgo(text, history, themeKey, goalTitles);
 
-      // Handle task creation
       let createdAction: SurgoAction | undefined;
       if (res.action?.type === 'create_task') {
         const targetGoal = activeGoals[0];
@@ -195,17 +278,12 @@ export default function ChatScreen() {
         }
       }
 
-      const surgoMsg: ChatMsg = {
-        id: uid(),
-        role: 'surgo',
-        text: res.message,
-        action: createdAction,
-      };
-      setMessages(prev => [...prev, surgoMsg]);
-    } catch (err) {
       setMessages(prev => [...prev, {
-        id: uid(),
-        role: 'surgo',
+        id: uid(), role: 'surgo', text: res.message, action: createdAction,
+      }]);
+    } catch {
+      setMessages(prev => [...prev, {
+        id: uid(), role: 'surgo',
         text: "Sorry, I had trouble connecting. Check your internet and try again.",
       }]);
     } finally {
@@ -306,23 +384,91 @@ export default function ChatScreen() {
           </ScrollView>
         )}
 
+        {/* ── Recording banner ─────────────────────────────────────────────── */}
+        {micState !== 'idle' && (
+          <View style={{
+            flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
+            paddingVertical: 10,
+            backgroundColor: micState === 'recording' ? '#FF3B3015' : theme.colors.primaryLight,
+            borderTopWidth: 1, borderTopColor: theme.colors.border,
+          }}>
+            {micState === 'recording' ? (
+              <>
+                <Animated.View style={{
+                  width: 8, height: 8, borderRadius: 4,
+                  backgroundColor: '#FF3B30',
+                  transform: [{ scale: pulse }],
+                }} />
+                <Text style={{ color: '#FF3B30', fontSize: 13, fontWeight: '700' }}>
+                  Listening… tap mic to send
+                </Text>
+              </>
+            ) : (
+              <>
+                <ActivityIndicator size="small" color={theme.colors.primary} />
+                <Text style={{ color: theme.colors.primary, fontSize: 13, fontWeight: '700' }}>
+                  Transcribing…
+                </Text>
+              </>
+            )}
+          </View>
+        )}
+
         {/* ── Input bar ────────────────────────────────────────────────────── */}
         <View style={{
           flexDirection: 'row',
           alignItems: 'flex-end',
-          gap: 10,
-          paddingHorizontal: 16,
+          gap: 8,
+          paddingHorizontal: 14,
           paddingVertical: 12,
-          borderTopWidth: 1,
+          borderTopWidth: micState === 'idle' ? 1 : 0,
           borderTopColor: theme.colors.border,
           backgroundColor: theme.colors.surface,
         }}>
+          {/* Mic button */}
+          <TouchableOpacity
+            onPress={handleMicPress}
+            disabled={micState === 'transcribing' || loading}
+            activeOpacity={0.8}
+            style={{ alignItems: 'center', justifyContent: 'center' }}
+          >
+            <Animated.View style={{
+              width: 44, height: 44, borderRadius: 22,
+              backgroundColor: micState === 'recording'
+                ? '#FF3B30'
+                : theme.colors.primaryLight,
+              alignItems: 'center', justifyContent: 'center',
+              transform: [{ scale: micState === 'recording' ? pulse : 1 }],
+            }}>
+              {micState === 'transcribing' ? (
+                <ActivityIndicator size="small" color={theme.colors.primary} />
+              ) : (
+                <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+                  <Path
+                    d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"
+                    stroke={micState === 'recording' ? '#fff' : theme.colors.primary}
+                    strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                  />
+                  <Path
+                    d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"
+                    stroke={micState === 'recording' ? '#fff' : theme.colors.primary}
+                    strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                  />
+                </Svg>
+              )}
+            </Animated.View>
+          </TouchableOpacity>
+
+          {/* Text input */}
           <TextInput
             value={input}
             onChangeText={setInput}
-            placeholder={themeKey === 'hardcore' ? "Tell me what to do..." : "Say anything to Surgo..."}
+            placeholder={micState === 'recording'
+              ? "Listening…"
+              : themeKey === 'hardcore' ? "Type or speak to Surgo..." : "Type or speak to Surgo…"}
             placeholderTextColor={theme.colors.textMuted}
             multiline
+            editable={micState === 'idle'}
             style={{
               flex: 1,
               color: theme.colors.text,
@@ -330,11 +476,12 @@ export default function ChatScreen() {
               backgroundColor: theme.colors.background,
               borderRadius: 22,
               borderWidth: 1,
-              borderColor: theme.colors.border,
+              borderColor: micState !== 'idle' ? theme.colors.border + '60' : theme.colors.border,
               paddingHorizontal: 16,
               paddingVertical: 10,
               maxHeight: 100,
               fontWeight: '500',
+              opacity: micState !== 'idle' ? 0.5 : 1,
             }}
             onSubmitEditing={send}
             blurOnSubmit={false}
@@ -343,11 +490,13 @@ export default function ChatScreen() {
           {/* Send button */}
           <TouchableOpacity
             onPress={send}
-            disabled={!input.trim() || loading}
+            disabled={!input.trim() || loading || micState !== 'idle'}
             activeOpacity={0.8}
             style={{
               width: 44, height: 44, borderRadius: 22,
-              backgroundColor: input.trim() && !loading ? theme.colors.primary : theme.colors.border,
+              backgroundColor: input.trim() && !loading && micState === 'idle'
+                ? theme.colors.primary
+                : theme.colors.border,
               alignItems: 'center', justifyContent: 'center',
             }}
           >

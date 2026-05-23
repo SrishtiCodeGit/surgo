@@ -1,7 +1,40 @@
 import { ThemeKey } from '@/types';
 
-const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const GROQ_MODEL   = 'llama-3.3-70b-versatile';
+const GROQ_API_URL   = 'https://api.groq.com/openai/v1/chat/completions';
+const GROQ_WHISPER   = 'https://api.groq.com/openai/v1/audio/transcriptions';
+const GROQ_MODEL     = 'llama-3.3-70b-versatile';
+const WHISPER_MODEL  = 'whisper-large-v3-turbo';   // free, fast, accurate
+
+// ─── Speech → Text via Groq Whisper ──────────────────────────────────────────
+
+export async function transcribeAudio(audioUri: string): Promise<string> {
+  const apiKey = process.env.EXPO_PUBLIC_GROQ_API_KEY;
+  if (!apiKey) throw new Error('Missing EXPO_PUBLIC_GROQ_API_KEY');
+
+  const formData = new FormData();
+  formData.append('file', {
+    uri:  audioUri,
+    type: 'audio/m4a',
+    name: 'surgo_voice.m4a',
+  } as any);
+  formData.append('model',    WHISPER_MODEL);
+  formData.append('language', 'en');
+  formData.append('response_format', 'json');
+
+  const res = await fetch(GROQ_WHISPER, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${apiKey}` },
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Whisper ${res.status}: ${err}`);
+  }
+
+  const data = await res.json();
+  return (data.text ?? '').trim();
+}
 
 export interface SurgoAction {
   type: 'create_task';
