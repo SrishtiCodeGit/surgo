@@ -12,9 +12,11 @@ import { useEffect, useState, useCallback } from 'react';
 import { useTheme } from '@/context/ThemeContext';
 import { useStreakStore } from '@/stores/streakStore';
 import { useGoalStore } from '@/stores/goalStore';
+import { useNotificationStore } from '@/stores/notificationStore';
 import { StreakBadge } from '@/components/ui/StreakBadge';
 import { TaskCard } from '@/components/ui/TaskCard';
 import { WelcomeMascot } from '@/components/ui/WelcomeMascot';
+import { BellIcon, NotificationPanel } from '@/components/ui/NotificationPanel';
 import { getMilestoneQuote, getTodaysQuote } from '@/lib/quotes';
 import { toDateString } from '@/lib/streak';
 
@@ -33,12 +35,19 @@ export default function TodayScreen() {
     getTodaysTasks, completeTask, goals,
   } = useGoalStore();
 
-  const [refreshing, setRefreshing] = useState(false);
+  const [refreshing, setRefreshing]       = useState(false);
+  const [showNotifs, setShowNotifs]       = useState(false);
+
+  const {
+    notifs, isLoaded: notifsLoaded,
+    load: loadNotifs, generate, markAllRead, unreadCount,
+  } = useNotificationStore();
 
   // Load data on mount
   useEffect(() => {
     if (!streakLoaded) loadStreak(USER_ID);
     if (!goalsLoaded) load();
+    if (!notifsLoaded) loadNotifs();
   }, []);
 
   const onRefresh = useCallback(async () => {
@@ -110,6 +119,24 @@ export default function TodayScreen() {
 
   const isLoading = !streakLoaded || !goalsLoaded;
 
+  // Generate fresh notifications whenever data is ready
+  useEffect(() => {
+    if (streakLoaded && goalsLoaded) {
+      generate({
+        streak: streak?.currentStreak ?? 0,
+        completedToday: completedCount,
+        totalToday: totalCount,
+        hasGoals: goals.length > 0,
+        themeKey,
+      });
+    }
+  }, [streakLoaded, goalsLoaded, completedCount]);
+
+  const handleBellPress = () => {
+    setShowNotifs(true);
+    markAllRead();
+  };
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <ScrollView
@@ -119,14 +146,22 @@ export default function TodayScreen() {
         }
       >
 
-        {/* ── SURGO wordmark ───────────────────────────────────────────────── */}
-        <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 8 }}>
+        {/* ── Top bar: SURGO wordmark + notification bell ──────────────────── */}
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
           <View style={{ backgroundColor: theme.colors.primaryLight, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 }}>
             <Text style={{ color: theme.colors.primary, fontWeight: '900', fontSize: 11, letterSpacing: 2.5 }}>
               SURGO
             </Text>
           </View>
+          <BellIcon unread={unreadCount()} onPress={handleBellPress} />
         </View>
+
+        {/* Notification panel */}
+        <NotificationPanel
+          visible={showNotifs}
+          notifs={notifs}
+          onClose={() => setShowNotifs(false)}
+        />
 
         {/* ── Companion hero ───────────────────────────────────────────────── */}
         <View
