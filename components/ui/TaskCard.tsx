@@ -1,6 +1,18 @@
 import { View, Text, TouchableOpacity } from 'react-native';
+import { Audio } from 'expo-av';
 import { useTheme } from '@/context/ThemeContext';
 import { Task } from '@/types';
+
+async function playComplete() {
+  try {
+    await Audio.setAudioModeAsync({ playsInSilentModeIOS: true });
+    const { sound } = await Audio.Sound.createAsync(
+      require('@/assets/whoosh.mp3'),
+      { shouldPlay: true, volume: 1.0 },
+    );
+    setTimeout(() => sound.unloadAsync().catch(() => {}), 3000);
+  } catch {}
+}
 
 interface TaskCardProps {
   task: Task;
@@ -13,7 +25,11 @@ export function TaskCard({ task, onComplete }: TaskCardProps) {
 
   return (
     <TouchableOpacity
-      onPress={() => !isCompleted && onComplete(task.id)}
+      onPress={() => {
+        if (isCompleted) return;
+        playComplete();
+        onComplete(task.id);
+      }}
       activeOpacity={0.72}
       style={{
         backgroundColor: theme.colors.surface,
