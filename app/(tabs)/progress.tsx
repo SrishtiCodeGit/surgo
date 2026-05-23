@@ -1,69 +1,424 @@
-import { View, Text, ScrollView } from 'react-native';
+import { View, Text, ScrollView, Dimensions } from 'react-native';
+import Svg, { Circle, Path, G, Text as SvgText } from 'react-native-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useEffect } from 'react';
 import { useTheme } from '@/context/ThemeContext';
 import { useStreakStore } from '@/stores/streakStore';
+import { useGoalStore } from '@/stores/goalStore';
+import { StreakDay } from '@/types';
+
+const { width: SCREEN_W } = Dimensions.get('window');
+const CARD_W = SCREEN_W - 40;
+
+// ─── Design tokens ────────────────────────────────────────────────────────────
+
+const D = {
+  dark:    '#1C1C1E',
+  muted:   '#999999',
+  light:   '#F5F5F5',
+  border:  'rgba(0,0,0,0.07)',
+  green:   '#22C55E',
+  orange:  '#F59E0B',
+  purple:  '#A78BFA',
+  missed:  '#EBEBEB',
+};
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function statusColor(status: string, primary: string) {
+  if (status === 'completed') return D.green;
+  if (status === 'frozen')    return D.purple;
+  if (status === 'missed')    return D.orange;
+  return D.missed;
+}
+
+function getLast7(history: StreakDay[]) {
+  const days: (StreakDay | null)[] = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const dateStr = d.toISOString().split('T')[0];
+    const found   = history.find(h => h.date === dateStr) ?? null;
+    days.push(found ? found : { date: dateStr, status: 'empty' as any, tasksCompleted: 0, tasksTotal: 0 });
+  }
+  return days;
+}
+
+function getLast30(history: StreakDay[]) {
+  const days: (StreakDay | null)[] = [];
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const dateStr = d.toISOString().split('T')[0];
+    const found   = history.find(h => h.date === dateStr) ?? null;
+    days.push(found ?? { date: dateStr, status: 'empty' as any, tasksCompleted: 0, tasksTotal: 0 });
+  }
+  return days;
+}
+
+const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+// ─── Streak ring ─────────────────────────────────────────────────────────────
+
+function StreakRing({
+  current, longest, primary,
+}: { current: number; longest: number; primary: string }) {
+  const size   = 170;
+  const sw     = 16;
+  const r      = (size - sw) / 2;
+  const circ   = 2 * Math.PI * r;
+  const pct    = longest > 0 ? Math.min(current / longest, 1) : current > 0 ? 1 : 0;
+  const offset = circ * (1 - pct);
+
+  return (
+    <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+      <Svg width={size} height={size}>
+        {/* Track */}
+        <Circle cx={size/2} cy={size/2} r={r}
+          stroke={D.missed} strokeWidth={sw} fill="none" />
+        {/* Progress arc */}
+        <Circle cx={size/2} cy={size/2} r={r}
+          stroke={current > 0 ? primary : D.missed}
+          strokeWidth={sw} fill="none"
+          strokeDasharray={circ}
+          strokeDashoffset={offset}
+          strokeLinecap="round"
+          rotation="-90"
+          origin={`${size/2},${size/2}`}
+        />
+      </Svg>
+      {/* Centre label */}
+      <View style={{
+        position: 'absolute',
+        alignItems: 'center', justifyContent: 'center',
+      }}>
+        <Text style={{ color: D.dark, fontSize: 42, fontWeight: '800', letterSpacing: -2 }}>
+          {current}
+        </Text>
+        <Text style={{ color: D.muted, fontSize: 12, fontWeight: '600', marginTop: -4 }}>
+          day streak
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+// ─── Completion rate mini-ring ────────────────────────────────────────────────
+
+function RateRing({ rate, primary }: { rate: number; primary: string }) {
+  const size  = 64;
+  const sw    = 7;
+  const r     = (size - sw) / 2;
+  const circ  = 2 * Math.PI * r;
+  const offset = circ * (1 - rate / 100);
+
+  return (
+    <Svg width={size} height={size}>
+      <Circle cx={size/2} cy={size/2} r={r} stroke={D.missed} strokeWidth={sw} fill="none" />
+      <Circle cx={size/2} cy={size/2} r={r}
+        stroke={primary} strokeWidth={sw} fill="none"
+        strokeDasharray={circ}
+        strokeDashoffset={offset}
+        strokeLinecap="round"
+        rotation="-90"
+        origin={`${size/2},${size/2}`}
+      />
+      <SvgText
+        x={size/2} y={size/2 + 4.5}
+        textAnchor="middle"
+        fontSize="13" fontWeight="700"
+        fill={D.dark}
+      >
+        {rate}%
+      </SvgText>
+    </Svg>
+  );
+}
+
+// ─── 7-day bar chart ─────────────────────────────────────────────────────────
+
+function WeekChart({ days, primary }: { days: (StreakDay | null)[]; primary: string }) {
+  const chartH = 90;
+  const barW   = 28;
+  const gap    = (CARD_W - 40 - 7 * barW) / 6;
+
+  return (
+    <View>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-end', height: chartH, gap }}>
+        {days.map((day, i) => {
+          const status = (day as any)?.status ?? 'empty';
+          const pct    = status === 'completed'
+            ? (day!.tasksTotal > 0 ? day!.tasksCompleted / day!.tasksTotal : 1)
+            : status === 'frozen' ? 0.5
+            : 0.06;
+          const barH   = Math.max(chartH * pct, 5);
+          const color  =
+            status === 'completed' ? primary
+            : status === 'frozen'  ? D.purple
+            : status === 'missed'  ? D.orange
+            : D.missed;
+
+          return (
+            <View key={i} style={{ alignItems: 'center', gap: 6 }}>
+              <View style={{
+                width: barW, height: barH,
+                backgroundColor: color,
+                borderRadius: 8,
+              }} />
+            </View>
+          );
+        })}
+      </View>
+
+      {/* Day labels */}
+      <View style={{ flexDirection: 'row', gap, marginTop: 8 }}>
+        {days.map((day, i) => {
+          const date = day ? new Date(day.date + 'T00:00:00') : new Date();
+          const label = date.toLocaleDateString('en-US', { weekday: 'short' }).slice(0, 2);
+          const isToday = day?.date === new Date().toISOString().split('T')[0];
+          return (
+            <View key={i} style={{ width: barW, alignItems: 'center' }}>
+              <Text style={{
+                color: isToday ? primary : D.muted,
+                fontSize: 10,
+                fontWeight: isToday ? '800' : '500',
+              }}>
+                {label}
+              </Text>
+            </View>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+// ─── 30-day heatmap ───────────────────────────────────────────────────────────
+
+function Heatmap({ days, primary }: { days: (StreakDay | null)[]; primary: string }) {
+  const cellSize = Math.floor((CARD_W - 40 - 9 * 4) / 10);
+
+  return (
+    <View>
+      {/* Legend */}
+      <View style={{ flexDirection: 'row', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
+        {[
+          { color: D.green,  label: 'Completed' },
+          { color: D.orange, label: 'Missed'    },
+          { color: D.purple, label: 'Frozen'    },
+          { color: D.missed, label: 'No data'   },
+        ].map(l => (
+          <View key={l.label} style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+            <View style={{ width: 10, height: 10, borderRadius: 3, backgroundColor: l.color }} />
+            <Text style={{ color: D.muted, fontSize: 10, fontWeight: '500' }}>{l.label}</Text>
+          </View>
+        ))}
+      </View>
+
+      {/* Grid — 10 cols × 3 rows */}
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4 }}>
+        {days.map((day, i) => {
+          const status = (day as any)?.status ?? 'empty';
+          const color  =
+            status === 'completed' ? D.green
+            : status === 'missed'  ? D.orange
+            : status === 'frozen'  ? D.purple
+            : D.missed;
+          const isToday = day?.date === new Date().toISOString().split('T')[0];
+          return (
+            <View
+              key={i}
+              style={{
+                width: cellSize, height: cellSize,
+                borderRadius: 4,
+                backgroundColor: color,
+                borderWidth: isToday ? 2 : 0,
+                borderColor: D.dark,
+              }}
+            />
+          );
+        })}
+      </View>
+
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 }}>
+        <Text style={{ color: D.muted, fontSize: 10 }}>30 days ago</Text>
+        <Text style={{ color: D.muted, fontSize: 10 }}>Today</Text>
+      </View>
+    </View>
+  );
+}
+
+// ─── Main screen ──────────────────────────────────────────────────────────────
 
 export default function ProgressScreen() {
-  const { theme } = useTheme();
-  const { stats } = useStreakStore();
-  const streakStats = stats();
+  const { theme }                              = useTheme();
+  const { streak, isLoaded, loadStreak }       = useStreakStore();
+  const { goals, isLoaded: goalsLoaded, load } = useGoalStore();
 
-  const statCards = [
-    { label: 'Current Streak', value: streakStats?.currentStreak ?? 0, suffix: 'days', emoji: theme.emoji.streak },
-    { label: 'Longest Streak', value: streakStats?.longestStreak ?? 0, suffix: 'days', emoji: '🏆' },
-    { label: 'Completion Rate', value: streakStats?.completionRate ?? 0, suffix: '%', emoji: '📊' },
-    { label: 'Total Check-ins', value: streakStats?.completedDays ?? 0, suffix: 'days', emoji: '✅' },
-  ];
+  useEffect(() => { if (!isLoaded)    loadStreak('local'); }, []);
+  useEffect(() => { if (!goalsLoaded) load(); }, []);
+
+  const s           = streak;
+  const history     = s?.history ?? [];
+  const current     = s?.currentStreak ?? 0;
+  const longest     = s?.longestStreak ?? 0;
+  const totalDays   = history.length;
+  const completed   = history.filter(d => d.status === 'completed').length;
+  const missed      = history.filter(d => d.status === 'missed').length;
+  const frozen      = history.filter(d => d.status === 'frozen').length;
+  const rate        = totalDays > 0 ? Math.round((completed / totalDays) * 100) : 0;
+  const activeGoals = goals.filter(g => g.isActive).length;
+  const primary     = theme.colors.primary;
+
+  const last7  = getLast7(history);
+  const last30 = getLast30(history);
+
+  const card = (children: React.ReactNode, mb = 12) => (
+    <View style={{
+      backgroundColor: '#FFFFFF',
+      borderRadius: 20,
+      padding: 20,
+      marginBottom: mb,
+      borderWidth: 1, borderColor: D.border,
+      shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.05, shadowRadius: 10, elevation: 2,
+    }}>
+      {children}
+    </View>
+  );
+
+  const cardTitle = (title: string) => (
+    <Text style={{
+      color: D.dark, fontSize: 15, fontWeight: '700',
+      letterSpacing: -0.2, marginBottom: 16,
+    }}>
+      {title}
+    </Text>
+  );
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <ScrollView contentContainerStyle={{ padding: 20 }}>
-        <Text style={{ color: theme.colors.text }} className="text-3xl font-bold mb-2">
-          Progress
-        </Text>
-        <Text style={{ color: theme.colors.textMuted }} className="text-sm mb-8">
-          Every day counts. Here's your story.
-        </Text>
+      <ScrollView
+        contentContainerStyle={{ padding: 20, paddingBottom: 48 }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* ── Header ────────────────────────────────────────────────── */}
+        <View style={{ marginBottom: 20 }}>
+          <Text style={{ color: D.dark, fontSize: 28, fontWeight: '800', letterSpacing: -0.5 }}>
+            Progress
+          </Text>
+          <Text style={{ color: D.muted, fontSize: 12, marginTop: 3, fontWeight: '500' }}>
+            Your consistency story at a glance
+          </Text>
+        </View>
 
-        {/* Stat grid */}
-        <View className="flex-row flex-wrap gap-3 mb-8">
-          {statCards.map((card) => (
-            <View
-              key={card.label}
-              style={{
-                backgroundColor: theme.colors.surface,
-                borderColor: theme.colors.border,
-                borderWidth: 1,
-                width: '47%',
-              }}
-              className="rounded-2xl p-4"
-            >
-              <Text className="text-2xl mb-1">{card.emoji}</Text>
-              <Text style={{ color: theme.colors.text }} className="text-2xl font-bold">
-                {card.value}
-                <Text style={{ color: theme.colors.textMuted }} className="text-sm font-normal">
-                  {' '}{card.suffix}
-                </Text>
+        {/* ── Streak ring ───────────────────────────────────────────── */}
+        {card(
+          <View style={{ alignItems: 'center' }}>
+            <StreakRing current={current} longest={longest} primary={primary} />
+            <View style={{ flexDirection: 'row', gap: 28, marginTop: 16 }}>
+              <View style={{ alignItems: 'center' }}>
+                <Text style={{ color: D.dark, fontSize: 20, fontWeight: '800' }}>{longest}</Text>
+                <Text style={{ color: D.muted, fontSize: 11, marginTop: 2 }}>Best streak</Text>
+              </View>
+              <View style={{ width: 1, backgroundColor: D.border }} />
+              <View style={{ alignItems: 'center' }}>
+                <Text style={{ color: D.dark, fontSize: 20, fontWeight: '800' }}>{s?.totalCheckIns ?? 0}</Text>
+                <Text style={{ color: D.muted, fontSize: 11, marginTop: 2 }}>Total check-ins</Text>
+              </View>
+              <View style={{ width: 1, backgroundColor: D.border }} />
+              <View style={{ alignItems: 'center' }}>
+                <Text style={{ color: D.dark, fontSize: 20, fontWeight: '800' }}>{activeGoals}</Text>
+                <Text style={{ color: D.muted, fontSize: 11, marginTop: 2 }}>Active goals</Text>
+              </View>
+            </View>
+          </View>
+        )}
+
+        {/* ── 7-day bar chart ───────────────────────────────────────── */}
+        {card(
+          <>
+            {cardTitle('Last 7 Days')}
+            <WeekChart days={last7} primary={primary} />
+          </>
+        )}
+
+        {/* ── 30-day heatmap ────────────────────────────────────────── */}
+        {card(
+          <>
+            {cardTitle('30-Day Activity')}
+            <Heatmap days={last30} primary={primary} />
+          </>
+        )}
+
+        {/* ── Stats row ─────────────────────────────────────────────── */}
+        <View style={{ flexDirection: 'row', gap: 12, marginBottom: 12 }}>
+          {/* Completion rate */}
+          <View style={{
+            flex: 1, backgroundColor: '#FFFFFF', borderRadius: 20, padding: 18,
+            alignItems: 'center', borderWidth: 1, borderColor: D.border,
+            shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.05, shadowRadius: 10, elevation: 2,
+          }}>
+            <RateRing rate={rate} primary={primary} />
+            <Text style={{ color: D.dark, fontSize: 12, fontWeight: '700', marginTop: 8 }}>
+              Completion
+            </Text>
+          </View>
+
+          {/* Breakdown */}
+          <View style={{
+            flex: 1, backgroundColor: '#FFFFFF', borderRadius: 20, padding: 18,
+            borderWidth: 1, borderColor: D.border,
+            shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.05, shadowRadius: 10, elevation: 2,
+            justifyContent: 'center', gap: 10,
+          }}>
+            {[
+              { label: 'Completed', value: completed, color: D.green  },
+              { label: 'Missed',    value: missed,    color: D.orange },
+              { label: 'Frozen',    value: frozen,    color: D.purple },
+            ].map(item => (
+              <View key={item.label}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
+                  <Text style={{ color: D.muted, fontSize: 11, fontWeight: '500' }}>{item.label}</Text>
+                  <Text style={{ color: D.dark, fontSize: 11, fontWeight: '700' }}>{item.value}d</Text>
+                </View>
+                <View style={{ height: 4, backgroundColor: D.missed, borderRadius: 2, overflow: 'hidden' }}>
+                  <View style={{
+                    width: `${totalDays > 0 ? (item.value / totalDays) * 100 : 0}%`,
+                    height: 4, backgroundColor: item.color, borderRadius: 2,
+                  }} />
+                </View>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {/* ── Freeze cards remaining ────────────────────────────────── */}
+        {card(
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+            <View style={{
+              width: 48, height: 48, borderRadius: 24,
+              backgroundColor: '#EEF2FF',
+              alignItems: 'center', justifyContent: 'center',
+            }}>
+              <Text style={{ fontSize: 22 }}>❄️</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: D.dark, fontWeight: '700', fontSize: 14 }}>
+                Freeze Cards
               </Text>
-              <Text style={{ color: theme.colors.textMuted }} className="text-xs mt-1">
-                {card.label}
+              <Text style={{ color: D.muted, fontSize: 12, marginTop: 2 }}>
+                {s?.freezeCardsAvailable ?? 0} card{s?.freezeCardsAvailable !== 1 ? 's' : ''} available to protect your streak
               </Text>
             </View>
-          ))}
-        </View>
+            <Text style={{ color: primary, fontSize: 28, fontWeight: '800' }}>
+              {s?.freezeCardsAvailable ?? 0}
+            </Text>
+          </View>
+        , 0)}
 
-        {/* Weekly review placeholder */}
-        <View
-          style={{ backgroundColor: theme.colors.surfaceAlt, borderColor: theme.colors.border, borderWidth: 1 }}
-          className="rounded-2xl p-5"
-        >
-          <Text style={{ color: theme.colors.text }} className="text-base font-bold mb-2">
-            📋 Weekly AI Review
-          </Text>
-          <Text style={{ color: theme.colors.textMuted }} className="text-sm">
-            Complete your first week of check-ins and your AI coach will write a personalised review here.
-          </Text>
-        </View>
       </ScrollView>
     </SafeAreaView>
   );

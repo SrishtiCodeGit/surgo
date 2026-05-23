@@ -373,7 +373,7 @@ export function BalancedAnimatedSplash({ onFinish }: { onFinish?: () => void }) 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0D1B3E',
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -381,13 +381,13 @@ const styles = StyleSheet.create({
     fontSize: 38,
     fontWeight: '800',
     letterSpacing: 11,
-    color: '#FFFFFF',
+    color: '#1C1C1E',
     marginBottom: 6,
   },
   sub: {
     fontSize: 13,
     fontWeight: '700',
     letterSpacing: 2.5,
-    color: '#06B6D4',
+    color: '#4F46E5',
   },
 });

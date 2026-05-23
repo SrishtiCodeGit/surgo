@@ -64,7 +64,7 @@ function RootLayoutInner() {
   if (showIntro) {
     return (
       <>
-        <StatusBar style={themeKey === 'soft' ? 'dark' : 'light'} />
+        <StatusBar style="dark" />
         <ThemeSplash themeKey={themeKey} onFinish={() => setShowIntro(false)} />
       </>
     );
