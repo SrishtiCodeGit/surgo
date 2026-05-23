@@ -1,4 +1,5 @@
 import { View, Text, ScrollView, TouchableOpacity, Modal } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
 import { router } from 'expo-router';
@@ -43,21 +44,49 @@ export default function ProfileScreen() {
 
       <ScrollView contentContainerStyle={{ padding: 22, paddingBottom: 56 }}>
 
-        {/* ── Header ────────────────────────────────────────────────────────── */}
-        <View style={{ marginBottom: 28 }}>
-          <Text
+        {/* ── Header: back arrow + title ────────────────────────────────────── */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 28 }}>
+          {/* Back arrow → Today */}
+          <TouchableOpacity
+            onPress={() => router.replace('/(tabs)')}
+            activeOpacity={0.7}
             style={{
-              color: theme.colors.text,
-              fontSize: 32,
-              fontWeight: '900',
-              letterSpacing: -0.8,
+              width: 38,
+              height: 38,
+              borderRadius: 19,
+              backgroundColor: theme.colors.surfaceAlt,
+              borderWidth: 1,
+              borderColor: theme.colors.border,
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
-            Profile
-          </Text>
-          <Text style={{ color: theme.colors.textMuted, fontSize: 14, marginTop: 4 }}>
-            Your Surgo identity
-          </Text>
+            <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+              <Path
+                d="M19 12H5M5 12L12 19M5 12L12 5"
+                stroke={theme.colors.text}
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </Svg>
+          </TouchableOpacity>
+
+          <View>
+            <Text
+              style={{
+                color: theme.colors.text,
+                fontSize: 28,
+                fontWeight: '900',
+                letterSpacing: -0.8,
+              }}
+            >
+              Profile
+            </Text>
+            <Text style={{ color: theme.colors.textMuted, fontSize: 13, marginTop: 2 }}>
+              Your Surgo identity
+            </Text>
+          </View>
         </View>
 
         {/* ── Active theme hero ─────────────────────────────────────────────── */}

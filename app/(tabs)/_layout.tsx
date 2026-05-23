@@ -155,12 +155,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
-          tabBarIcon: ({ color, focused }) => (
-            <TabIcon focused={focused} theme={theme}>
-              <IconProfile color={color} />
-            </TabIcon>
-          ),
+          href: null,   // hidden from tab bar — accessed via icon on Today
         }}
       />
     </Tabs>

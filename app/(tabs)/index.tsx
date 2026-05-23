@@ -6,6 +6,7 @@ import {
   Alert,
   RefreshControl,
 } from 'react-native';
+import Svg, { Circle, Path } from 'react-native-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useEffect, useState, useCallback } from 'react';
@@ -146,14 +147,32 @@ export default function TodayScreen() {
         }
       >
 
-        {/* ── Top bar: SURGO wordmark + notification bell ──────────────────── */}
+        {/* ── Top bar: SURGO wordmark · bell · profile ─────────────────────── */}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
           <View style={{ backgroundColor: theme.colors.primaryLight, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 }}>
             <Text style={{ color: theme.colors.primary, fontWeight: '900', fontSize: 11, letterSpacing: 2.5 }}>
               SURGO
             </Text>
           </View>
-          <BellIcon unread={unreadCount()} onPress={handleBellPress} />
+
+          {/* Right-side icons */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 18 }}>
+            <BellIcon unread={unreadCount()} onPress={handleBellPress} />
+
+            {/* Profile icon */}
+            <TouchableOpacity
+              onPress={() => router.push('/(tabs)/profile')}
+              activeOpacity={0.72}
+            >
+              <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+                <Circle cx="12" cy="8" r="4" stroke={theme.colors.text} strokeWidth="1.8" />
+                <Path
+                  d="M4 20 C4 16.13 7.58 13 12 13 C16.42 13 20 16.13 20 20"
+                  stroke={theme.colors.text} strokeWidth="1.8" strokeLinecap="round"
+                />
+              </Svg>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Notification panel */}
