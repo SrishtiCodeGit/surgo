@@ -11,37 +11,174 @@ import { useTheme } from '@/context/ThemeContext';
 import { useGoalStore } from '@/stores/goalStore';
 import { useProfileStore } from '@/stores/profileStore';
 import { WelcomeMascot } from '@/components/ui/WelcomeMascot';
-import { chatWithSurgo, transcribeAudio, ApiTurn, SurgoAction } from '@/lib/surgoChat';
+import {
+  chatWithSurgo, transcribeAudio,
+  ApiTurn, SurgoAction, PlanTask,
+} from '@/lib/surgoChat';
 import { toDateString } from '@/lib/streak';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface ChatMsg {
-  id: string;
-  role: 'user' | 'surgo';
-  text: string;
-  action?: SurgoAction;
-  taskCreated?: boolean;
+  id:           string;
+  role:         'user' | 'surgo';
+  text:         string;
+  action?:      SurgoAction;
+  planCreated?: boolean;   // true once user confirms the plan
 }
 
 function uid() { return Math.random().toString(36).slice(2) + Date.now().toString(36); }
 
+// ─── Plan card (shown inside Surgo bubble) ────────────────────────────────────
+
+function PlanCard({
+  tasks,
+  created,
+  onConfirm,
+  theme,
+}: {
+  tasks:     PlanTask[];
+  created:   boolean;
+  onConfirm: () => void;
+  theme:     any;
+}) {
+  if (created) {
+    return (
+      <View style={{
+        marginTop: 10,
+        backgroundColor: theme.colors.success + '15',
+        borderWidth: 1,
+        borderColor: theme.colors.success + '50',
+        borderRadius: 14,
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+      }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+          <Svg width={13} height={13} viewBox="0 0 24 24" fill="none">
+            <Path d="M20 6L9 17l-5-5" stroke={theme.colors.success} strokeWidth="2.5"
+              strokeLinecap="round" strokeLinejoin="round" />
+          </Svg>
+          <Text style={{ color: theme.colors.success, fontWeight: '800', fontSize: 12 }}>
+            {tasks.length} tasks added to your Goals!
+          </Text>
+        </View>
+        {tasks.map((t, i) => (
+          <Text key={i} style={{ color: theme.colors.success, fontSize: 11, marginLeft: 4, marginBottom: 2 }}>
+            • {t.title}
+          </Text>
+        ))}
+      </View>
+    );
+  }
+
+  return (
+    <View style={{
+      marginTop: 10,
+      backgroundColor: theme.colors.primaryLight,
+      borderWidth: 1,
+      borderColor: theme.colors.primary + '40',
+      borderRadius: 14,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+    }}>
+      <Text style={{ color: theme.colors.primary, fontWeight: '800', fontSize: 12, marginBottom: 8 }}>
+        📋 Your Plan
+      </Text>
+      {tasks.map((t, i) => (
+        <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginBottom: 6 }}>
+          <View style={{
+            width: 20, height: 20, borderRadius: 10,
+            backgroundColor: theme.colors.primary + '25',
+            borderWidth: 1, borderColor: theme.colors.primary + '60',
+            alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1,
+          }}>
+            <Text style={{ color: theme.colors.primary, fontSize: 9, fontWeight: '800' }}>{i + 1}</Text>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: theme.colors.text, fontSize: 13, fontWeight: '600' }}>{t.title}</Text>
+            <Text style={{ color: theme.colors.textMuted, fontSize: 11, marginTop: 1 }}>
+              ~{t.estimatedMinutes} min
+            </Text>
+          </View>
+        </View>
+      ))}
+
+      {/* Confirm button */}
+      <TouchableOpacity
+        onPress={onConfirm}
+        activeOpacity={0.85}
+        style={{
+          marginTop: 10,
+          backgroundColor: theme.colors.primary,
+          borderRadius: 10,
+          paddingVertical: 10,
+          alignItems: 'center',
+          flexDirection: 'row',
+          justifyContent: 'center',
+          gap: 6,
+        }}
+      >
+        <Svg width={13} height={13} viewBox="0 0 24 24" fill="none">
+          <Path d="M20 6L9 17l-5-5" stroke="#fff" strokeWidth="2.5"
+            strokeLinecap="round" strokeLinejoin="round" />
+        </Svg>
+        <Text style={{ color: '#fff', fontWeight: '800', fontSize: 13 }}>
+          Yes, create these tasks!
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+// ─── Single-task chip ─────────────────────────────────────────────────────────
+
+function TaskChip({ action, theme }: { action: SurgoAction; theme: any }) {
+  if (action.type !== 'create_task' || !action.task) return null;
+  return (
+    <View style={{
+      marginTop: 6,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      backgroundColor: theme.colors.success + '18',
+      borderWidth: 1,
+      borderColor: theme.colors.success + '50',
+      borderRadius: 10,
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+    }}>
+      <Svg width={12} height={12} viewBox="0 0 24 24" fill="none">
+        <Path d="M9 11l3 3L22 4" stroke={theme.colors.success} strokeWidth="2.5"
+          strokeLinecap="round" strokeLinejoin="round" />
+        <Path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"
+          stroke={theme.colors.success} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </Svg>
+      <Text style={{ color: theme.colors.success, fontSize: 12, fontWeight: '700' }}>
+        Task added — {action.task.title}
+      </Text>
+    </View>
+  );
+}
+
 // ─── Bubble ───────────────────────────────────────────────────────────────────
 
-function Bubble({ msg, theme, photoUri, themeKey }: {
-  msg: ChatMsg;
-  theme: any;
-  photoUri: string;
-  themeKey: string;
+function Bubble({
+  msg, theme, photoUri, themeKey, onConfirmPlan,
+}: {
+  msg:           ChatMsg;
+  theme:         any;
+  photoUri:      string;
+  themeKey:      string;
+  onConfirmPlan: (msgId: string, tasks: PlanTask[]) => void;
 }) {
   const isUser = msg.role === 'user';
 
   return (
     <View style={{
       flexDirection: isUser ? 'row-reverse' : 'row',
-      alignItems: 'flex-end',
-      gap: 8,
-      marginBottom: 12,
+      alignItems:    'flex-end',
+      gap:           8,
+      marginBottom:  12,
       paddingHorizontal: 4,
     }}>
       {/* Avatar */}
@@ -50,7 +187,11 @@ function Bubble({ msg, theme, photoUri, themeKey }: {
           photoUri ? (
             <Image source={{ uri: photoUri }} style={{ width: 32, height: 32 }} />
           ) : (
-            <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: theme.colors.surfaceAlt, alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{
+              width: 32, height: 32, borderRadius: 16,
+              backgroundColor: theme.colors.surfaceAlt,
+              alignItems: 'center', justifyContent: 'center',
+            }}>
               <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
                 <Circle cx="12" cy="8" r="4" stroke={theme.colors.textMuted} strokeWidth="1.8" />
                 <Path d="M4 20C4 16.13 7.58 13 12 13c4.42 0 8 3.13 8 7"
@@ -66,20 +207,20 @@ function Bubble({ msg, theme, photoUri, themeKey }: {
       </View>
 
       {/* Bubble content */}
-      <View style={{ maxWidth: '74%' }}>
+      <View style={{ maxWidth: '78%' }}>
         <View style={{
-          backgroundColor: isUser ? theme.colors.primary : theme.colors.surface,
-          borderRadius: 18,
+          backgroundColor:     isUser ? theme.colors.primary : theme.colors.surface,
+          borderRadius:        18,
           borderBottomRightRadius: isUser ? 4 : 18,
           borderBottomLeftRadius:  isUser ? 18 : 4,
-          paddingHorizontal: 14,
-          paddingVertical: 10,
-          borderWidth: isUser ? 0 : 1,
-          borderColor: theme.colors.border,
+          paddingHorizontal:   14,
+          paddingVertical:     10,
+          borderWidth:         isUser ? 0 : 1,
+          borderColor:         theme.colors.border,
         }}>
           <Text style={{
-            color: isUser ? theme.colors.textInverse : theme.colors.text,
-            fontSize: 14,
+            color:      isUser ? theme.colors.textInverse : theme.colors.text,
+            fontSize:   14,
             lineHeight: 20,
             fontWeight: '500',
           }}>
@@ -87,54 +228,50 @@ function Bubble({ msg, theme, photoUri, themeKey }: {
           </Text>
         </View>
 
-        {/* Task chip — shown after task created */}
+        {/* Single task chip */}
         {msg.action?.type === 'create_task' && (
-          <View style={{
-            marginTop: 6,
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 6,
-            backgroundColor: theme.colors.success + '18',
-            borderWidth: 1,
-            borderColor: theme.colors.success + '50',
-            borderRadius: 10,
-            paddingHorizontal: 10,
-            paddingVertical: 6,
-          }}>
-            <Svg width={12} height={12} viewBox="0 0 24 24" fill="none">
-              <Path d="M9 11l3 3L22 4" stroke={theme.colors.success} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-              <Path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"
-                stroke={theme.colors.success} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </Svg>
-            <Text style={{ color: theme.colors.success, fontSize: 12, fontWeight: '700' }}>
-              Task added — {msg.action.task.title}
-            </Text>
-          </View>
+          <TaskChip action={msg.action} theme={theme} />
+        )}
+
+        {/* Plan card */}
+        {msg.action?.type === 'suggest_plan' && msg.action.tasks && (
+          <PlanCard
+            tasks={msg.action.tasks}
+            created={!!msg.planCreated}
+            onConfirm={() => onConfirmPlan(msg.id, msg.action!.tasks!)}
+            theme={theme}
+          />
         )}
       </View>
     </View>
   );
 }
 
-// ─── Typing indicator ─────────────────────────────────────────────────────────
+// ─── Typing dots ──────────────────────────────────────────────────────────────
 
 function TypingDots({ color }: { color: string }) {
   return (
     <View style={{ flexDirection: 'row', gap: 4, paddingHorizontal: 4, paddingVertical: 6 }}>
       {[0, 1, 2].map(i => (
-        <View key={i} style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: color, opacity: 0.4 + i * 0.2 }} />
+        <View key={i} style={{
+          width: 6, height: 6, borderRadius: 3,
+          backgroundColor: color,
+          opacity: 0.4 + i * 0.2,
+        }} />
       ))}
     </View>
   );
 }
 
-// ─── Main screen ──────────────────────────────────────────────────────────────
+// ─── Welcome messages ─────────────────────────────────────────────────────────
 
 const WELCOME: Record<string, string> = {
-  soft:     "Hey! I'm Surgo 🌸 I'm here to help you gently get things done. What's on your mind today?",
-  balanced: "Hey — I'm Surgo. Tell me what you need to do and I'll get it sorted. What's the plan?",
-  hardcore: "Surgo here. No fluff. Tell me what you need to get done and we'll make it happen. Go.",
+  soft:     "Hey! I'm Surgo 🌸 Tell me what you want to achieve and I'll build a plan for you. What's on your mind?",
+  balanced: "Hey — I'm Surgo. Tell me your goal and I'll break it down into tasks. What are we working on?",
+  hardcore: "Surgo here. Give me your goal, I'll give you a plan. No fluff. Go.",
 };
+
+// ─── Main screen ──────────────────────────────────────────────────────────────
 
 export default function ChatScreen() {
   const { theme, themeKey } = useTheme();
@@ -144,13 +281,13 @@ export default function ChatScreen() {
   const [messages, setMessages] = useState<ChatMsg[]>([
     { id: 'welcome', role: 'surgo', text: WELCOME[themeKey] ?? WELCOME.balanced },
   ]);
-  const [input,       setInput]       = useState('');
-  const [loading,     setLoading]     = useState(false);
-  const [recording,   setRecording]   = useState<Audio.Recording | null>(null);
-  const [micState,    setMicState]    = useState<'idle' | 'recording' | 'transcribing'>('idle');
+  const [input,     setInput]     = useState('');
+  const [loading,   setLoading]   = useState(false);
+  const [recording, setRecording] = useState<Audio.Recording | null>(null);
+  const [micState,  setMicState]  = useState<'idle' | 'recording' | 'transcribing'>('idle');
   const scrollRef = useRef<ScrollView>(null);
 
-  // Pulsing animation for recording indicator
+  // Pulsing animation for recording
   const pulse = useRef(new Animated.Value(1)).current;
   useEffect(() => {
     if (micState === 'recording') {
@@ -167,10 +304,9 @@ export default function ChatScreen() {
     }
   }, [micState]);
 
-  useEffect(() => { if (!isLoaded) load(); }, []);
+  useEffect(() => { if (!isLoaded)      load(); },        []);
   useEffect(() => { if (!profileLoaded) loadProfile(); }, []);
 
-  // Scroll to bottom whenever messages change
   useEffect(() => {
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 80);
   }, [messages, loading]);
@@ -178,20 +314,43 @@ export default function ChatScreen() {
   const activeGoals = goals.filter(g => g.isActive);
   const goalTitles  = activeGoals.map(g => g.title);
 
-  // Build API history from current messages (exclude welcome + action chips)
   const buildHistory = (): ApiTurn[] =>
     messages
       .filter(m => m.id !== 'welcome')
       .map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.text }));
 
-  const send = () => {
-    const text = input.trim();
-    if (!text) return;
-    setInput('');
-    sendText(text);
+  // ── Plan confirmation ────────────────────────────────────────────────────────
+
+  const confirmPlan = async (msgId: string, tasks: PlanTask[]) => {
+    const targetGoal = activeGoals[0];
+    if (!targetGoal) {
+      Alert.alert('No active goal', 'Add a goal first in the Goals tab, then I can create tasks for it!');
+      return;
+    }
+
+    try {
+      await addTasks(
+        tasks.map(t => ({
+          goalId:           targetGoal.id,
+          userId:           'local',
+          title:            t.title,
+          dueDate:          toDateString(new Date()),
+          estimatedMinutes: t.estimatedMinutes,
+          aiGenerated:      true,
+          isStretchTask:    false,
+        }))
+      );
+
+      // Mark the message's plan as created
+      setMessages(prev =>
+        prev.map(m => m.id === msgId ? { ...m, planCreated: true } : m)
+      );
+    } catch {
+      Alert.alert('Could not create tasks', 'Check your internet and try again.');
+    }
   };
 
-  // ── Mic handlers ────────────────────────────────────────────────────────────
+  // ── Mic handlers ─────────────────────────────────────────────────────────────
 
   const startRecording = async () => {
     try {
@@ -224,19 +383,17 @@ export default function ChatScreen() {
 
       const text = await transcribeAudio(uri);
       if (text) {
-        // Put transcription in input box — user sees it and it auto-sends
         setInput(text);
         setMicState('idle');
-        // Auto-send after short delay so user sees what was heard
         setTimeout(() => {
           sendText(text);
           setInput('');
         }, 900);
       } else {
         setMicState('idle');
-        Alert.alert('Nothing heard', 'Surgo couldn\'t catch that. Try again.');
+        Alert.alert('Nothing heard', "Surgo couldn't catch that. Try again.");
       }
-    } catch (e) {
+    } catch {
       setMicState('idle');
       setRecording(null);
       Alert.alert('Transcription failed', 'Check your internet and try again.');
@@ -244,11 +401,18 @@ export default function ChatScreen() {
   };
 
   const handleMicPress = () => {
-    if (micState === 'idle')      startRecording();
+    if (micState === 'idle')          startRecording();
     else if (micState === 'recording') stopAndTranscribe();
   };
 
-  // ── Core send (accepts explicit text so mic can call it) ────────────────────
+  // ── Core send ────────────────────────────────────────────────────────────────
+
+  const send = () => {
+    const text = input.trim();
+    if (!text) return;
+    setInput('');
+    sendText(text);
+  };
 
   const sendText = async (text: string) => {
     if (!text.trim() || loading) return;
@@ -259,10 +423,12 @@ export default function ChatScreen() {
 
     try {
       const history = buildHistory();
-      const res = await chatWithSurgo(text, history, themeKey, goalTitles);
+      const res     = await chatWithSurgo(text, history, themeKey, goalTitles);
 
-      let createdAction: SurgoAction | undefined;
-      if (res.action?.type === 'create_task') {
+      let finalAction: SurgoAction | undefined;
+
+      if (res.action?.type === 'create_task' && res.action.task) {
+        // Auto-create single task immediately
         const targetGoal = activeGoals[0];
         if (targetGoal) {
           await addTasks([{
@@ -274,22 +440,28 @@ export default function ChatScreen() {
             aiGenerated:      true,
             isStretchTask:    false,
           }]);
-          createdAction = res.action;
+          finalAction = res.action;
         }
+      } else if (res.action?.type === 'suggest_plan') {
+        // Show plan card — user must confirm
+        finalAction = res.action;
       }
 
       setMessages(prev => [...prev, {
-        id: uid(), role: 'surgo', text: res.message, action: createdAction,
+        id: uid(), role: 'surgo', text: res.message, action: finalAction,
       }]);
     } catch {
       setMessages(prev => [...prev, {
-        id: uid(), role: 'surgo',
+        id:   uid(),
+        role: 'surgo',
         text: "Sorry, I had trouble connecting. Check your internet and try again.",
       }]);
     } finally {
       setLoading(false);
     }
   };
+
+  // ─── Render ──────────────────────────────────────────────────────────────────
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
@@ -300,14 +472,14 @@ export default function ChatScreen() {
       >
         {/* ── Header ───────────────────────────────────────────────────────── */}
         <View style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 12,
+          flexDirection:   'row',
+          alignItems:      'center',
+          gap:             12,
           paddingHorizontal: 20,
-          paddingVertical: 14,
+          paddingVertical:   14,
           borderBottomWidth: 1,
           borderBottomColor: theme.colors.border,
-          backgroundColor: theme.colors.surface,
+          backgroundColor:   theme.colors.surface,
         }}>
           <View style={{ width: 38, height: 38 }}>
             <WelcomeMascot themeKey={themeKey} size={38} />
@@ -318,8 +490,10 @@ export default function ChatScreen() {
               ● Online — ready to help
             </Text>
           </View>
-          {/* Hint pill */}
-          <View style={{ backgroundColor: theme.colors.primaryLight, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 }}>
+          <View style={{
+            backgroundColor: theme.colors.primaryLight,
+            paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8,
+          }}>
             <Text style={{ color: theme.colors.primary, fontSize: 10, fontWeight: '800', letterSpacing: 0.5 }}>AI</Text>
           </View>
         </View>
@@ -332,12 +506,22 @@ export default function ChatScreen() {
           keyboardDismissMode="interactive"
         >
           {messages.map(m => (
-            <Bubble key={m.id} msg={m} theme={theme} photoUri={profile.photoUri} themeKey={themeKey} />
+            <Bubble
+              key={m.id}
+              msg={m}
+              theme={theme}
+              photoUri={profile.photoUri}
+              themeKey={themeKey}
+              onConfirmPlan={confirmPlan}
+            />
           ))}
 
           {/* Typing indicator */}
           {loading && (
-            <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginBottom: 12, paddingHorizontal: 4 }}>
+            <View style={{
+              flexDirection: 'row', alignItems: 'flex-end',
+              gap: 8, marginBottom: 12, paddingHorizontal: 4,
+            }}>
               <View style={{ width: 32, height: 32, borderRadius: 16, overflow: 'hidden' }}>
                 <WelcomeMascot themeKey={themeKey} size={32} />
               </View>
@@ -353,7 +537,7 @@ export default function ChatScreen() {
           )}
         </ScrollView>
 
-        {/* ── Suggestion chips (only shown on empty input) ─────────────────── */}
+        {/* ── Suggestion chips ─────────────────────────────────────────────── */}
         {input.length === 0 && messages.length <= 1 && (
           <ScrollView
             horizontal
@@ -361,21 +545,21 @@ export default function ChatScreen() {
             contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingVertical: 8 }}
           >
             {[
-              "Add a task to run 30 mins",
-              "Help me study today",
-              "Remind me to drink water",
-              "What should I focus on?",
+              "Help me get fit this month",
+              "I want to learn a new skill",
+              "Add a task to drink more water",
+              "Help me study for my exam",
             ].map(s => (
               <TouchableOpacity
                 key={s}
                 onPress={() => setInput(s)}
                 style={{
-                  backgroundColor: theme.colors.primaryLight,
-                  borderRadius: 20,
+                  backgroundColor:  theme.colors.primaryLight,
+                  borderRadius:     20,
                   paddingHorizontal: 14,
-                  paddingVertical: 8,
-                  borderWidth: 1,
-                  borderColor: theme.colors.primary + '30',
+                  paddingVertical:   8,
+                  borderWidth:      1,
+                  borderColor:      theme.colors.primary + '30',
                 }}
               >
                 <Text style={{ color: theme.colors.primary, fontSize: 12, fontWeight: '600' }}>{s}</Text>
@@ -416,14 +600,14 @@ export default function ChatScreen() {
 
         {/* ── Input bar ────────────────────────────────────────────────────── */}
         <View style={{
-          flexDirection: 'row',
-          alignItems: 'flex-end',
-          gap: 8,
+          flexDirection:  'row',
+          alignItems:     'flex-end',
+          gap:            8,
           paddingHorizontal: 14,
-          paddingVertical: 12,
-          borderTopWidth: micState === 'idle' ? 1 : 0,
-          borderTopColor: theme.colors.border,
-          backgroundColor: theme.colors.surface,
+          paddingVertical:   12,
+          borderTopWidth:    micState === 'idle' ? 1 : 0,
+          borderTopColor:    theme.colors.border,
+          backgroundColor:   theme.colors.surface,
         }}>
           {/* Mic button */}
           <TouchableOpacity
@@ -434,9 +618,7 @@ export default function ChatScreen() {
           >
             <Animated.View style={{
               width: 44, height: 44, borderRadius: 22,
-              backgroundColor: micState === 'recording'
-                ? '#FF3B30'
-                : theme.colors.primaryLight,
+              backgroundColor: micState === 'recording' ? '#FF3B30' : theme.colors.primaryLight,
               alignItems: 'center', justifyContent: 'center',
               transform: [{ scale: micState === 'recording' ? pulse : 1 }],
             }}>
@@ -463,25 +645,27 @@ export default function ChatScreen() {
           <TextInput
             value={input}
             onChangeText={setInput}
-            placeholder={micState === 'recording'
-              ? "Listening…"
-              : themeKey === 'hardcore' ? "Type or speak to Surgo..." : "Type or speak to Surgo…"}
+            placeholder={
+              micState === 'recording'
+                ? "Listening…"
+                : "Tell Surgo your goal or task…"
+            }
             placeholderTextColor={theme.colors.textMuted}
             multiline
             editable={micState === 'idle'}
             style={{
-              flex: 1,
-              color: theme.colors.text,
-              fontSize: 15,
+              flex:       1,
+              color:      theme.colors.text,
+              fontSize:   15,
               backgroundColor: theme.colors.background,
-              borderRadius: 22,
-              borderWidth: 1,
-              borderColor: micState !== 'idle' ? theme.colors.border + '60' : theme.colors.border,
+              borderRadius:    22,
+              borderWidth:     1,
+              borderColor:     micState !== 'idle' ? theme.colors.border + '60' : theme.colors.border,
               paddingHorizontal: 16,
-              paddingVertical: 10,
-              maxHeight: 100,
-              fontWeight: '500',
-              opacity: micState !== 'idle' ? 0.5 : 1,
+              paddingVertical:   10,
+              maxHeight:         100,
+              fontWeight:        '500',
+              opacity:           micState !== 'idle' ? 0.5 : 1,
             }}
             onSubmitEditing={send}
             blurOnSubmit={false}

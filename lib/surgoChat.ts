@@ -1,9 +1,9 @@
 import { ThemeKey } from '@/types';
 
-const GROQ_API_URL   = 'https://api.groq.com/openai/v1/chat/completions';
-const GROQ_WHISPER   = 'https://api.groq.com/openai/v1/audio/transcriptions';
-const GROQ_MODEL     = 'llama-3.3-70b-versatile';
-const WHISPER_MODEL  = 'whisper-large-v3-turbo';   // free, fast, accurate
+const GROQ_API_URL  = 'https://api.groq.com/openai/v1/chat/completions';
+const GROQ_WHISPER  = 'https://api.groq.com/openai/v1/audio/transcriptions';
+const GROQ_MODEL    = 'llama-3.3-70b-versatile';
+const WHISPER_MODEL = 'whisper-large-v3-turbo';
 
 // ─── Speech → Text via Groq Whisper ──────────────────────────────────────────
 
@@ -17,14 +17,14 @@ export async function transcribeAudio(audioUri: string): Promise<string> {
     type: 'audio/m4a',
     name: 'surgo_voice.m4a',
   } as any);
-  formData.append('model',    WHISPER_MODEL);
-  formData.append('language', 'en');
+  formData.append('model',           WHISPER_MODEL);
+  formData.append('language',        'en');
   formData.append('response_format', 'json');
 
   const res = await fetch(GROQ_WHISPER, {
-    method: 'POST',
+    method:  'POST',
     headers: { Authorization: `Bearer ${apiKey}` },
-    body: formData,
+    body:    formData,
   });
 
   if (!res.ok) {
@@ -36,20 +36,30 @@ export async function transcribeAudio(audioUri: string): Promise<string> {
   return (data.text ?? '').trim();
 }
 
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+export interface PlanTask {
+  title:            string;
+  estimatedMinutes: number;
+}
+
 export interface SurgoAction {
-  type: 'create_task';
-  task: { title: string; estimatedMinutes: number };
+  type:  'create_task' | 'suggest_plan';
+  task?: PlanTask;           // single quick task (auto-created)
+  tasks?: PlanTask[];        // multi-task plan (needs confirmation)
 }
 
 export interface SurgoResponse {
   message: string;
-  action: SurgoAction | null;
+  action:  SurgoAction | null;
 }
 
 export interface ApiTurn {
-  role: 'user' | 'assistant';
+  role:    'user' | 'assistant';
   content: string;
 }
+
+// ─── Chat ─────────────────────────────────────────────────────────────────────
 
 const TONE: Record<ThemeKey, string> = {
   soft:     'warm, gentle, encouraging — like a kind best friend',
@@ -59,77 +69,94 @@ const TONE: Record<ThemeKey, string> = {
 
 export async function chatWithSurgo(
   userMessage: string,
-  history: ApiTurn[],
-  themeKey: ThemeKey,
-  goalTitles: string[],
+  history:     ApiTurn[],
+  themeKey:    ThemeKey,
+  goalTitles:  string[],
 ): Promise<SurgoResponse> {
   const apiKey = process.env.EXPO_PUBLIC_GROQ_API_KEY;
   if (!apiKey) throw new Error('Missing EXPO_PUBLIC_GROQ_API_KEY');
 
   const goalsLine = goalTitles.length > 0
     ? `User's active goals: ${goalTitles.join(' | ')}`
-    : `User has no goals yet — encourage them to add one.`;
+    : `User has no goals yet — encourage them to add one in the Goals tab.`;
 
-  const system = `You are Surgo, a personal AI life coach and task assistant built into the Surgo goal-tracking app.
+  const system = `You are Surgo, a personal AI life coach inside a goal-tracking app.
 Your personality: ${TONE[themeKey]}.
 ${goalsLine}
 
-You understand natural language. When the user mentions ANYTHING they want to do, should do, plan to do, or need to do — create a task for it automatically. Be proactive.
+RULES — follow exactly, no exceptions:
+1. Always reply in PLAIN conversational English in the "message" field. NEVER put JSON, code blocks, or raw data in the message.
+2. Your entire response must be ONE valid JSON object — no text before or after it, no markdown fences.
+3. Choose the right action:
 
-Examples that should trigger task creation:
-- "I need to run tomorrow" → create task "Go for a run"
-- "remind me to drink water" → create task "Drink 8 glasses of water"
-- "help me study maths" → create task "Study maths"
-- "I want to call my mom" → create task "Call mom"
+   A) SIMPLE / QUICK request (single thing to do right now):
+      Use "create_task". It auto-creates the task immediately.
+      Example triggers: "remind me to X", "add a task to Y", "I need to Z today"
 
-Always respond in ONLY this exact JSON format (no markdown, no explanation outside JSON):
-{
-  "message": "your conversational reply — 1-3 sentences, stay in character",
-  "action": {
-    "type": "create_task",
-    "task": {
-      "title": "specific actionable task title",
-      "estimatedMinutes": 30
-    }
-  }
-}
+   B) GOAL / PLAN request (bigger goal, multi-step, "how do I achieve X"):
+      Use "suggest_plan" with 3–6 tasks that break the goal into steps.
+      Ask the user if they want to create the plan.
+      Example triggers: "help me learn guitar", "I want to get fit", "how do I study for exams"
 
-If no task should be created, set action to null:
-{
-  "message": "your reply",
-  "action": null
-}
+   C) CONVERSATION (question, chat, no task needed):
+      Set action to null.
 
-Rules:
-- estimatedMinutes must be realistic (5–120)
-- Task title should be specific and actionable, not vague
-- Keep your message short and punchy — this is a mobile chat
-- Never output anything outside the JSON`;
+Response format — ONLY output this JSON, nothing else:
+
+For a quick task:
+{"message":"Your friendly reply here.","action":{"type":"create_task","task":{"title":"Task title","estimatedMinutes":30}}}
+
+For a plan:
+{"message":"Here's a plan for you! Want me to create these tasks?","action":{"type":"suggest_plan","tasks":[{"title":"Step 1 title","estimatedMinutes":20},{"title":"Step 2 title","estimatedMinutes":30}]}}
+
+For conversation only:
+{"message":"Your friendly reply here.","action":null}
+
+Rules for tasks:
+- estimatedMinutes must be 5–120
+- Task titles must be specific and actionable
+- message must be 1–3 sentences, warm and in character
+- NEVER output anything except the JSON object`;
 
   const messages = [
     { role: 'system', content: system },
-    ...history.slice(-10),
+    ...history.slice(-12),
     { role: 'user', content: userMessage },
   ];
 
   const res = await fetch(GROQ_API_URL, {
-    method: 'POST',
+    method:  'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
+      Authorization:  `Bearer ${apiKey}`,
     },
-    body: JSON.stringify({ model: GROQ_MODEL, messages, max_tokens: 400, temperature: 0.85 }),
+    body: JSON.stringify({
+      model:       GROQ_MODEL,
+      messages,
+      max_tokens:  600,
+      temperature: 0.7,
+      // Force JSON output
+      response_format: { type: 'json_object' },
+    }),
   });
 
   if (!res.ok) throw new Error(`Groq ${res.status}`);
 
   const data = await res.json();
-  const raw  = (data.choices?.[0]?.message?.content ?? '')
-    .replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+  const raw  = (data.choices?.[0]?.message?.content ?? '').trim();
 
   try {
-    return JSON.parse(raw) as SurgoResponse;
+    const parsed = JSON.parse(raw) as SurgoResponse;
+    // Sanity-check: message must be a plain string
+    if (typeof parsed.message !== 'string' || parsed.message.startsWith('{')) {
+      return { message: "I'm here — what do you need to get done?", action: null };
+    }
+    return parsed;
   } catch {
-    return { message: raw || "I'm here — what's on your mind?", action: null };
+    // Last resort: return raw as message if it looks like plain text
+    if (!raw.startsWith('{')) {
+      return { message: raw || "I'm here — what's on your mind?", action: null };
+    }
+    return { message: "I'm here — what do you need to get done?", action: null };
   }
 }
