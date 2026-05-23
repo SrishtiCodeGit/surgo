@@ -266,9 +266,9 @@ function TypingDots({ color }: { color: string }) {
 // ─── Welcome messages ─────────────────────────────────────────────────────────
 
 const WELCOME: Record<string, string> = {
-  soft:     "Hey! I'm Surgo 🌸 Tell me what you want to achieve and I'll build a plan for you. What's on your mind?",
-  balanced: "Hey — I'm Surgo. Tell me your goal and I'll break it down into tasks. What are we working on?",
-  hardcore: "Surgo here. Give me your goal, I'll give you a plan. No fluff. Go.",
+  soft:     "Hey! I'm Surgo 🌸 I'm your personal assistant — I'll ask you the right questions to build a plan that's made just for you. What are you trying to work on?",
+  balanced: "Hey — I'm Surgo, your personal AI coach. Tell me what you want to achieve and I'll ask a few quick questions to build you a proper personalised plan. What's the goal?",
+  hardcore: "Surgo here. I'm not just a task bot — I'll ask you what I need to know, then build you a real plan based on YOUR situation. What are we fixing?",
 };
 
 // ─── Main screen ──────────────────────────────────────────────────────────────
@@ -545,10 +545,10 @@ export default function ChatScreen() {
             contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingVertical: 8 }}
           >
             {[
-              "Help me get fit this month",
-              "I want to learn a new skill",
-              "Add a task to drink more water",
-              "Help me study for my exam",
+              "I want to get slim",
+              "Help me build a study routine",
+              "I want to sleep better",
+              "Remind me to drink water",
             ].map(s => (
               <TouchableOpacity
                 key={s}
