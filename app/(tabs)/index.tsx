@@ -1,6 +1,7 @@
 import {
   View,
   Text,
+  Image,
   ScrollView,
   TouchableOpacity,
   Alert,
@@ -14,6 +15,7 @@ import { useTheme } from '@/context/ThemeContext';
 import { useStreakStore } from '@/stores/streakStore';
 import { useGoalStore } from '@/stores/goalStore';
 import { useNotificationStore } from '@/stores/notificationStore';
+import { useProfileStore } from '@/stores/profileStore';
 import { StreakBadge } from '@/components/ui/StreakBadge';
 import { TaskCard } from '@/components/ui/TaskCard';
 import { WelcomeMascot } from '@/components/ui/WelcomeMascot';
@@ -44,11 +46,14 @@ export default function TodayScreen() {
     load: loadNotifs, generate, markAllRead, unreadCount,
   } = useNotificationStore();
 
+  const { profile, isLoaded: profileLoaded, load: loadProfile } = useProfileStore();
+
   // Load data on mount
   useEffect(() => {
     if (!streakLoaded) loadStreak(USER_ID);
     if (!goalsLoaded) load();
     if (!notifsLoaded) loadNotifs();
+    if (!profileLoaded) loadProfile();
   }, []);
 
   const onRefresh = useCallback(async () => {
@@ -159,18 +164,40 @@ export default function TodayScreen() {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 18 }}>
             <BellIcon unread={unreadCount()} onPress={handleBellPress} />
 
-            {/* Profile icon */}
+            {/* Profile avatar / icon */}
             <TouchableOpacity
               onPress={() => router.push('/(tabs)/profile')}
               activeOpacity={0.72}
             >
-              <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
-                <Circle cx="12" cy="8" r="4" stroke={theme.colors.text} strokeWidth="1.8" />
-                <Path
-                  d="M4 20 C4 16.13 7.58 13 12 13 C16.42 13 20 16.13 20 20"
-                  stroke={theme.colors.text} strokeWidth="1.8" strokeLinecap="round"
-                />
-              </Svg>
+              {profile.photoUri ? (
+                <View style={{
+                  width: 30, height: 30, borderRadius: 15,
+                  overflow: 'hidden',
+                  borderWidth: 1.5,
+                  borderColor: theme.colors.primary + '60',
+                }}>
+                  <Image
+                    source={{ uri: profile.photoUri }}
+                    style={{ width: 30, height: 30 }}
+                  />
+                </View>
+              ) : (
+                <View style={{
+                  width: 30, height: 30, borderRadius: 15,
+                  backgroundColor: theme.colors.primaryLight,
+                  borderWidth: 1.5,
+                  borderColor: theme.colors.primary + '40',
+                  alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
+                    <Circle cx="12" cy="8" r="4" stroke={theme.colors.primary} strokeWidth="1.8" />
+                    <Path
+                      d="M4 20 C4 16.13 7.58 13 12 13 C16.42 13 20 16.13 20 20"
+                      stroke={theme.colors.primary} strokeWidth="1.8" strokeLinecap="round"
+                    />
+                  </Svg>
+                </View>
+              )}
             </TouchableOpacity>
           </View>
         </View>
