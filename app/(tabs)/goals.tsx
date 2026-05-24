@@ -154,10 +154,10 @@ export default function GoalsScreen() {
 
   function buildPlaceholderAnalysis(): GoalAnalysis {
     return {
-      overview: `You want to achieve: "${title}". With ${minutesPerDay} minutes per day over ${deadlineDays} days, you have ${minutesPerDay * deadlineDays} total minutes to invest.`,
-      achievabilityNote: `This goal is achievable with consistent daily effort.`,
-      timeBreakdown: `Spend your ${minutesPerDay} minutes per day focused entirely on this goal.`,
-      keyActivities: [{ activity: 'Daily focused work', timePerWeek: `${minutesPerDay * 7} mins/week`, why: 'Consistency is the key.', howTo: 'Show up every day.' }],
+      overview: `Love this goal! ${deadlineDays} days with ${minutesPerDay} min/day is a solid plan — totally doable if you stay consistent.`,
+      achievabilityNote: `Yep, this is realistic — just show up every day.`,
+      timeBreakdown: `Use all ${minutesPerDay} mins focused on this goal each day.`,
+      keyActivities: [{ activity: 'Daily focused work', timePerWeek: `${minutesPerDay * 7} mins/week`, why: 'Consistency beats intensity.', howTo: 'Block the time and just start.' }],
       milestones: [
         { title: '25% complete', targetDate: toDateString(new Date(Date.now() + deadlineDays * 0.25 * 86400000)) },
         { title: '50% complete', targetDate: toDateString(new Date(Date.now() + deadlineDays * 0.5  * 86400000)) },
