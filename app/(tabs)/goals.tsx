@@ -17,6 +17,7 @@ import { useGoalStore } from '@/stores/goalStore';
 import { GoalCategory } from '@/types';
 import { analyzeGoal, GoalAnalysis } from '@/lib/claude';
 import { toDateString } from '@/lib/streak';
+import { WelcomeMascot } from '@/components/ui/WelcomeMascot';
 
 // ─── Category accent colours ──────────────────────────────────────────────────
 
@@ -216,25 +217,20 @@ export default function GoalsScreen() {
             <View style={{
               backgroundColor: theme.colors.surface,
               borderRadius: 24,
-              padding: 36,
+              paddingHorizontal: 28,
+              paddingTop: 36,
+              paddingBottom: 32,
               alignItems: 'center',
               borderWidth: 1,
               borderColor: theme.colors.border,
-              marginTop: 16,
+              marginTop: 8,
             }}>
-              <View style={{
-                width: 80, height: 80, borderRadius: 40,
-                backgroundColor: theme.colors.primaryLight,
-                alignItems: 'center', justifyContent: 'center',
-                marginBottom: 20,
-              }}>
-                <Text style={{ fontSize: 38 }}>{theme.emoji.goal}</Text>
-              </View>
-              <Text style={{ color: theme.colors.text, fontSize: 20, fontWeight: '800', marginBottom: 8, letterSpacing: -0.4 }}>
+              <WelcomeMascot themeKey={themeKey} size={120} pose="happy" />
+              <Text style={{ color: theme.colors.text, fontSize: 22, fontWeight: '900', marginTop: 16, marginBottom: 8, letterSpacing: -0.5 }}>
                 Dream it. Do it.
               </Text>
               <Text style={{ color: theme.colors.textMuted, fontSize: 14, textAlign: 'center', lineHeight: 21, marginBottom: 28 }}>
-                Set your first resolution and AI will build your entire daily plan — tasks, milestones, the works.
+                Set your first resolution and Surgo will build your entire daily plan — tasks, milestones, the works.
               </Text>
               <TouchableOpacity
                 onPress={() => setStep('step1')}
@@ -250,7 +246,7 @@ export default function GoalsScreen() {
                 }}
               >
                 <Text style={{ color: theme.colors.textInverse, fontWeight: '800', fontSize: 15 }}>
-                  + Set Your First Goal
+                  Set Your First Goal
                 </Text>
               </TouchableOpacity>
             </View>
@@ -349,26 +345,21 @@ export default function GoalsScreen() {
                   </View>
 
                   {/* Meta row */}
-                  <View style={{ flexDirection: 'row', gap: 16 }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                      <Text style={{ fontSize: 11 }}>📅</Text>
-                      <Text style={{ color: theme.colors.textMuted, fontSize: 12, fontWeight: '500' }}>
-                        {daysLeft}d left
-                      </Text>
-                    </View>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                      <Text style={{ fontSize: 11 }}>✅</Text>
-                      <Text style={{ color: theme.colors.textMuted, fontSize: 12, fontWeight: '500' }}>
-                        {completedTasks}/{goalTasks.length} tasks
-                      </Text>
-                    </View>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Text style={{ color: theme.colors.textMuted, fontSize: 12, fontWeight: '500' }}>
+                      {daysLeft}d left
+                    </Text>
+                    <Text style={{ color: theme.colors.border, fontSize: 12 }}>·</Text>
+                    <Text style={{ color: theme.colors.textMuted, fontSize: 12, fontWeight: '500' }}>
+                      {completedTasks}/{goalTasks.length} tasks
+                    </Text>
                     {(goal.minutesPerDay ?? 0) > 0 && (
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                        <Text style={{ fontSize: 11 }}>⏱</Text>
+                      <>
+                        <Text style={{ color: theme.colors.border, fontSize: 12 }}>·</Text>
                         <Text style={{ color: theme.colors.textMuted, fontSize: 12, fontWeight: '500' }}>
                           {goal.minutesPerDay}m/day
                         </Text>
-                      </View>
+                      </>
                     )}
                   </View>
                 </View>
@@ -637,9 +628,9 @@ export default function GoalsScreen() {
             borderWidth: 1, borderColor: theme.colors.border,
             gap: 6,
           }}>
-            <Text style={{ color: theme.colors.text, fontWeight: '800', fontSize: 13 }}>✨ What happens next</Text>
+            <Text style={{ color: theme.colors.text, fontWeight: '800', fontSize: 13 }}>What happens next</Text>
             <Text style={{ color: theme.colors.textMuted, fontSize: 13, lineHeight: 20 }}>
-              AI will check if your goal is achievable in {deadlineDays} days, tell you exactly what to do and why, and generate a full week of daily tasks.
+              Surgo will check if your goal is achievable in {deadlineDays} days, tell you exactly what to do and why, and generate a full week of daily tasks.
             </Text>
           </View>
 
@@ -656,7 +647,7 @@ export default function GoalsScreen() {
             activeOpacity={0.85}
           >
             <Text style={{ color: theme.colors.textInverse, fontWeight: '800', fontSize: 16 }}>
-              ✨ Build My AI Plan
+              Build My AI Plan
             </Text>
           </TouchableOpacity>
         </ScrollView>
@@ -680,20 +671,13 @@ export default function GoalsScreen() {
           shadowOffset: { width: 0, height: 8 },
           shadowOpacity: 0.12, shadowRadius: 24, elevation: 6,
         }}>
-          <View style={{
-            width: 72, height: 72, borderRadius: 36,
-            backgroundColor: theme.colors.primaryLight,
-            alignItems: 'center', justifyContent: 'center',
-            marginBottom: 20,
-          }}>
-            <Text style={{ fontSize: 32 }}>✨</Text>
-          </View>
-          <ActivityIndicator size="large" color={theme.colors.primary} style={{ marginBottom: 20 }} />
+          <WelcomeMascot themeKey={themeKey} size={110} pose="thumbsUp" />
+          <ActivityIndicator size="large" color={theme.colors.primary} style={{ marginTop: 16, marginBottom: 20 }} />
           <Text style={{ color: theme.colors.text, fontSize: 20, fontWeight: '800', textAlign: 'center', marginBottom: 8, letterSpacing: -0.4 }}>
             Building your plan…
           </Text>
           <Text style={{ color: theme.colors.textMuted, fontSize: 14, textAlign: 'center', lineHeight: 21 }}>
-            AI is analysing your goal, figuring out what it takes, and creating your first week of tasks.
+            Surgo is analysing your goal, figuring out what it takes, and creating your first week of tasks.
           </Text>
         </View>
       </SafeAreaView>
@@ -731,7 +715,7 @@ export default function GoalsScreen() {
                 <Text style={{ fontSize: 18 }}>{cat?.emoji}</Text>
               </View>
               <Text style={{ color: 'rgba(255,255,255,0.80)', fontSize: 11, fontWeight: '800', letterSpacing: 1.4, textTransform: 'uppercase' }}>
-                ✨ Your AI Plan
+                Your AI Plan
               </Text>
             </View>
             <Text style={{ color: '#fff', fontSize: 20, fontWeight: '800', lineHeight: 26, marginBottom: 8 }}>
@@ -750,19 +734,19 @@ export default function GoalsScreen() {
             </View>
           </View>
 
-          <ReviewCard emoji="📋" title="Overview" theme={theme}>
+          <ReviewCard title="Overview" theme={theme}>
             <Text style={{ color: theme.colors.text, fontSize: 14, lineHeight: 22 }}>{analysis.overview}</Text>
           </ReviewCard>
 
-          <ReviewCard emoji="🎯" title="Achievability" theme={theme}>
+          <ReviewCard title="Achievability" theme={theme}>
             <Text style={{ color: theme.colors.text, fontSize: 14, lineHeight: 22 }}>{analysis.achievabilityNote}</Text>
           </ReviewCard>
 
-          <ReviewCard emoji="⏱" title={`Using your ${minutesPerDay} min/day`} theme={theme}>
+          <ReviewCard title={`Using your ${minutesPerDay} min/day`} theme={theme}>
             <Text style={{ color: theme.colors.text, fontSize: 14, lineHeight: 22 }}>{analysis.timeBreakdown}</Text>
           </ReviewCard>
 
-          <ReviewCard emoji="🔑" title="What you need to do" theme={theme}>
+          <ReviewCard title="What you need to do" theme={theme}>
             {analysis.keyActivities.map((act, i) => (
               <View key={i} style={{ marginBottom: i < analysis.keyActivities.length - 1 ? 16 : 0 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
@@ -780,7 +764,7 @@ export default function GoalsScreen() {
             ))}
           </ReviewCard>
 
-          <ReviewCard emoji="🏁" title="Milestones" theme={theme}>
+          <ReviewCard title="Milestones" theme={theme}>
             {analysis.milestones.map((m, i) => (
               <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: i < analysis.milestones.length - 1 ? 12 : 0 }}>
                 <View style={{ width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: theme.colors.primary, backgroundColor: theme.colors.primaryLight }} />
@@ -794,7 +778,7 @@ export default function GoalsScreen() {
             ))}
           </ReviewCard>
 
-          <ReviewCard emoji="📅" title={`Today's tasks (${todayTasks.length})`} theme={theme}>
+          <ReviewCard title={`Today's tasks (${todayTasks.length})`} theme={theme}>
             {todayTasks.map((t, i) => (
               <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: i < todayTasks.length - 1 ? 10 : 0 }}>
                 <View style={{ width: 18, height: 18, borderRadius: 9, borderWidth: 2, borderColor: theme.colors.border, marginTop: 2 }} />
@@ -829,7 +813,7 @@ export default function GoalsScreen() {
               <ActivityIndicator color={theme.colors.textInverse} />
             ) : (
               <Text style={{ color: theme.colors.textInverse, fontWeight: '800', fontSize: 16 }}>
-                {theme.emoji.goal}  Start This Goal
+                Start This Goal
               </Text>
             )}
           </TouchableOpacity>
@@ -865,21 +849,24 @@ function StepDots({ current, total, color }: { current: number; total: number; c
   );
 }
 
-function ReviewCard({ emoji, title, children, theme }: { emoji: string; title: string; children: React.ReactNode; theme: any }) {
+function ReviewCard({ title, children, theme }: { title: string; children: React.ReactNode; theme: any }) {
   return (
     <View style={{
       backgroundColor: theme.colors.surface,
       borderColor: theme.colors.border,
       borderWidth: 1,
       borderRadius: 18,
-      padding: 18,
+      overflow: 'hidden',
       marginBottom: 12,
     }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-        <Text style={{ fontSize: 16 }}>{emoji}</Text>
-        <Text style={{ color: theme.colors.text, fontWeight: '800', fontSize: 14 }}>{title}</Text>
+      {/* Accent top bar */}
+      <View style={{ height: 3, backgroundColor: theme.colors.primary, opacity: 0.35 }} />
+      <View style={{ padding: 18 }}>
+        <Text style={{ color: theme.colors.text, fontWeight: '800', fontSize: 13, letterSpacing: 0.4, textTransform: 'uppercase', marginBottom: 12, opacity: 0.7 }}>
+          {title}
+        </Text>
+        {children}
       </View>
-      {children}
     </View>
   );
 }
