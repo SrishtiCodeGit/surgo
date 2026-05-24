@@ -159,51 +159,106 @@ function RateRing({ rate, primary }: { rate: number; primary: string }) {
   );
 }
 
-// ─── 7-day bar chart ─────────────────────────────────────────────────────────
+// ─── 7-day checkpoint track ──────────────────────────────────────────────────
 
-function WeekChart({ days, primary }: { days: (StreakDay | null)[]; primary: string }) {
-  const chartH = 90;
-  const barW   = 28;
-  const gap    = (CARD_W - 40 - 7 * barW) / 6;
+const CHECKPOINT_FILL: Record<string, string> = {
+  soft:     '#FFB6C1',   // baby pink
+  balanced: '#1C1C1E',   // black
+  hardcore: '#FF2800',   // red
+};
+
+function WeekChart({
+  days, themeKey,
+}: {
+  days: (StreakDay | null)[];
+  primary: string;
+  themeKey: 'soft' | 'balanced' | 'hardcore';
+}) {
+  const dotR     = 14;
+  const dotD     = dotR * 2;
+  const innerW   = CARD_W - 40;
+  const spacing  = (innerW - 7 * dotD) / 6;
+  const doneFill = CHECKPOINT_FILL[themeKey];
+  const checkColor = themeKey === 'soft' ? '#7A3340' : '#FFFFFF';
+  const today    = new Date().toISOString().split('T')[0];
 
   return (
     <View>
-      <View style={{ flexDirection: 'row', alignItems: 'flex-end', height: chartH, gap }}>
-        {days.map((day, i) => {
-          const status = (day as any)?.status ?? 'empty';
-          const pct    = status === 'completed'
-            ? (day!.tasksTotal > 0 ? day!.tasksCompleted / day!.tasksTotal : 1)
-            : status === 'frozen' ? 0.5
-            : 0.06;
-          const barH   = Math.max(chartH * pct, 5);
-          const color  =
-            status === 'completed' ? primary
-            : status === 'frozen'  ? D.purple
-            : status === 'missed'  ? D.orange
-            : D.missed;
+      {/* Track + dots */}
+      <View style={{ height: dotD + 4 }}>
+        {/* Connecting line through centres */}
+        <View style={{
+          position: 'absolute',
+          top: dotR + 2,
+          left: dotR,
+          width: innerW - dotD,
+          height: 2,
+          backgroundColor: '#1C1C1E',
+          opacity: 0.12,
+        }} />
 
-          return (
-            <View key={i} style={{ alignItems: 'center', gap: 6 }}>
-              <View style={{
-                width: barW, height: barH,
-                backgroundColor: color,
-                borderRadius: 8,
-              }} />
-            </View>
-          );
-        })}
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          {days.map((day, i) => {
+            const status  = (day as any)?.status ?? 'empty';
+            const done    = status === 'completed';
+            const isToday = day?.date === today;
+
+            return (
+              <View
+                key={i}
+                style={{
+                  width:  i < 6 ? dotD + spacing : dotD,
+                  height: dotD + 4,
+                  alignItems: 'flex-start',
+                  justifyContent: 'center',
+                }}
+              >
+                <View style={{
+                  width:  dotD,
+                  height: dotD,
+                  borderRadius: dotR,
+                  backgroundColor: done ? doneFill : 'transparent',
+                  borderWidth: 2,
+                  borderColor: done ? doneFill : '#1C1C1E',
+                  opacity: done ? 1 : (isToday ? 0.55 : 0.22),
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                  {done && (
+                    <Text style={{
+                      color: checkColor,
+                      fontSize: 11,
+                      fontWeight: '900',
+                      lineHeight: 13,
+                    }}>
+                      ✓
+                    </Text>
+                  )}
+                </View>
+              </View>
+            );
+          })}
+        </View>
       </View>
 
       {/* Day labels */}
-      <View style={{ flexDirection: 'row', gap, marginTop: 8 }}>
+      <View style={{ flexDirection: 'row', marginTop: 6 }}>
         {days.map((day, i) => {
-          const date = day ? new Date(day.date + 'T00:00:00') : new Date();
-          const label = date.toLocaleDateString('en-US', { weekday: 'short' }).slice(0, 2);
-          const isToday = day?.date === new Date().toISOString().split('T')[0];
+          const date    = day ? new Date(day.date + 'T00:00:00') : new Date();
+          const label   = date.toLocaleDateString('en-US', { weekday: 'short' }).slice(0, 2);
+          const isToday = day?.date === today;
           return (
-            <View key={i} style={{ width: barW, alignItems: 'center' }}>
+            <View
+              key={i}
+              style={{
+                width: i < 6 ? dotD + spacing : dotD,
+                alignItems: 'flex-start',
+              }}
+            >
               <Text style={{
-                color: isToday ? primary : D.muted,
+                width: dotD,
+                textAlign: 'center',
+                color: isToday ? D.dark : D.muted,
                 fontSize: 10,
                 fontWeight: isToday ? '800' : '500',
               }}>
@@ -450,7 +505,7 @@ export default function ProgressScreen() {
         {card(
           <>
             {cardTitle('Last 7 Days')}
-            <WeekChart days={last7} primary={primary} />
+            <WeekChart days={last7} primary={primary} themeKey={themeKey} />
           </>
         )}
 
