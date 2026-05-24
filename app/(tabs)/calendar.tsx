@@ -567,38 +567,53 @@ export default function CalendarScreen() {
 
             {/* ── Blocked slot overlays ──────────────────────────────── */}
             {blockedToday.map(slot => {
-              const topPx = ((toMins(slot.startTime) - START_HOUR*60) / 60) * HOUR_H;
-              const hPx   = ((toMins(slot.endTime) - toMins(slot.startTime)) / 60) * HOUR_H;
-              if (topPx < 0 || topPx > GRID_H || hPx <= 0) return null;
+              const rawTop = ((toMins(slot.startTime) - START_HOUR*60) / 60) * HOUR_H;
+              const rawH   = ((toMins(slot.endTime) - toMins(slot.startTime)) / 60) * HOUR_H;
+              // Clamp to visible grid range
+              const topPx  = Math.max(0, rawTop);
+              const hPx    = rawH - (topPx - rawTop);
+              if (topPx >= GRID_H || hPx <= 0) return null;
+              const visH   = Math.min(hPx, GRID_H - topPx);
               return (
                 <TouchableOpacity
                   key={slot.id}
                   onLongPress={() => handleRemoveSlot(slot)}
                   activeOpacity={0.85}
                   style={{
-                    position:'absolute', top:topPx, left:0, right:0, height:hPx,
-                    backgroundColor: slot.color + '14',
-                    borderLeftWidth:3, borderLeftColor: slot.color + '80',
-                    borderRightWidth:1, borderTopWidth:1, borderBottomWidth:1,
-                    borderColor: slot.color + '25',
-                    borderRadius:10, paddingLeft:10, paddingTop:8,
+                    position:'absolute', top:topPx, left:0, right:0, height:visH,
+                    backgroundColor: slot.color + '26',
+                    borderLeftWidth: 4, borderLeftColor: slot.color + 'CC',
+                    borderTopWidth: topPx === 0 ? 0 : 1,
+                    borderBottomWidth: 1,
+                    borderRightWidth: 1,
+                    borderColor: slot.color + '40',
+                    borderRadius: 10,
                     overflow:'hidden',
                   }}
                 >
-                  {/* Diagonal stripe pattern via SVG */}
-                  <Svg style={{ position:'absolute', top:0, left:0, right:0, bottom:0 }} width="100%" height={hPx}>
+                  {/* Diagonal stripe fill */}
+                  <Svg style={{ position:'absolute', top:0, left:0, right:0, bottom:0 }} width="100%" height={visH}>
                     <Defs>
-                      <Pattern id={`stripe-${slot.id}`} width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-                        <Line x1="0" y1="0" x2="0" y2="10" stroke={slot.color} strokeWidth="1.5" strokeOpacity="0.07" />
+                      <Pattern id={`stripe-${slot.id}`} width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                        <Line x1="0" y1="0" x2="0" y2="12" stroke={slot.color} strokeWidth="2" strokeOpacity="0.18" />
                       </Pattern>
                     </Defs>
-                    <Rect width="100%" height={hPx} fill={`url(#stripe-${slot.id})`} />
+                    <Rect width="100%" height={visH} fill={`url(#stripe-${slot.id})`} />
                   </Svg>
-                  <Text style={{ color:slot.color, fontSize:12, fontWeight:'500' }}>
-                    {slot.emoji} {slot.label}
-                  </Text>
-                  {hPx > 40 && (
-                    <Text style={{ color:slot.color, fontSize:10, marginTop:2, opacity:0.75 }}>
+                  {/* Label chip — always visible */}
+                  <View style={{
+                    flexDirection:'row', alignItems:'center', gap:5,
+                    marginLeft:10, marginTop:7,
+                    backgroundColor: slot.color + '33',
+                    alignSelf:'flex-start',
+                    paddingHorizontal:8, paddingVertical:3,
+                    borderRadius:8,
+                  }}>
+                    <Text style={{ fontSize:12 }}>{slot.emoji}</Text>
+                    <Text style={{ color:slot.color, fontSize:11, fontWeight:'600' }}>{slot.label}</Text>
+                  </View>
+                  {visH > 50 && (
+                    <Text style={{ color:slot.color, fontSize:10, marginLeft:14, marginTop:4, opacity:0.85, fontWeight:'400' }}>
                       {fmt12(slot.startTime)} – {fmt12(slot.endTime)}
                     </Text>
                   )}
