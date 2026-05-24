@@ -1,11 +1,12 @@
 import {
   View, Text, ScrollView, TouchableOpacity, TextInput,
   Alert, RefreshControl, Dimensions, Modal, KeyboardAvoidingView,
-  Platform, Pressable,
+  Platform, Pressable, Animated,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path, Circle, Rect, Defs, Pattern, Line } from 'react-native-svg';
 import { useState, useEffect, useCallback, useRef } from 'react';
+import * as Speech from 'expo-speech';
 import { useTheme } from '@/context/ThemeContext';
 import { useGoalStore } from '@/stores/goalStore';
 import { useBlockedSlotStore } from '@/stores/blockedSlotStore';
@@ -134,6 +135,132 @@ function useClock() {
   const [now, setNow] = useState(new Date());
   useEffect(() => { const id = setInterval(() => setNow(new Date()), 1000); return () => clearInterval(id); }, []);
   return now;
+}
+
+// ─── Packed-calendar modal ────────────────────────────────────────────────────
+
+const PACKED_SPEECH: Record<string, string> = {
+  soft:     "Hey... I can see your schedule is really packed today. Please don't exhaust yourself — you need rest too. Your wellbeing matters more than any to-do list. Let's work on one goal at a time and give it your full love and attention.",
+  balanced: "Hey, heads up. Your calendar is completely maxed out today. A packed schedule actually hurts your focus and output. Let's simplify — pick your top priority, protect your energy, and work on one goal at a time. The rest can wait.",
+  hardcore: "Listen. Your calendar is at maximum load. Even elite performers schedule recovery — that's not weakness, that's strategy. Pick your number one mission for today, execute it fully, and queue everything else. One goal at a time.",
+};
+
+const PACKED_HEADLINE: Record<string, string> = {
+  soft:     "Don't exhaust yourself 🌸",
+  balanced: "Your calendar is maxed out",
+  hardcore: "Max load — pick one mission",
+};
+
+const PACKED_SUB: Record<string, string> = {
+  soft:     "You deserve rest too. Fewer things done with full attention always beats rushing through everything. Pick one and own it today. 💛",
+  balanced: "Focus beats multitasking every single time. Pick your #1 priority, protect your energy, and let the rest wait.",
+  hardcore: "Even champions schedule recovery. One goal, full execution. Queue the rest.",
+};
+
+function PackedDayModal({
+  visible, themeKey, theme, onClose,
+}: {
+  visible: boolean;
+  themeKey: string;
+  theme: any;
+  onClose: () => void;
+}) {
+  const isSpeaking = useRef(false);
+
+  const speak = async () => {
+    await Speech.stop();
+    isSpeaking.current = true;
+    Speech.speak(PACKED_SPEECH[themeKey] ?? PACKED_SPEECH.balanced, {
+      language: 'en-US',
+      pitch: themeKey === 'hardcore' ? 0.88 : themeKey === 'soft' ? 1.06 : 1.0,
+      rate:  themeKey === 'hardcore' ? 0.95 : themeKey === 'soft' ? 0.82 : 0.88,
+      onDone: () => { isSpeaking.current = false; },
+    });
+  };
+
+  useEffect(() => {
+    if (visible) { speak(); }
+    return () => { Speech.stop(); };
+  }, [visible]);
+
+  const isHardcore = themeKey === 'hardcore';
+  const bgColor    = isHardcore ? '#0D0000' : theme.colors.background;
+  const accent     = isHardcore ? '#FF3B30' : themeKey === 'soft' ? '#F0B429' : theme.colors.primary;
+
+  if (!visible) return null;
+
+  return (
+    <Modal transparent animationType="fade" visible={visible} onRequestClose={onClose} statusBarTranslucent>
+      {/* Dark scrim */}
+      <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.72)', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+
+        {/* Card */}
+        <View style={{
+          width: '100%', backgroundColor: bgColor,
+          borderRadius: 32, paddingHorizontal: 28, paddingTop: 36, paddingBottom: 32,
+          alignItems: 'center',
+          borderWidth: isHardcore ? 1 : 0,
+          borderColor: isHardcore ? accent + '40' : 'transparent',
+          shadowColor: accent, shadowOffset: { width: 0, height: 12 },
+          shadowOpacity: 0.28, shadowRadius: 32, elevation: 20,
+        }}>
+
+          {/* Mascot */}
+          <WelcomeMascot themeKey={themeKey as any} size={140} pose="sad" />
+
+          {/* Headline */}
+          <Text style={{
+            color: isHardcore ? accent : theme.colors.text,
+            fontSize: 22, fontWeight: '600', letterSpacing: -0.3,
+            textAlign: 'center', marginTop: 20, marginBottom: 12,
+          }}>
+            {PACKED_HEADLINE[themeKey] ?? PACKED_HEADLINE.balanced}
+          </Text>
+
+          {/* Sub text */}
+          <Text style={{
+            color: isHardcore ? '#FF8080' : theme.colors.textMuted,
+            fontSize: 14, lineHeight: 22, textAlign: 'center',
+            marginBottom: 32,
+          }}>
+            {PACKED_SUB[themeKey] ?? PACKED_SUB.balanced}
+          </Text>
+
+          {/* Buttons */}
+          <View style={{ flexDirection: 'row', gap: 12, width: '100%' }}>
+            {/* Replay voice */}
+            <TouchableOpacity
+              onPress={speak}
+              activeOpacity={0.78}
+              style={{
+                flex: 1, paddingVertical: 14, borderRadius: 16, alignItems: 'center',
+                backgroundColor: accent + '18',
+                borderWidth: 1, borderColor: accent + '40',
+                flexDirection: 'row', justifyContent: 'center', gap: 8,
+              }}
+            >
+              <Text style={{ fontSize: 16 }}>🔊</Text>
+              <Text style={{ color: accent, fontSize: 14, fontWeight: '500' }}>Replay</Text>
+            </TouchableOpacity>
+
+            {/* Dismiss */}
+            <TouchableOpacity
+              onPress={() => { Speech.stop(); onClose(); }}
+              activeOpacity={0.85}
+              style={{
+                flex: 1.6, paddingVertical: 14, borderRadius: 16, alignItems: 'center',
+                backgroundColor: accent,
+                shadowColor: accent, shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.30, shadowRadius: 10, elevation: 5,
+              }}
+            >
+              <Text style={{ color: '#fff', fontSize: 14, fontWeight: '500' }}>Got it ✓</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
 }
 
 // ─── Add-blocked-slot bottom sheet ───────────────────────────────────────────
@@ -353,11 +480,13 @@ export default function CalendarScreen() {
   const now      = useClock();
   const todayStr = toDateString(new Date());
 
-  const [sel, setSel]             = useState(new Date());
-  const [anchor, setAnchor]       = useState(new Date());
+  const [sel, setSel]               = useState(new Date());
+  const [anchor, setAnchor]         = useState(new Date());
   const [refreshing, setRefreshing] = useState(false);
-  const [showAdd, setShowAdd]     = useState(false);
-  const scrollRef = useRef<ScrollView>(null);
+  const [showAdd, setShowAdd]       = useState(false);
+  const [showPacked, setShowPacked] = useState(false);
+  const shownPackedFor              = useRef('');
+  const scrollRef                   = useRef<ScrollView>(null);
 
   const selStr  = toDateString(sel);
   const isToday = selStr === todayStr;
@@ -388,6 +517,21 @@ export default function CalendarScreen() {
   const progress    = dayTasks.length > 0 ? doneCount / dayTasks.length : 0;
 
   const analysis = getLoadAnalysis(dayTasks, blockedToday, themeKey);
+
+  // Compute very-packed threshold (ratio > 85% or 8+ tasks)
+  const _blockedMins  = blockedToday.reduce((s, b) => s + Math.max(0, toMins(b.endTime) - toMins(b.startTime)), 0);
+  const _freeMins     = Math.max(1, (END_HOUR - START_HOUR) * 60 - _blockedMins);
+  const _taskMins     = dayTasks.reduce((s, t) => s + (t.estimatedMinutes ?? 30), 0);
+  const isVeryPacked  = _taskMins / _freeMins > 0.85 || dayTasks.length >= 8;
+
+  // Show the packed modal once per date (not on every re-render)
+  useEffect(() => {
+    if (isLoaded && isVeryPacked && selStr !== shownPackedFor.current) {
+      shownPackedFor.current = selStr;
+      // Small delay so the calendar grid renders first
+      setTimeout(() => setShowPacked(true), 600);
+    }
+  }, [isVeryPacked, selStr, isLoaded]);
 
   const handleComplete   = async (t: Task) => { t.completedAt ? await uncompleteTask(t.id) : await completeTask(t.id); };
   const handleReschedule = (t: Task) => Alert.alert('Reschedule', t.title, [
@@ -794,6 +938,14 @@ export default function CalendarScreen() {
         onSave={(s) => addSlot(s)}
         theme={theme}
         themeKey={themeKey}
+      />
+
+      {/* ── Overpacked day modal ───────────────────────────────────── */}
+      <PackedDayModal
+        visible={showPacked}
+        themeKey={themeKey}
+        theme={theme}
+        onClose={() => setShowPacked(false)}
       />
 
     </SafeAreaView>
