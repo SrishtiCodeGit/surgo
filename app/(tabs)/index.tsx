@@ -425,49 +425,43 @@ export default function TodayScreen() {
           </>
         )}
 
-        {/* ── Check-in button — Duolingo 3D press style ───────────────────── */}
+        {/* ── Check-in button ──────────────────────────────────────────────── */}
         {allDone && currentState !== 'active' && (
-          <View style={{
-            marginTop: 20,
-            borderRadius: 16,
-            backgroundColor: theme.colors.primary + 'CC', // darker shade = bottom layer
-          }}>
-            <TouchableOpacity
-              onPress={handleCheckIn}
-              activeOpacity={0.88}
-              style={{
-                backgroundColor:  theme.colors.primary,
-                borderRadius:     16,
-                alignItems:       'center',
-                paddingVertical:  17,
-                marginBottom:     4,       // reveals darker layer below = 3D effect
-                borderWidth:      2,
-                borderColor:      'rgba(255,255,255,0.25)',
-                shadowColor:      theme.colors.primary,
-                shadowOffset:     { width: 0, height: 6 },
-                shadowOpacity:    0.40,
-                shadowRadius:     10,
-                elevation:        6,
-              }}
-            >
-              <Text style={{ color: '#fff', fontSize: 17, fontWeight: '900', letterSpacing: 0.3 }}>
-                {theme.emoji.win}  Check In — Extend Streak
-              </Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity
+            onPress={handleCheckIn}
+            style={{
+              backgroundColor: theme.colors.primary,
+              marginTop: 20,
+              paddingVertical: 16,
+              borderRadius: 14,
+              alignItems: 'center',
+              shadowColor: theme.colors.primary,
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.35,
+              shadowRadius: 12,
+              elevation: 4,
+            }}
+            activeOpacity={0.85}
+          >
+            <Text style={{ color: theme.colors.textInverse, fontSize: 16, fontWeight: '800' }}>
+              {theme.emoji.win} Check In — Extend Streak
+            </Text>
+          </TouchableOpacity>
         )}
 
         {currentState === 'active' && (
-          <View style={{
-            backgroundColor: '#F0FDF4',
-            borderColor:     '#22C55E',
-            borderWidth:     2,
-            marginTop:       20,
-            paddingVertical: 14,
-            borderRadius:    16,
-            alignItems:      'center',
-          }}>
-            <Text style={{ color: '#16A34A', fontSize: 15, fontWeight: '800' }}>
+          <View
+            style={{
+              backgroundColor: theme.colors.success + '20',
+              borderColor: theme.colors.success,
+              borderWidth: 1,
+              marginTop: 20,
+              paddingVertical: 14,
+              borderRadius: 14,
+              alignItems: 'center',
+            }}
+          >
+            <Text style={{ color: theme.colors.success, fontSize: 15, fontWeight: '700' }}>
               ✓ Checked in for today!
             </Text>
           </View>
