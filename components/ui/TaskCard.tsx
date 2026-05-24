@@ -20,14 +20,23 @@ interface TaskCardProps {
   onComplete: (taskId: string) => void;
 }
 
+const DONE_COLOR: Record<string, string> = {
+  soft:     '#FFB6C1',  // baby pink
+  balanced: '#1C1C1E',  // black
+  hardcore: '#FF2800',  // red
+};
+
 export function TaskCard({ task, onComplete }: TaskCardProps) {
-  const { theme } = useTheme();
+  const { theme, themeKey } = useTheme();
   const isCompleted = !!task.completedAt;
   const cat = categoriseTask(task.title);
 
-  // When completed: go grey. When pending: use category colour.
-  const accentColor = isCompleted ? theme.colors.success : cat.color;
-  const cardBg      = isCompleted ? theme.colors.surface  : cat.bg;
+  const doneColor   = DONE_COLOR[themeKey] ?? theme.colors.success;
+  const tickColor   = themeKey === 'soft' ? '#7A3340' : '#FFFFFF';
+
+  // When completed: theme done colour. When pending: use category colour.
+  const accentColor = isCompleted ? doneColor       : cat.color;
+  const cardBg      = isCompleted ? theme.colors.surface : cat.bg;
 
   return (
     <TouchableOpacity
@@ -72,15 +81,15 @@ export function TaskCard({ task, onComplete }: TaskCardProps) {
           width:           22,
           height:          22,
           borderRadius:    6,
-          backgroundColor: isCompleted ? theme.colors.success : 'transparent',
-          borderColor:     isCompleted ? theme.colors.success : cat.color + '80',
+          backgroundColor: isCompleted ? doneColor : 'transparent',
+          borderColor:     isCompleted ? doneColor  : cat.color + '80',
           borderWidth:     1.5,
           alignItems:      'center',
           justifyContent:  'center',
           flexShrink:      0,
         }}>
           {isCompleted && (
-            <Text style={{ color: '#fff', fontSize: 12, fontWeight: '900' }}>✓</Text>
+            <Text style={{ color: tickColor, fontSize: 12, fontWeight: '900' }}>✓</Text>
           )}
         </View>
 

@@ -85,6 +85,13 @@ export default function TodayScreen() {
   const allDone = totalCount > 0 && completedCount === totalCount;
 
   const currentState = streakState() ?? 'new';
+
+  const DONE_COLOR: Record<string, string> = {
+    soft:     '#FFB6C1',
+    balanced: '#1C1C1E',
+    hardcore: '#FF2800',
+  };
+  const doneColor = DONE_COLOR[themeKey] ?? theme.colors.success;
   const currentStreak = streak?.currentStreak ?? 0;
   const freezeCards = streak?.freezeCardsAvailable ?? 0;
 
@@ -397,13 +404,13 @@ export default function TodayScreen() {
               </Text>
               <View
                 style={{
-                  backgroundColor: allDone ? theme.colors.success + '22' : theme.colors.surfaceAlt,
+                  backgroundColor: allDone ? doneColor + '22' : theme.colors.surfaceAlt,
                   paddingHorizontal: 10,
                   paddingVertical: 5,
                   borderRadius: 10,
                 }}
               >
-                <Text style={{ color: allDone ? theme.colors.success : theme.colors.textMuted, fontSize: 12, fontWeight: '700' }}>
+                <Text style={{ color: allDone ? doneColor : theme.colors.textMuted, fontSize: 12, fontWeight: '700' }}>
                   {completedCount}/{totalCount} done
                 </Text>
               </View>
@@ -413,7 +420,7 @@ export default function TodayScreen() {
             <View style={{ backgroundColor: theme.colors.border, height: 6, borderRadius: 3, marginBottom: 14, overflow: 'hidden' }}>
               <View
                 style={{
-                  backgroundColor: allDone ? theme.colors.success : theme.colors.primary,
+                  backgroundColor: allDone ? doneColor : theme.colors.primary,
                   height: 6,
                   borderRadius: 3,
                   width: `${totalCount > 0 ? (completedCount / totalCount) * 100 : 0}%`,
@@ -454,8 +461,8 @@ export default function TodayScreen() {
         {currentState === 'active' && (
           <View
             style={{
-              backgroundColor: theme.colors.success + '20',
-              borderColor: theme.colors.success,
+              backgroundColor: doneColor + '20',
+              borderColor: doneColor,
               borderWidth: 1,
               marginTop: 20,
               paddingVertical: 14,
@@ -463,7 +470,7 @@ export default function TodayScreen() {
               alignItems: 'center',
             }}
           >
-            <Text style={{ color: theme.colors.success, fontSize: 15, fontWeight: '700' }}>
+            <Text style={{ color: doneColor, fontSize: 15, fontWeight: '700' }}>
               ✓ Checked in for today!
             </Text>
           </View>
