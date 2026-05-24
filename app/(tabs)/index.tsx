@@ -279,8 +279,10 @@ export default function TodayScreen() {
             elevation: 3,
           }}
         >
-          {/* Mascot */}
-          <WelcomeMascot themeKey={themeKey} size={110} />
+          {/* Mascot — tap to preview all poses */}
+          <TouchableOpacity onPress={() => router.push('/mascot-preview')} activeOpacity={0.8}>
+            <WelcomeMascot themeKey={themeKey} size={110} />
+          </TouchableOpacity>
 
           {/* Greeting text */}
           <View style={{ flex: 1 }}>
