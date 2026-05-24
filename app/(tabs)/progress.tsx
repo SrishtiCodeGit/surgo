@@ -66,44 +66,21 @@ function StreakRing({
 }: { current: number; longest: number; primary: string; themeKey: ThemeKey }) {
   const size     = 210;
   const sw       = 18;
-  const outerSw  = 6;            // second outer decorative ring
   const r        = (size - sw) / 2;
-  const outerR   = r + sw / 2 + outerSw / 2 + 6;   // outside the main ring
   const circ     = 2 * Math.PI * r;
-  const outerCirc= 2 * Math.PI * outerR;
   const pct      = longest > 0 ? Math.min(current / longest, 1) : current > 0 ? 1 : 0;
-  const offset   = circ     * (1 - pct);
-  const outerOff = outerCirc * (1 - pct);
+  const offset   = circ * (1 - pct);
   const mascotSz = 112;
 
   return (
     <View style={{ alignItems: 'center', justifyContent: 'center' }}>
-      {/* Two rings drawn as one SVG */}
       <Svg width={size} height={size}>
-        {/* ── Outer decorative ring (track) ── */}
-        <Circle
-          cx={size / 2} cy={size / 2} r={outerR}
-          stroke={D.missed} strokeWidth={outerSw} fill="none"
-          opacity={0.5}
-        />
-        {/* ── Outer decorative ring (progress) ── */}
-        <Circle
-          cx={size / 2} cy={size / 2} r={outerR}
-          stroke={primary} strokeWidth={outerSw} fill="none"
-          strokeDasharray={outerCirc}
-          strokeDashoffset={outerOff}
-          strokeLinecap="round"
-          rotation="-90"
-          origin={`${size / 2},${size / 2}`}
-          opacity={0.40}
-        />
-
-        {/* ── Main ring (track) ── */}
+        {/* Ring track */}
         <Circle
           cx={size / 2} cy={size / 2} r={r}
           stroke={D.missed} strokeWidth={sw} fill="none"
         />
-        {/* ── Main ring (progress arc) ── */}
+        {/* Ring progress arc */}
         <Circle
           cx={size / 2} cy={size / 2} r={r}
           stroke={current > 0 ? primary : D.missed}
