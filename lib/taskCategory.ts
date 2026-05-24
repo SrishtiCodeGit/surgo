@@ -18,8 +18,8 @@ const CATEGORIES: Array<{
   {
     label: 'Fitness',
     emoji: '🏃',
-    color: '#16A34A',
-    bg:    '#16A34A14',
+    color: '#34D399',   // emerald-400 — fresh, energetic
+    bg:    '#34D39914',
     keywords: [
       'run', 'running', 'jog', 'walk', 'hike', 'gym', 'workout', 'exercise',
       'swim', 'cycle', 'cycling', 'bike', 'yoga', 'stretch', 'lift', 'weights',
@@ -30,8 +30,8 @@ const CATEGORIES: Array<{
   {
     label: 'Study',
     emoji: '📚',
-    color: '#7C3AED',
-    bg:    '#7C3AED12',
+    color: '#A78BFA',   // violet-400 — calm, focused
+    bg:    '#A78BFA14',
     keywords: [
       'study', 'studying', 'read', 'reading', 'learn', 'learning', 'revise',
       'revision', 'exam', 'test', 'quiz', 'class', 'lecture', 'course',
@@ -43,8 +43,8 @@ const CATEGORIES: Array<{
   {
     label: 'Diet',
     emoji: '🥗',
-    color: '#D97706',
-    bg:    '#D9770612',
+    color: '#FBBF24',   // amber-400 — warm, food
+    bg:    '#FBBF2414',
     keywords: [
       'eat', 'eating', 'meal', 'breakfast', 'lunch', 'dinner', 'snack',
       'diet', 'food', 'cook', 'cooking', 'recipe', 'calories', 'calorie',
@@ -55,8 +55,8 @@ const CATEGORIES: Array<{
   {
     label: 'Wellness',
     emoji: '🧘',
-    color: '#0891B2',
-    bg:    '#0891B212',
+    color: '#22D3EE',   // cyan-400 — calm, water
+    bg:    '#22D3EE14',
     keywords: [
       'meditate', 'meditation', 'sleep', 'nap', 'rest', 'relax', 'relaxation',
       'breathe', 'breathing', 'mindful', 'mindfulness', 'journal', 'journaling',
@@ -67,8 +67,8 @@ const CATEGORIES: Array<{
   {
     label: 'Social',
     emoji: '💬',
-    color: '#DB2777',
-    bg:    '#DB277712',
+    color: '#F472B6',   // pink-400 — warmth, connection
+    bg:    '#F472B614',
     keywords: [
       'call', 'phone', 'text', 'message', 'meet', 'hangout', 'party',
       'friend', 'family', 'mom', 'mum', 'dad', 'sister', 'brother',
@@ -79,8 +79,8 @@ const CATEGORIES: Array<{
   {
     label: 'Work',
     emoji: '💼',
-    color: '#2563EB',
-    bg:    '#2563EB12',
+    color: '#60A5FA',   // blue-400 — professional, clear
+    bg:    '#60A5FA14',
     keywords: [
       'work', 'office', 'meeting', 'email', 'report', 'presentation',
       'project', 'deadline', 'client', 'boss', 'colleague', 'team',
@@ -91,8 +91,8 @@ const CATEGORIES: Array<{
   {
     label: 'Health',
     emoji: '💊',
-    color: '#DC2626',
-    bg:    '#DC262612',
+    color: '#F87171',   // red-400 — care, medical
+    bg:    '#F8717114',
     keywords: [
       'doctor', 'dentist', 'appointment', 'medicine', 'medication', 'pill',
       'supplement', 'vitamin', 'vaccine', 'checkup', 'hospital', 'clinic',
@@ -102,8 +102,8 @@ const CATEGORIES: Array<{
   {
     label: 'Finance',
     emoji: '💰',
-    color: '#059669',
-    bg:    '#05966912',
+    color: '#4ADE80',   // green-400 — growth, money
+    bg:    '#4ADE8014',
     keywords: [
       'budget', 'money', 'finance', 'savings', 'save', 'invest', 'investment',
       'bank', 'pay', 'bill', 'rent', 'insurance', 'tax', 'expense',
@@ -113,8 +113,8 @@ const CATEGORIES: Array<{
 ];
 
 const DEFAULT: TaskCategory = {
-  color: '#6366F1',
-  bg:    '#6366F112',
+  color: '#818CF8',   // indigo-400 — neutral-warm default
+  bg:    '#818CF814',
   label: 'Task',
   emoji: '✦',
 };

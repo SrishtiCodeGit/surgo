@@ -25,14 +25,14 @@ const { width: SW } = Dimensions.get('window');
 // ─── Category accent colours ──────────────────────────────────────────────────
 
 const CATEGORY_COLORS: Record<GoalCategory, string> = {
-  fitness:       '#F97316',
-  career:        '#6366F1',
-  learning:      '#0EA5E9',
-  finance:       '#22C55E',
-  health:        '#EC4899',
-  relationships: '#F43F5E',
-  creativity:    '#A855F7',
-  other:         '#94A3B8',
+  fitness:       '#FB923C',  // orange-400   — warm, energetic
+  career:        '#818CF8',  // indigo-400   — focus, ambition
+  learning:      '#38BDF8',  // sky-400      — open, curious
+  finance:       '#34D399',  // emerald-400  — growth, money
+  health:        '#F472B6',  // pink-400     — care, vitality
+  relationships: '#FB7185',  // rose-400     — warmth, connection
+  creativity:    '#C084FC',  // purple-400   — imagination
+  other:         '#94A3B8',  // slate-400    — neutral
 };
 
 const CATEGORIES: { key: GoalCategory; label: string; emoji: string }[] = [

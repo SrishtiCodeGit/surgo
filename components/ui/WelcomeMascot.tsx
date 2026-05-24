@@ -22,16 +22,16 @@ const CFG = {
     eyeRy: 1.0,
   },
   balanced: {
-    body:  ['#A0B0FF', '#4050D8', '#0A0A70'] as const,
-    iris:  ['#80E0FF', '#004A70']             as const,
-    arm:   ['#7080F8', '#1020A0']             as const,
-    foot:  ['#5060E8', '#080870']             as const,
-    ear:   ['#7080F8', '#1020A0']             as const,
-    gnd:   'rgba(60,80,220,0.16)',
-    smile: '#1A1A80',
-    brow:  '#0A0A60',
+    body:  ['#BFDBFE', '#60A5FA', '#1D4ED8'] as const,
+    iris:  ['#BAE6FD', '#0369A1']             as const,
+    arm:   ['#93C5FD', '#3B82F6']             as const,
+    foot:  ['#7DD3FC', '#1D4ED8']             as const,
+    ear:   ['#93C5FD', '#3B82F6']             as const,
+    gnd:   'rgba(59,130,246,0.16)',
+    smile: '#1E3A8A',
+    brow:  '#1E40AF',
     blush: null,
-    gloss: 'rgba(200,220,255,0.40)',
+    gloss: 'rgba(186,230,253,0.45)',
     eyeRy: 0.90,
   },
   hardcore: {
@@ -172,17 +172,17 @@ export function WelcomeMascot({
       {isBalanced && (
         <>
           <Circle cx={eyeLx} cy={eyeY} r={eR*1.10} fill="none"
-            stroke="#C0D0FF" strokeWidth={s*0.018} strokeOpacity="0.88" />
+            stroke="#BFDBFE" strokeWidth={s*0.018} strokeOpacity="0.88" />
           <Circle cx={eyeRx} cy={eyeY} r={eR*1.10} fill="none"
-            stroke="#C0D0FF" strokeWidth={s*0.018} strokeOpacity="0.88" />
+            stroke="#BFDBFE" strokeWidth={s*0.018} strokeOpacity="0.88" />
           <Path
             d={`M ${eyeLx + eR*1.10} ${eyeY - eR*0.05} L ${eyeRx - eR*1.10} ${eyeY - eR*0.05}`}
-            stroke="#C0D0FF" strokeWidth={s*0.013} strokeOpacity="0.80"
+            stroke="#BFDBFE" strokeWidth={s*0.013} strokeOpacity="0.80"
           />
           <Path d={`M ${eyeLx - eR*1.10} ${eyeY} L ${eyeLx - eR*1.42} ${eyeY + eR*0.24}`}
-            stroke="#C0D0FF" strokeWidth={s*0.012} strokeLinecap="round" strokeOpacity="0.72" />
+            stroke="#BFDBFE" strokeWidth={s*0.012} strokeLinecap="round" strokeOpacity="0.72" />
           <Path d={`M ${eyeRx + eR*1.10} ${eyeY} L ${eyeRx + eR*1.42} ${eyeY + eR*0.24}`}
-            stroke="#C0D0FF" strokeWidth={s*0.012} strokeLinecap="round" strokeOpacity="0.72" />
+            stroke="#BFDBFE" strokeWidth={s*0.012} strokeLinecap="round" strokeOpacity="0.72" />
         </>
       )}
 
@@ -220,9 +220,9 @@ export function WelcomeMascot({
       {isBalanced && !isMotivating && !isSad && (
         <>
           <Path d={`M ${eyeLx - eR*0.72} ${eyeY - eR*0.86} L ${eyeLx + eR*0.58} ${eyeY - eR*0.68}`}
-            stroke="#0A0A60" strokeWidth={s*0.030} strokeLinecap="round" />
+            stroke="#1E40AF" strokeWidth={s*0.030} strokeLinecap="round" />
           <Path d={`M ${eyeRx - eR*0.58} ${eyeY - eR*0.68} L ${eyeRx + eR*0.72} ${eyeY - eR*0.86}`}
-            stroke="#0A0A60" strokeWidth={s*0.030} strokeLinecap="round" />
+            stroke="#1E40AF" strokeWidth={s*0.030} strokeLinecap="round" />
         </>
       )}
 

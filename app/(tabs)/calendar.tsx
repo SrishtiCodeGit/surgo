@@ -27,14 +27,14 @@ const DAY_LABELS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 // ─── Category colours ─────────────────────────────────────────────────────────
 
 const CAT: Record<string, { bg: string; bar: string; title: string; sub: string }> = {
-  fitness:       { bg:'#FFF7ED', bar:'#F97316', title:'#92400E', sub:'#FB923C' },
-  career:        { bg:'#F0F0FF', bar:'#6366F1', title:'#3730A3', sub:'#818CF8' },
-  learning:      { bg:'#E0F7FF', bar:'#0EA5E9', title:'#075985', sub:'#38BDF8' },
-  finance:       { bg:'#F0FDF4', bar:'#22C55E', title:'#14532D', sub:'#4ADE80' },
-  health:        { bg:'#FFF0F7', bar:'#EC4899', title:'#831843', sub:'#F472B6' },
-  relationships: { bg:'#FFF1F2', bar:'#F43F5E', title:'#9F1239', sub:'#FB7185' },
-  creativity:    { bg:'#FAF0FF', bar:'#A855F7', title:'#581C87', sub:'#C084FC' },
-  other:         { bg:'#F8FAFC', bar:'#94A3B8', title:'#334155', sub:'#94A3B8' },
+  fitness:       { bg:'#FFF7ED', bar:'#FB923C', title:'#9A3412', sub:'#FDBA74' },
+  career:        { bg:'#EEF2FF', bar:'#818CF8', title:'#3730A3', sub:'#A5B4FC' },
+  learning:      { bg:'#E0F2FE', bar:'#38BDF8', title:'#0C4A6E', sub:'#7DD3FC' },
+  finance:       { bg:'#ECFDF5', bar:'#34D399', title:'#065F46', sub:'#6EE7B7' },
+  health:        { bg:'#FDF2F8', bar:'#F472B6', title:'#831843', sub:'#F9A8D4' },
+  relationships: { bg:'#FFF1F2', bar:'#FB7185', title:'#881337', sub:'#FDA4AF' },
+  creativity:    { bg:'#FAF5FF', bar:'#C084FC', title:'#6B21A8', sub:'#D8B4FE' },
+  other:         { bg:'#F8FAFC', bar:'#94A3B8', title:'#475569', sub:'#CBD5E1' },
 };
 const cs = (cat?: string) => CAT[cat ?? 'other'] ?? CAT.other;
 
