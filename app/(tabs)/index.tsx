@@ -28,6 +28,7 @@ import { StreakBadge } from '@/components/ui/StreakBadge';
 import { TaskCard } from '@/components/ui/TaskCard';
 import { WelcomeMascot } from '@/components/ui/WelcomeMascot';
 import { BellIcon, NotificationPanel } from '@/components/ui/NotificationPanel';
+import { TaskCelebrationModal } from '@/components/ui/TaskCelebrationModal';
 import { getMilestoneQuote, getTodaysQuote } from '@/lib/quotes';
 import { toDateString } from '@/lib/streak';
 
@@ -48,6 +49,7 @@ export default function TodayScreen() {
 
   const [refreshing, setRefreshing]       = useState(false);
   const [showNotifs, setShowNotifs]       = useState(false);
+  const [celebration, setCelebration]     = useState<{ remaining: number; total: number } | null>(null);
 
   const {
     notifs, isLoaded: notifsLoaded,
@@ -95,6 +97,12 @@ export default function TodayScreen() {
       delete: { type: 'easeInEaseOut', property: 'opacity' },
     });
     await completeTask(taskId);
+
+    // Show celebration after state settles
+    const updated   = getTodaysTasks();
+    const total     = updated.length;
+    const remaining = updated.filter(t => !t.completedAt).length;
+    setCelebration({ remaining, total });
   };
 
   const handleCheckIn = async () => {
@@ -167,6 +175,14 @@ export default function TodayScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      {/* Task completion celebration */}
+      <TaskCelebrationModal
+        visible={!!celebration}
+        remaining={celebration?.remaining ?? 0}
+        total={celebration?.total ?? 0}
+        onDismiss={() => setCelebration(null)}
+      />
+
       <ScrollView
         contentContainerStyle={{ padding: 20, paddingBottom: 48 }}
         refreshControl={
