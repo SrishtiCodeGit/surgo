@@ -82,13 +82,13 @@ export function WelcomeMascot({
   const isThumbsUp   = pose === 'thumbsUp';
 
   // ── Eye dimensions ────────────────────────────────────────────────────────
-  // Motivating uses full cute eyes (mouth does the work), sad stays normal
-  const eyeRyVal  = eR * cfg.eyeRy;
-  const actualIR  = iR;
-  const actualPR  = pR;
-  const irisY     = eyeY + eR * 0.06;
-  const pupilY    = eyeY + eR * 0.08;
-  const shineR    = s * 0.030;
+  // Motivating: heavy squint for anger, else normal
+  const eyeRyVal  = isMotivating ? eR * cfg.eyeRy * 0.38 : eR * cfg.eyeRy;
+  const actualIR  = isMotivating ? iR * 0.58 : iR;
+  const actualPR  = isMotivating ? pR * 0.60 : pR;
+  const irisY     = isMotivating ? eyeY - eR * 0.06 : eyeY + eR * 0.06;
+  const pupilY    = isMotivating ? eyeY - eR * 0.04 : eyeY + eR * 0.08;
+  const shineR    = isMotivating ? s * 0.014 : s * 0.030;
 
   return (
     <Svg width={s} height={s}>
@@ -161,8 +161,12 @@ export function WelcomeMascot({
       {/* Eye shine */}
       <Circle cx={eyeLx - actualIR*0.32} cy={irisY - actualIR*0.40} r={shineR} fill="white" />
       <Circle cx={eyeRx - actualIR*0.32} cy={irisY - actualIR*0.40} r={shineR} fill="white" />
-      <Circle cx={eyeLx + iR*0.28} cy={eyeY + iR*0.06} r={s*0.016} fill="rgba(255,255,255,0.65)" />
-      <Circle cx={eyeRx + iR*0.28} cy={eyeY + iR*0.06} r={s*0.016} fill="rgba(255,255,255,0.65)" />
+      {!isMotivating && (
+        <>
+          <Circle cx={eyeLx + iR*0.28} cy={eyeY + iR*0.06} r={s*0.016} fill="rgba(255,255,255,0.65)" />
+          <Circle cx={eyeRx + iR*0.28} cy={eyeY + iR*0.06} r={s*0.016} fill="rgba(255,255,255,0.65)" />
+        </>
+      )}
 
       {/* ── Balanced: glasses ── */}
       {isBalanced && (
@@ -184,16 +188,16 @@ export function WelcomeMascot({
 
       {/* ── Eyebrows ── */}
 
-      {/* Motivating: raised energetic brows (wide open + pumped) */}
+      {/* Motivating: thick angry brows slamming down toward nose  (\  /) */}
       {isMotivating && (
         <>
           <Path
-            d={`M ${eyeLx - eR*0.68} ${eyeY - eR*1.10} Q ${eyeLx + eR*0.10} ${eyeY - eR*1.28} ${eyeLx + eR*0.64} ${eyeY - eR*1.08}`}
-            stroke={cfg.brow} strokeWidth={s*0.026} strokeLinecap="round" fill="none"
+            d={`M ${eyeLx - eR*0.80} ${eyeY - eR*1.10} L ${eyeLx + eR*0.68} ${eyeY - eR*0.52}`}
+            stroke={cfg.brow} strokeWidth={s*0.040} strokeLinecap="round"
           />
           <Path
-            d={`M ${eyeRx - eR*0.64} ${eyeY - eR*1.08} Q ${eyeRx - eR*0.10} ${eyeY - eR*1.28} ${eyeRx + eR*0.68} ${eyeY - eR*1.10}`}
-            stroke={cfg.brow} strokeWidth={s*0.026} strokeLinecap="round" fill="none"
+            d={`M ${eyeRx - eR*0.68} ${eyeY - eR*0.52} L ${eyeRx + eR*0.80} ${eyeY - eR*1.10}`}
+            stroke={cfg.brow} strokeWidth={s*0.040} strokeLinecap="round"
           />
         </>
       )}
