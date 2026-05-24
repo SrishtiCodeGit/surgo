@@ -116,8 +116,8 @@ function StreakRing({
         <Text style={{
           color: D.dark,
           fontSize: 15,
-          fontWeight: '800',
-          letterSpacing: -0.4,
+          fontWeight: '300',
+          letterSpacing: 0.2,
           marginTop: -10,
         }}>
           {current} {current === 1 ? 'day' : 'days'}
@@ -150,7 +150,7 @@ function RateRing({ rate, primary }: { rate: number; primary: string }) {
       <SvgText
         x={size/2} y={size/2 + 4.5}
         textAnchor="middle"
-        fontSize="13" fontWeight="700"
+        fontSize="13" fontWeight="400"
         fill={D.dark}
       >
         {rate}%
@@ -260,7 +260,7 @@ function WeekChart({
                 textAlign: 'center',
                 color: isToday ? D.dark : D.muted,
                 fontSize: 10,
-                fontWeight: isToday ? '800' : '500',
+                fontWeight: isToday ? '500' : '400',
               }}>
                 {label}
               </Text>
@@ -289,7 +289,7 @@ function Heatmap({ days, primary }: { days: (StreakDay | null)[]; primary: strin
         ].map(l => (
           <View key={l.label} style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
             <View style={{ width: 10, height: 10, borderRadius: 3, backgroundColor: l.color }} />
-            <Text style={{ color: D.muted, fontSize: 10, fontWeight: '500' }}>{l.label}</Text>
+            <Text style={{ color: D.muted, fontSize: 10, fontWeight: '400' }}>{l.label}</Text>
           </View>
         ))}
       </View>
@@ -391,16 +391,16 @@ function SurgoChartBanner({
         <Text style={{
           color: D.dark,
           fontSize: 13,
-          fontWeight: '800',
+          fontWeight: '500',
           lineHeight: 19,
-          letterSpacing: -0.2,
+          letterSpacing: -0.1,
         }}>
           See your progress here!
         </Text>
         <Text style={{
           color: D.muted,
           fontSize: 11,
-          fontWeight: '500',
+          fontWeight: '400',
           marginTop: 4,
           lineHeight: 16,
         }}>
@@ -452,8 +452,8 @@ export default function ProgressScreen() {
 
   const cardTitle = (title: string) => (
     <Text style={{
-      color: D.dark, fontSize: 15, fontWeight: '700',
-      letterSpacing: -0.2, marginBottom: 16,
+      color: D.dark, fontSize: 14, fontWeight: '500',
+      letterSpacing: 0, marginBottom: 16,
     }}>
       {title}
     </Text>
@@ -467,10 +467,10 @@ export default function ProgressScreen() {
       >
         {/* ── Header ────────────────────────────────────────────────── */}
         <View style={{ marginBottom: 20 }}>
-          <Text style={{ color: D.dark, fontSize: 28, fontWeight: '800', letterSpacing: -0.5 }}>
+          <Text style={{ color: D.dark, fontSize: 28, fontWeight: '600', letterSpacing: -0.3 }}>
             Progress
           </Text>
-          <Text style={{ color: D.muted, fontSize: 12, marginTop: 3, fontWeight: '500' }}>
+          <Text style={{ color: D.muted, fontSize: 12, marginTop: 3, fontWeight: '400' }}>
             Your consistency story at a glance
           </Text>
         </View>
@@ -481,17 +481,17 @@ export default function ProgressScreen() {
             <StreakRing current={current} longest={longest} primary={primary} themeKey={themeKey} />
             <View style={{ flexDirection: 'row', gap: 28, marginTop: 16 }}>
               <View style={{ alignItems: 'center' }}>
-                <Text style={{ color: D.dark, fontSize: 20, fontWeight: '800' }}>{longest}</Text>
+                <Text style={{ color: D.dark, fontSize: 22, fontWeight: '300' }}>{longest}</Text>
                 <Text style={{ color: D.muted, fontSize: 11, marginTop: 2 }}>Best streak</Text>
               </View>
               <View style={{ width: 1, backgroundColor: D.border }} />
               <View style={{ alignItems: 'center' }}>
-                <Text style={{ color: D.dark, fontSize: 20, fontWeight: '800' }}>{s?.totalCheckIns ?? 0}</Text>
+                <Text style={{ color: D.dark, fontSize: 22, fontWeight: '300' }}>{s?.totalCheckIns ?? 0}</Text>
                 <Text style={{ color: D.muted, fontSize: 11, marginTop: 2 }}>Total check-ins</Text>
               </View>
               <View style={{ width: 1, backgroundColor: D.border }} />
               <View style={{ alignItems: 'center' }}>
-                <Text style={{ color: D.dark, fontSize: 20, fontWeight: '800' }}>{activeGoals}</Text>
+                <Text style={{ color: D.dark, fontSize: 22, fontWeight: '300' }}>{activeGoals}</Text>
                 <Text style={{ color: D.muted, fontSize: 11, marginTop: 2 }}>Active goals</Text>
               </View>
             </View>
@@ -527,7 +527,7 @@ export default function ProgressScreen() {
             shadowOpacity: 0.05, shadowRadius: 10, elevation: 2,
           }}>
             <RateRing rate={rate} primary={primary} />
-            <Text style={{ color: D.dark, fontSize: 12, fontWeight: '700', marginTop: 8 }}>
+            <Text style={{ color: D.dark, fontSize: 12, fontWeight: '400', marginTop: 8 }}>
               Completion
             </Text>
           </View>
@@ -547,8 +547,8 @@ export default function ProgressScreen() {
             ].map(item => (
               <View key={item.label}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <Text style={{ color: D.muted, fontSize: 11, fontWeight: '500' }}>{item.label}</Text>
-                  <Text style={{ color: D.dark, fontSize: 11, fontWeight: '700' }}>{item.value}d</Text>
+                  <Text style={{ color: D.muted, fontSize: 11, fontWeight: '400' }}>{item.label}</Text>
+                  <Text style={{ color: D.dark, fontSize: 11, fontWeight: '400' }}>{item.value}d</Text>
                 </View>
                 <View style={{ height: 4, backgroundColor: D.missed, borderRadius: 2, overflow: 'hidden' }}>
                   <View style={{
@@ -572,14 +572,14 @@ export default function ProgressScreen() {
               <Text style={{ fontSize: 22 }}>❄️</Text>
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{ color: D.dark, fontWeight: '700', fontSize: 14 }}>
+              <Text style={{ color: D.dark, fontWeight: '500', fontSize: 14 }}>
                 Freeze Cards
               </Text>
               <Text style={{ color: D.muted, fontSize: 12, marginTop: 2 }}>
                 {s?.freezeCardsAvailable ?? 0} card{s?.freezeCardsAvailable !== 1 ? 's' : ''} available to protect your streak
               </Text>
             </View>
-            <Text style={{ color: primary, fontSize: 28, fontWeight: '800' }}>
+            <Text style={{ color: primary, fontSize: 28, fontWeight: '300' }}>
               {s?.freezeCardsAvailable ?? 0}
             </Text>
           </View>

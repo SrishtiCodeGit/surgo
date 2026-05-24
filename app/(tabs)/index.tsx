@@ -200,7 +200,7 @@ export default function TodayScreen() {
         {/* ── Top bar: SURGO wordmark · bell · profile ─────────────────────── */}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
           <View style={{ backgroundColor: theme.colors.primaryLight, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 }}>
-            <Text style={{ color: theme.colors.primary, fontWeight: '900', fontSize: 11, letterSpacing: 2.5 }}>
+            <Text style={{ color: theme.colors.primary, fontWeight: '600', fontSize: 11, letterSpacing: 2.5 }}>
               SURGO
             </Text>
           </View>
@@ -297,7 +297,7 @@ export default function TodayScreen() {
               style={{
                 color: theme.colors.textMuted,
                 fontSize: 11,
-                fontWeight: '700',
+                fontWeight: '400',
                 textTransform: 'uppercase',
                 letterSpacing: 1.8,
                 marginBottom: 6,
@@ -309,8 +309,8 @@ export default function TodayScreen() {
               style={{
                 color: theme.colors.text,
                 fontSize: 26,
-                fontWeight: '800',
-                letterSpacing: -0.5,
+                fontWeight: '500',
+                letterSpacing: -0.3,
                 lineHeight: 30,
               }}
             >
@@ -320,7 +320,7 @@ export default function TodayScreen() {
               style={{
                 color: theme.colors.primary,
                 fontSize: 13,
-                fontWeight: '700',
+                fontWeight: '400',
                 marginTop: 8,
                 letterSpacing: 0.2,
               }}
@@ -356,7 +356,7 @@ export default function TodayScreen() {
             }}
           >
             <Text style={{ fontSize: 36, marginBottom: 12 }}>{theme.emoji.goal}</Text>
-            <Text style={{ color: theme.colors.text, fontSize: 17, fontWeight: '700', marginBottom: 8, textAlign: 'center' }}>
+            <Text style={{ color: theme.colors.text, fontSize: 17, fontWeight: '500', marginBottom: 8, textAlign: 'center' }}>
               No goals yet
             </Text>
             <Text style={{ color: theme.colors.textMuted, fontSize: 13, textAlign: 'center', marginBottom: 20 }}>
@@ -366,7 +366,7 @@ export default function TodayScreen() {
               onPress={() => router.push('/(tabs)/goals')}
               style={{ backgroundColor: theme.colors.primary, paddingHorizontal: 20, paddingVertical: 12, borderRadius: 12 }}
             >
-              <Text style={{ color: theme.colors.textInverse, fontWeight: '700' }}>+ Add a Goal</Text>
+              <Text style={{ color: theme.colors.textInverse, fontWeight: '500' }}>+ Add a Goal</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -385,7 +385,7 @@ export default function TodayScreen() {
             }}
           >
             <Text style={{ fontSize: 32, marginBottom: 10 }}>✅</Text>
-            <Text style={{ color: theme.colors.text, fontSize: 16, fontWeight: '700', textAlign: 'center' }}>
+            <Text style={{ color: theme.colors.text, fontSize: 16, fontWeight: '500', textAlign: 'center' }}>
               No tasks scheduled for today
             </Text>
             <Text style={{ color: theme.colors.textMuted, fontSize: 13, textAlign: 'center', marginTop: 6 }}>
@@ -399,7 +399,7 @@ export default function TodayScreen() {
           <>
             {/* Header row */}
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-              <Text style={{ color: theme.colors.text, fontSize: 18, fontWeight: '800', letterSpacing: -0.3 }}>
+              <Text style={{ color: theme.colors.text, fontSize: 18, fontWeight: '500', letterSpacing: -0.2 }}>
                 Today's Tasks
               </Text>
               <View
@@ -410,7 +410,7 @@ export default function TodayScreen() {
                   borderRadius: 10,
                 }}
               >
-                <Text style={{ color: allDone ? doneColor : theme.colors.textMuted, fontSize: 12, fontWeight: '700' }}>
+                <Text style={{ color: allDone ? doneColor : theme.colors.textMuted, fontSize: 12, fontWeight: '400' }}>
                   {completedCount}/{totalCount} done
                 </Text>
               </View>
@@ -452,7 +452,7 @@ export default function TodayScreen() {
             }}
             activeOpacity={0.85}
           >
-            <Text style={{ color: theme.colors.textInverse, fontSize: 16, fontWeight: '800' }}>
+            <Text style={{ color: theme.colors.textInverse, fontSize: 16, fontWeight: '500' }}>
               {theme.emoji.win} Check In — Extend Streak
             </Text>
           </TouchableOpacity>
@@ -470,7 +470,7 @@ export default function TodayScreen() {
               alignItems: 'center',
             }}
           >
-            <Text style={{ color: doneColor, fontSize: 15, fontWeight: '700' }}>
+            <Text style={{ color: doneColor, fontSize: 15, fontWeight: '400' }}>
               ✓ Checked in for today!
             </Text>
           </View>
@@ -481,7 +481,7 @@ export default function TodayScreen() {
           <View style={{ marginTop: 28 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 }}>
               <View style={{ flex: 1, height: 1, backgroundColor: theme.colors.border }} />
-              <Text style={{ color: theme.colors.textMuted, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1.5 }}>
+              <Text style={{ color: theme.colors.textMuted, fontSize: 11, fontWeight: '400', textTransform: 'uppercase', letterSpacing: 1.5 }}>
                 End of day
               </Text>
               <View style={{ flex: 1, height: 1, backgroundColor: theme.colors.border }} />
@@ -519,7 +519,7 @@ export default function TodayScreen() {
                   <Text style={{ fontSize: 22 }}>🌙</Text>
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ color: theme.colors.text, fontWeight: '700', fontSize: 15 }}>
+                  <Text style={{ color: theme.colors.text, fontWeight: '500', fontSize: 15 }}>
                     Nightly Review
                   </Text>
                   <Text style={{ color: theme.colors.textMuted, fontSize: 12, marginTop: 2 }} numberOfLines={1}>
@@ -533,7 +533,7 @@ export default function TodayScreen() {
                     alignItems: 'center', justifyContent: 'center',
                   }}
                 >
-                  <Text style={{ color: theme.colors.primary, fontSize: 16, fontWeight: '700' }}>→</Text>
+                  <Text style={{ color: theme.colors.primary, fontSize: 16, fontWeight: '400' }}>→</Text>
                 </View>
               </TouchableOpacity>
             ))}

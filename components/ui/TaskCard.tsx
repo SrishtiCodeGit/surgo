@@ -98,7 +98,7 @@ export function TaskCard({ task, onComplete }: TaskCardProps) {
           <Text style={{
             color:              theme.colors.text,
             fontSize:           15,
-            fontWeight:         '600',
+            fontWeight:         '400',
             lineHeight:         21,
             textDecorationLine: isCompleted ? 'line-through' : 'none',
           }}>
@@ -121,7 +121,7 @@ export function TaskCard({ task, onComplete }: TaskCardProps) {
                 <Text style={{
                   color:       cat.color,
                   fontSize:    10,
-                  fontWeight:  '700',
+                  fontWeight:  '400',
                   letterSpacing: 0.3,
                 }}>
                   {cat.label}
@@ -134,7 +134,7 @@ export function TaskCard({ task, onComplete }: TaskCardProps) {
               <Text style={{
                 color:         theme.colors.textMuted,
                 fontSize:      11,
-                fontWeight:    '600',
+                fontWeight:    '400',
                 letterSpacing: 0.4,
               }}>
                 {task.estimatedMinutes} min
@@ -155,7 +155,7 @@ export function TaskCard({ task, onComplete }: TaskCardProps) {
             <Text style={{
               color:         cat.color,
               fontSize:      9,
-              fontWeight:    '900',
+              fontWeight:    '500',
               letterSpacing: 1.2,
             }}>
               AI

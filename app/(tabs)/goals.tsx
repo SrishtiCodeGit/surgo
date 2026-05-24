@@ -103,7 +103,7 @@ function SurgoBubble({
           borderBottomWidth: 7, borderBottomColor: 'transparent',
           borderRightWidth: 7, borderRightColor: theme.colors.surface,
         }} />
-        <Text style={{ color: theme.colors.text, fontSize: 15, fontWeight: '800', lineHeight: 22 }}>
+        <Text style={{ color: theme.colors.text, fontSize: 15, fontWeight: '500', lineHeight: 22 }}>
           {headline}
         </Text>
         {sub && (
@@ -215,7 +215,7 @@ export default function GoalsScreen() {
           {/* ── Header: title left, Surgo + "+" right ── */}
           <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 24 }}>
             <View>
-              <Text style={{ color: theme.colors.text, fontSize: 32, fontWeight: '900', letterSpacing: -1 }}>
+              <Text style={{ color: theme.colors.text, fontSize: 30, fontWeight: '600', letterSpacing: -0.5 }}>
                 My Goals
               </Text>
               <Text style={{ color: theme.colors.textMuted, fontSize: 13, marginTop: 3 }}>
@@ -255,8 +255,8 @@ export default function GoalsScreen() {
             }}>
               <WelcomeMascot themeKey={themeKey} size={130} pose="happy" />
               <Text style={{
-                color: theme.colors.text, fontSize: 22, fontWeight: '900',
-                marginTop: 18, marginBottom: 8, letterSpacing: -0.5, textAlign: 'center',
+                color: theme.colors.text, fontSize: 20, fontWeight: '500',
+                marginTop: 18, marginBottom: 8, letterSpacing: -0.2, textAlign: 'center',
               }}>
                 I'm ready when you are!
               </Text>
@@ -277,7 +277,7 @@ export default function GoalsScreen() {
                   shadowOpacity: 0.30, shadowRadius: 12, elevation: 5,
                 }}
               >
-                <Text style={{ color: theme.colors.textInverse, fontWeight: '800', fontSize: 15 }}>
+                <Text style={{ color: theme.colors.textInverse, fontWeight: '500', fontSize: 15 }}>
                   Set My First Goal
                 </Text>
               </TouchableOpacity>
@@ -327,13 +327,13 @@ export default function GoalsScreen() {
                   }}>
                     <Text style={{ fontSize: 18 }}>{cat?.emoji}</Text>
                   </View>
-                  <Text style={{ color: cc, fontSize: 11, fontWeight: '900', letterSpacing: 1.5, textTransform: 'uppercase', flex: 1 }}>
+                  <Text style={{ color: cc, fontSize: 11, fontWeight: '500', letterSpacing: 1.2, textTransform: 'uppercase', flex: 1 }}>
                     {cat?.label}
                   </Text>
                   {/* ETA badge */}
                   {hasReview && (
                     <View style={{ backgroundColor: etaColor + '20', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 }}>
-                      <Text style={{ color: etaColor, fontSize: 10, fontWeight: '800' }}>{etaLabel}</Text>
+                      <Text style={{ color: etaColor, fontSize: 10, fontWeight: '400' }}>{etaLabel}</Text>
                     </View>
                   )}
                 </View>
@@ -342,10 +342,10 @@ export default function GoalsScreen() {
                 <View style={{ paddingHorizontal: 18, paddingTop: 14, paddingBottom: 16 }}>
                   {/* Title + % */}
                   <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 12, gap: 10 }}>
-                    <Text style={{ flex: 1, color: theme.colors.text, fontSize: 17, fontWeight: '800', lineHeight: 24 }} numberOfLines={2}>
+                    <Text style={{ flex: 1, color: theme.colors.text, fontSize: 16, fontWeight: '500', lineHeight: 24 }} numberOfLines={2}>
                       {goal.title}
                     </Text>
-                    <Text style={{ color: cc, fontSize: 24, fontWeight: '900', letterSpacing: -0.5 }}>
+                    <Text style={{ color: cc, fontSize: 24, fontWeight: '300', letterSpacing: -0.3 }}>
                       {progress}%
                     </Text>
                   </View>
@@ -358,16 +358,16 @@ export default function GoalsScreen() {
                   {/* Meta */}
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                     <View style={{ backgroundColor: cc + '14', paddingHorizontal: 9, paddingVertical: 4, borderRadius: 8 }}>
-                      <Text style={{ color: cc, fontSize: 11, fontWeight: '700' }}>{daysLeft}d left</Text>
+                      <Text style={{ color: cc, fontSize: 11, fontWeight: '400' }}>{daysLeft}d left</Text>
                     </View>
                     <Text style={{ color: theme.colors.textMuted, fontSize: 12 }}>·</Text>
-                    <Text style={{ color: theme.colors.textMuted, fontSize: 12, fontWeight: '500' }}>
+                    <Text style={{ color: theme.colors.textMuted, fontSize: 12, fontWeight: '400' }}>
                       {completedTasks}/{goalTasks.length} tasks done
                     </Text>
                     {(goal.minutesPerDay ?? 0) > 0 && (
                       <>
                         <Text style={{ color: theme.colors.textMuted, fontSize: 12 }}>·</Text>
-                        <Text style={{ color: theme.colors.textMuted, fontSize: 12, fontWeight: '500' }}>
+                        <Text style={{ color: theme.colors.textMuted, fontSize: 12, fontWeight: '400' }}>
                           {goal.minutesPerDay}m/day
                         </Text>
                       </>
@@ -395,7 +395,7 @@ export default function GoalsScreen() {
             {/* Back + dots */}
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
               <TouchableOpacity onPress={() => { resetForm(); setStep('list'); }} activeOpacity={0.7}>
-                <Text style={{ color: theme.colors.primary, fontSize: 15, fontWeight: '700' }}>← Back</Text>
+                <Text style={{ color: theme.colors.primary, fontSize: 15, fontWeight: '400' }}>← Back</Text>
               </TouchableOpacity>
               <StepDots current={1} total={2} color={theme.colors.primary} />
             </View>
@@ -432,7 +432,7 @@ export default function GoalsScreen() {
             />
 
             {/* Category */}
-            <Text style={{ color: theme.colors.text, fontSize: 13, fontWeight: '800', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 14 }}>
+            <Text style={{ color: theme.colors.text, fontSize: 12, fontWeight: '500', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 14 }}>
               Category
             </Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 32 }}>
@@ -453,7 +453,7 @@ export default function GoalsScreen() {
                     }}
                   >
                     <Text style={{ fontSize: 22 }}>{cat.emoji}</Text>
-                    <Text style={{ color: isSelected ? '#fff' : cc, fontSize: 8, fontWeight: '900', letterSpacing: 0.5, textTransform: 'uppercase' }}>
+                    <Text style={{ color: isSelected ? '#fff' : cc, fontSize: 8, fontWeight: '500', letterSpacing: 0.5, textTransform: 'uppercase' }}>
                       {cat.label}
                     </Text>
                   </TouchableOpacity>
@@ -462,7 +462,7 @@ export default function GoalsScreen() {
             </View>
 
             {/* Deadline */}
-            <Text style={{ color: theme.colors.text, fontSize: 13, fontWeight: '800', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 14 }}>
+            <Text style={{ color: theme.colors.text, fontSize: 12, fontWeight: '500', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 14 }}>
               Deadline
             </Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 36 }}>
@@ -481,7 +481,7 @@ export default function GoalsScreen() {
                       borderColor: isSelected ? theme.colors.primary : theme.colors.border,
                     }}
                   >
-                    <Text style={{ color: isSelected ? theme.colors.textInverse : theme.colors.text, fontWeight: '700', fontSize: 13 }}>
+                    <Text style={{ color: isSelected ? theme.colors.textInverse : theme.colors.text, fontWeight: '400', fontSize: 13 }}>
                       {d.label}
                     </Text>
                   </TouchableOpacity>
@@ -501,7 +501,7 @@ export default function GoalsScreen() {
                 shadowOpacity: 0.32, shadowRadius: 14, elevation: 6,
               }}
             >
-              <Text style={{ color: theme.colors.textInverse, fontWeight: '800', fontSize: 16 }}>Next →</Text>
+              <Text style={{ color: theme.colors.textInverse, fontWeight: '500', fontSize: 16 }}>Next →</Text>
             </TouchableOpacity>
           </ScrollView>
         </KeyboardAvoidingView>
@@ -524,7 +524,7 @@ export default function GoalsScreen() {
           {/* Back + dots */}
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
             <TouchableOpacity onPress={() => setStep('step1')} activeOpacity={0.7}>
-              <Text style={{ color: theme.colors.primary, fontSize: 15, fontWeight: '700' }}>← Back</Text>
+              <Text style={{ color: theme.colors.primary, fontSize: 15, fontWeight: '400' }}>← Back</Text>
             </TouchableOpacity>
             <StepDots current={2} total={2} color={theme.colors.primary} />
           </View>
@@ -545,9 +545,9 @@ export default function GoalsScreen() {
             marginBottom: 24, borderWidth: 1, borderColor: cc + '22',
           }}>
             <Text style={{ fontSize: 18 }}>{cat?.emoji}</Text>
-            <Text style={{ color: cc, fontWeight: '700', fontSize: 13, flex: 1 }} numberOfLines={1}>{title}</Text>
+            <Text style={{ color: cc, fontWeight: '400', fontSize: 13, flex: 1 }} numberOfLines={1}>{title}</Text>
             <View style={{ backgroundColor: cc + '22', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 }}>
-              <Text style={{ color: cc, fontSize: 11, fontWeight: '700' }}>
+              <Text style={{ color: cc, fontSize: 11, fontWeight: '400' }}>
                 {DEADLINES.find(d => d.days === deadlineDays)?.label}
               </Text>
             </View>
@@ -573,12 +573,12 @@ export default function GoalsScreen() {
                     backgroundColor: isSelected ? 'rgba(255,255,255,0.20)' : theme.colors.primaryLight,
                     borderRadius: 10, paddingHorizontal: 12, paddingVertical: 7, minWidth: 68, alignItems: 'center',
                   }}>
-                    <Text style={{ color: isSelected ? '#fff' : theme.colors.primary, fontSize: 15, fontWeight: '900' }}>
+                    <Text style={{ color: isSelected ? '#fff' : theme.colors.primary, fontSize: 15, fontWeight: '500' }}>
                       {opt.label}
                     </Text>
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={{ color: isSelected ? '#fff' : theme.colors.text, fontWeight: '700', fontSize: 14 }}>{opt.desc}</Text>
+                    <Text style={{ color: isSelected ? '#fff' : theme.colors.text, fontWeight: '400', fontSize: 14 }}>{opt.desc}</Text>
                     <Text style={{ color: isSelected ? 'rgba(255,255,255,0.65)' : theme.colors.textMuted, fontSize: 12, marginTop: 2 }}>{opt.hrs}</Text>
                   </View>
                   {isSelected && (
@@ -602,7 +602,7 @@ export default function GoalsScreen() {
               shadowOpacity: 0.32, shadowRadius: 14, elevation: 6,
             }}
           >
-            <Text style={{ color: theme.colors.textInverse, fontWeight: '800', fontSize: 16 }}>
+            <Text style={{ color: theme.colors.textInverse, fontWeight: '500', fontSize: 16 }}>
               Build My Plan
             </Text>
           </TouchableOpacity>
@@ -629,7 +629,7 @@ export default function GoalsScreen() {
         }}>
           <WelcomeMascot themeKey={themeKey} size={130} pose="motivating" />
           <ActivityIndicator size="large" color={theme.colors.primary} style={{ marginTop: 20, marginBottom: 18 }} />
-          <Text style={{ color: theme.colors.text, fontSize: 20, fontWeight: '900', letterSpacing: -0.4, marginBottom: 8 }}>
+          <Text style={{ color: theme.colors.text, fontSize: 20, fontWeight: '500', letterSpacing: -0.2, marginBottom: 8 }}>
             On it!
           </Text>
           <Text style={{ color: theme.colors.textMuted, fontSize: 14, textAlign: 'center', lineHeight: 21 }}>
@@ -655,7 +655,7 @@ export default function GoalsScreen() {
 
           {/* Back */}
           <TouchableOpacity onPress={() => setStep('step2')} style={{ marginBottom: 20 }} activeOpacity={0.7}>
-            <Text style={{ color: theme.colors.primary, fontSize: 15, fontWeight: '700' }}>← Edit</Text>
+            <Text style={{ color: theme.colors.primary, fontSize: 15, fontWeight: '400' }}>← Edit</Text>
           </TouchableOpacity>
 
           {/* Surgo reaction bubble */}
@@ -678,15 +678,15 @@ export default function GoalsScreen() {
               <View style={{ backgroundColor: 'rgba(255,255,255,0.20)', borderRadius: 10, width: 34, height: 34, alignItems: 'center', justifyContent: 'center' }}>
                 <Text style={{ fontSize: 17 }}>{cat?.emoji}</Text>
               </View>
-              <Text style={{ color: 'rgba(255,255,255,0.80)', fontSize: 11, fontWeight: '800', letterSpacing: 1.4, textTransform: 'uppercase' }}>
+              <Text style={{ color: 'rgba(255,255,255,0.80)', fontSize: 11, fontWeight: '500', letterSpacing: 1.4, textTransform: 'uppercase' }}>
                 Your AI Plan
               </Text>
             </View>
-            <Text style={{ color: '#fff', fontSize: 19, fontWeight: '800', lineHeight: 26, marginBottom: 10 }}>{title}</Text>
+            <Text style={{ color: '#fff', fontSize: 19, fontWeight: '500', lineHeight: 26, marginBottom: 10 }}>{title}</Text>
             <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
               {[`${minutesPerDay} min/day`, DEADLINES.find(d => d.days === deadlineDays)?.label ?? '', theme.name].map((tag, i) => (
                 <View key={i} style={{ backgroundColor: 'rgba(255,255,255,0.18)', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 9 }}>
-                  <Text style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}>{tag}</Text>
+                  <Text style={{ color: '#fff', fontSize: 11, fontWeight: '400' }}>{tag}</Text>
                 </View>
               ))}
             </View>
@@ -700,12 +700,12 @@ export default function GoalsScreen() {
             {analysis.keyActivities.map((act, i) => (
               <View key={i} style={{ marginBottom: i < analysis.keyActivities.length - 1 ? 14 : 0 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                  <Text style={{ color: theme.colors.text, fontWeight: '700', fontSize: 14, flex: 1 }}>{act.activity}</Text>
+                  <Text style={{ color: theme.colors.text, fontWeight: '500', fontSize: 14, flex: 1 }}>{act.activity}</Text>
                   <View style={{ backgroundColor: theme.colors.primaryLight, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 }}>
-                    <Text style={{ color: theme.colors.primary, fontSize: 11, fontWeight: '600' }}>{act.timePerWeek}</Text>
+                    <Text style={{ color: theme.colors.primary, fontSize: 11, fontWeight: '400' }}>{act.timePerWeek}</Text>
                   </View>
                 </View>
-                <Text style={{ color: theme.colors.primary, fontSize: 12, fontWeight: '600', marginBottom: 2 }}>{act.why}</Text>
+                <Text style={{ color: theme.colors.primary, fontSize: 12, fontWeight: '400', marginBottom: 2 }}>{act.why}</Text>
                 <Text style={{ color: theme.colors.textMuted, fontSize: 13, lineHeight: 19 }}>{act.howTo}</Text>
                 {i < analysis.keyActivities.length - 1 && <View style={{ height: 1, backgroundColor: theme.colors.border, marginTop: 12 }} />}
               </View>
@@ -717,7 +717,7 @@ export default function GoalsScreen() {
               <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: i < analysis.milestones.length - 1 ? 12 : 0 }}>
                 <View style={{ width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: theme.colors.primary, backgroundColor: theme.colors.primaryLight }} />
                 <View style={{ flex: 1 }}>
-                  <Text style={{ color: theme.colors.text, fontSize: 13, fontWeight: '600' }}>{m.title}</Text>
+                  <Text style={{ color: theme.colors.text, fontSize: 13, fontWeight: '400' }}>{m.title}</Text>
                   <Text style={{ color: theme.colors.textMuted, fontSize: 11, marginTop: 1 }}>
                     {new Date(m.targetDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                   </Text>
@@ -731,7 +731,7 @@ export default function GoalsScreen() {
               <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: i < todayTasks.length - 1 ? 10 : 0 }}>
                 <View style={{ width: 18, height: 18, borderRadius: 9, borderWidth: 2, borderColor: theme.colors.border, marginTop: 2 }} />
                 <View style={{ flex: 1 }}>
-                  <Text style={{ color: theme.colors.text, fontSize: 13, fontWeight: '600' }}>{t.title}</Text>
+                  <Text style={{ color: theme.colors.text, fontSize: 13, fontWeight: '400' }}>{t.title}</Text>
                   {t.estimatedMinutes > 0 && <Text style={{ color: theme.colors.textMuted, fontSize: 11, marginTop: 1 }}>~{t.estimatedMinutes} min</Text>}
                 </View>
               </View>
@@ -755,7 +755,7 @@ export default function GoalsScreen() {
           >
             {saving
               ? <ActivityIndicator color={theme.colors.textInverse} />
-              : <Text style={{ color: theme.colors.textInverse, fontWeight: '800', fontSize: 16 }}>Start This Goal</Text>
+              : <Text style={{ color: theme.colors.textInverse, fontWeight: '500', fontSize: 16 }}>Start This Goal</Text>
             }
           </TouchableOpacity>
         </ScrollView>
@@ -774,7 +774,7 @@ function StepDots({ current, total, color }: { current: number; total: number; c
       {Array.from({ length: total }).map((_, i) => (
         <View key={i} style={{ width: i + 1 === current ? 22 : 8, height: 8, borderRadius: 4, backgroundColor: i + 1 <= current ? color : color + '28' }} />
       ))}
-      <Text style={{ color, fontSize: 11, fontWeight: '700', marginLeft: 2 }}>{current}/{total}</Text>
+      <Text style={{ color, fontSize: 11, fontWeight: '400', marginLeft: 2 }}>{current}/{total}</Text>
     </View>
   );
 }
@@ -784,7 +784,7 @@ function ReviewCard({ title, children, theme }: { title: string; children: React
     <View style={{ backgroundColor: theme.colors.surface, borderColor: theme.colors.border, borderWidth: 1, borderRadius: 18, overflow: 'hidden', marginBottom: 12 }}>
       <View style={{ height: 3, backgroundColor: theme.colors.primary, opacity: 0.35 }} />
       <View style={{ padding: 18 }}>
-        <Text style={{ color: theme.colors.text, fontWeight: '800', fontSize: 12, letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 12, opacity: 0.55 }}>
+        <Text style={{ color: theme.colors.text, fontWeight: '500', fontSize: 11, letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 12, opacity: 0.5 }}>
           {title}
         </Text>
         {children}
