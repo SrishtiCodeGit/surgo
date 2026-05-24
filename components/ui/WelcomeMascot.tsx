@@ -2,188 +2,312 @@ import { ThemeKey } from '@/types';
 import Svg, {
   Circle, Ellipse, Path, Defs,
   RadialGradient as SvgRadialGrad,
+  LinearGradient as SvgLinearGrad,
   Stop,
 } from 'react-native-svg';
 
+// ─── Pastel theme palettes ────────────────────────────────────────────────────
+
 const CFG = {
   soft: {
-    body:  ['#FFF5A0', '#F5C030', '#C07800'] as const,
-    iris:  ['#FFD080', '#5A2800']             as const,
-    arm:   ['#FFE870', '#C07200']             as const,
-    foot:  ['#FFD840', '#A05C00']             as const,
-    ear:   ['#FFE870', '#C07800']             as const,
-    gnd:   'rgba(180,120,0,0.14)',
-    smile: '#8A5000',
-    blush: '#FFAA30',
-    gloss: 'rgba(255,255,200,0.42)',
-    eyeRy: 1.0,
+    // Warm cream / sunshine yellow — soft & pastel
+    bodyLight:  '#FFFAE8',
+    bodyMid:    '#FFE566',
+    bodyDark:   '#D4A800',
+    tummy:      '#FFFDF5',
+    wingLight:  '#FFE566',
+    wingDark:   '#CAAA00',
+    footLight:  '#FFD84A',
+    footDark:   '#B89200',
+    outline:    '#7A5C00',
+    blush:      '#FFB347',
+    smile:      '#7A5C00',
+    pupil:      '#1A0A00',
+    irisColor:  '#6B3A00',
+    beak:       '#FFA040',
+    beakDark:   '#CC6000',
+    tuftColor:  '#FFE566',
+    eyebrowColor: '#7A5C00',
+    browType:   'happy' as const,
   },
   balanced: {
-    body:  ['#A0B0FF', '#4050D8', '#0A0A70'] as const,
-    iris:  ['#80E0FF', '#004A70']             as const,
-    arm:   ['#7080F8', '#1020A0']             as const,
-    foot:  ['#5060E8', '#080870']             as const,
-    ear:   ['#7080F8', '#1020A0']             as const,
-    gnd:   'rgba(60,80,220,0.16)',
-    smile: '#1A1A80',
-    blush: null,
-    gloss: 'rgba(200,220,255,0.40)',
-    eyeRy: 0.90,
+    // Pastel sky blue / periwinkle
+    bodyLight:  '#E8F4FF',
+    bodyMid:    '#90C8FF',
+    bodyDark:   '#2060CC',
+    tummy:      '#F5FAFF',
+    wingLight:  '#90C8FF',
+    wingDark:   '#2060CC',
+    footLight:  '#6AAAF0',
+    footDark:   '#1040A0',
+    outline:    '#0A3080',
+    blush:      null,
+    smile:      '#0A3080',
+    pupil:      '#000A20',
+    irisColor:  '#0050A0',
+    beak:       '#F0B040',
+    beakDark:   '#C07000',
+    tuftColor:  '#90C8FF',
+    eyebrowColor: '#0A3080',
+    browType:   'focused' as const,
   },
   hardcore: {
-    body:  ['#FF8060', '#FF2800', '#6A0000'] as const,
-    iris:  ['#FF9060', '#8A0000']             as const,
-    arm:   ['#FF5040', '#7A0000']             as const,
-    foot:  ['#DD3020', '#5A0000']             as const,
-    ear:   ['#FF5040', '#7A0000']             as const,
-    gnd:   'rgba(255,60,0,0.18)',
-    smile: '#2A0000',
-    blush: null,
-    gloss: 'rgba(255,200,120,0.30)',
-    eyeRy: 0.88,
+    // Pastel coral / peach — still has energy but softer
+    bodyLight:  '#FFE8DF',
+    bodyMid:    '#FF8C6A',
+    bodyDark:   '#C03010',
+    tummy:      '#FFF5F2',
+    wingLight:  '#FF8C6A',
+    wingDark:   '#C03010',
+    footLight:  '#FF7050',
+    footDark:   '#A02000',
+    outline:    '#801800',
+    blush:      null,
+    smile:      '#801800',
+    pupil:      '#200000',
+    irisColor:  '#801800',
+    beak:       '#FF9030',
+    beakDark:   '#CC5000',
+    tuftColor:  '#FF8C6A',
+    eyebrowColor: '#801800',
+    browType:   'fierce' as const,
   },
 } as const;
 
+// ─── Mascot ───────────────────────────────────────────────────────────────────
+
 export function WelcomeMascot({ themeKey, size }: { themeKey: ThemeKey; size: number }) {
-  const s   = size;
-  const cx  = s * 0.5;
-  const bCy = s * 0.50;
-  const bRx = s * 0.30;
-  const bRy = s * 0.36;
+  const s  = size;
+  const cx = s * 0.50;
+  const cy = s * 0.50;
+  const cfg = CFG[themeKey];
+  const p   = `m_${themeKey}`;
 
-  const eyeY  = bCy - bRy * 0.14;
-  const eyeLx = cx - s * 0.135;
-  const eyeRx = cx + s * 0.135;
-  const eR    = s * 0.112;
-  const iR    = s * 0.074;
-  const pR    = s * 0.050;
+  // Body dimensions — slightly wider/rounder than before
+  const bW = s * 0.64;   // full width
+  const bH = s * 0.72;   // full height
+  const bRx = bW / 2;
+  const bRy = bH / 2;
 
-  const cfg        = CFG[themeKey];
-  const isBalanced = themeKey === 'balanced';
-  const isSoft     = themeKey === 'soft';
-  const p          = `wl_${themeKey}`;   // gradient ID prefix
+  // Eye positions — higher on face, larger (Duo-style)
+  const eyeY  = cy - bRy * 0.14;
+  const eyeLx = cx - s * 0.148;
+  const eyeRx = cx + s * 0.148;
+  const eR    = s * 0.130;   // big Duo-style eyes
+  const iR    = s * 0.085;
+  const pR    = s * 0.056;
+
+  const OL = s * 0.026;   // outline thickness
+
+  // ── Wing paths (actual teardrop wing shapes, not blobs) ──
+  const wAttachY = cy - bRy * 0.10;
+  const wLow     = cy + bRy * 0.20;
+  const wTipLx   = cx - bRx * 1.52;
+  const wTipRx   = cx + bRx * 1.52;
+  const wTipY    = cy - bRy * 0.30;
+
+  const leftWing  = `M ${cx - bRx * 0.88} ${wAttachY} Q ${wTipLx} ${wTipY} ${wTipLx + s*0.06} ${cy + bRy*0.08} Q ${cx - bRx * 1.12} ${wLow + s*0.04} ${cx - bRx * 0.88} ${wLow} Z`;
+  const rightWing = `M ${cx + bRx * 0.88} ${wAttachY} Q ${wTipRx} ${wTipY} ${wTipRx - s*0.06} ${cy + bRy*0.08} Q ${cx + bRx * 1.12} ${wLow + s*0.04} ${cx + bRx * 0.88} ${wLow} Z`;
+
+  // ── Beak (small rounded triangle below eyes) ──
+  const beakCx = cx;
+  const beakTy = eyeY + eR * 0.60;
+  const beakBy = beakTy + s * 0.090;
+  const beakW  = s * 0.090;
+
+  // ── Tuft (top of head — 3 small rounded bumps) ──
+  const tuftY = cy - bRy * 0.93;
 
   return (
-    <Svg width={s} height={s}>
+    <Svg width={s} height={s} viewBox={`0 0 ${s} ${s}`}>
       <Defs>
-        <SvgRadialGrad id={`${p}b`}  cx="30%" cy="22%" r="78%">
-          <Stop offset="0%"   stopColor={cfg.body[0]} />
-          <Stop offset="35%"  stopColor={cfg.body[1]} />
-          <Stop offset="100%" stopColor={cfg.body[2]} />
+        <SvgRadialGrad id={`${p}body`} cx="35%" cy="20%" r="80%">
+          <Stop offset="0%"   stopColor={cfg.bodyLight} />
+          <Stop offset="50%"  stopColor={cfg.bodyMid}   />
+          <Stop offset="100%" stopColor={cfg.bodyDark}  />
         </SvgRadialGrad>
-        <SvgRadialGrad id={`${p}i`}  cx="28%" cy="24%" r="72%">
-          <Stop offset="0%"   stopColor={cfg.iris[0]} />
-          <Stop offset="100%" stopColor={cfg.iris[1]} />
+        <SvgRadialGrad id={`${p}wing`} cx="30%" cy="20%" r="80%">
+          <Stop offset="0%"   stopColor={cfg.wingLight} />
+          <Stop offset="100%" stopColor={cfg.wingDark}  />
         </SvgRadialGrad>
-        <SvgRadialGrad id={`${p}a`}  cx="28%" cy="24%" r="72%">
-          <Stop offset="0%"   stopColor={cfg.arm[0]} />
-          <Stop offset="100%" stopColor={cfg.arm[1]} />
+        <SvgRadialGrad id={`${p}foot`} cx="30%" cy="25%" r="70%">
+          <Stop offset="0%"   stopColor={cfg.footLight} />
+          <Stop offset="100%" stopColor={cfg.footDark}  />
         </SvgRadialGrad>
-        <SvgRadialGrad id={`${p}f`}  cx="30%" cy="25%" r="70%">
-          <Stop offset="0%"   stopColor={cfg.foot[0]} />
-          <Stop offset="100%" stopColor={cfg.foot[1]} />
-        </SvgRadialGrad>
-        <SvgRadialGrad id={`${p}e`}  cx="30%" cy="25%" r="70%">
-          <Stop offset="0%"   stopColor={cfg.ear[0]} />
-          <Stop offset="100%" stopColor={cfg.ear[1]} />
-        </SvgRadialGrad>
-        <SvgRadialGrad id={`${p}gn`} cx="50%" cy="50%" r="50%">
-          <Stop offset="0%"   stopColor={cfg.gnd} />
-          <Stop offset="100%" stopColor="rgba(0,0,0,0)" />
+        <SvgRadialGrad id={`${p}shadow`} cx="50%" cy="50%" r="50%">
+          <Stop offset="0%"   stopColor="rgba(0,0,0,0.15)" />
+          <Stop offset="100%" stopColor="rgba(0,0,0,0)"     />
         </SvgRadialGrad>
       </Defs>
 
-      {/* Ground shadow */}
-      <Ellipse cx={cx} cy={bCy + bRy*1.08} rx={bRx*0.85} ry={bRy*0.12} fill={`url(#${p}gn)`} />
-
-      {/* Feet */}
-      <Ellipse cx={cx - s*0.105} cy={bCy + bRy*0.90} rx={s*0.090} ry={s*0.065} fill={`url(#${p}f)`} />
-      <Ellipse cx={cx + s*0.105} cy={bCy + bRy*0.90} rx={s*0.090} ry={s*0.065} fill={`url(#${p}f)`} />
-
-      {/* Ear bumps */}
-      <Circle cx={cx - bRx*0.50} cy={bCy - bRy*0.88} r={s*0.068} fill={`url(#${p}e)`} />
-      <Circle cx={cx + bRx*0.50} cy={bCy - bRy*0.88} r={s*0.068} fill={`url(#${p}e)`} />
-      <Ellipse cx={cx - bRx*0.50} cy={bCy - bRy*0.91} rx={s*0.032} ry={s*0.028}
-        fill={cfg.body[0]} opacity="0.55" />
-      <Ellipse cx={cx + bRx*0.50} cy={bCy - bRy*0.91} rx={s*0.032} ry={s*0.028}
-        fill={cfg.body[0]} opacity="0.55" />
-
-      {/* Body */}
-      <Ellipse cx={cx} cy={bCy} rx={bRx} ry={bRy} fill={`url(#${p}b)`} />
-      <Ellipse cx={cx} cy={bCy + bRy*0.28} rx={bRx*0.68} ry={bRy*0.52}
-        fill={cfg.body[0]} fillOpacity={0.30} />
-
-      {/* ── Arms raised in welcoming pose ── */}
-      <Circle cx={cx - bRx*1.00} cy={bCy - bRy*0.60} r={s*0.095} fill={`url(#${p}a)`} />
-      <Circle cx={cx + bRx*1.00} cy={bCy - bRy*0.60} r={s*0.095} fill={`url(#${p}a)`} />
-      {/* Arm gloss */}
-      <Circle cx={cx - bRx*1.04} cy={bCy - bRy*0.66} r={s*0.038} fill="rgba(255,255,255,0.30)" />
-      <Circle cx={cx + bRx*0.96} cy={bCy - bRy*0.66} r={s*0.038} fill="rgba(255,255,255,0.30)" />
-
-      {/* ── Eyes ── */}
-      <Ellipse cx={eyeLx} cy={eyeY} rx={eR} ry={eR * cfg.eyeRy} fill="white" />
-      <Ellipse cx={eyeRx} cy={eyeY} rx={eR} ry={eR * cfg.eyeRy} fill="white" />
-      <Circle  cx={eyeLx} cy={eyeY + eR*0.06} r={iR} fill={`url(#${p}i)`} />
-      <Circle  cx={eyeRx} cy={eyeY + eR*0.06} r={iR} fill={`url(#${p}i)`} />
-      <Circle  cx={eyeLx} cy={eyeY + eR*0.08} r={pR} fill="#050008" />
-      <Circle  cx={eyeRx} cy={eyeY + eR*0.08} r={pR} fill="#050008" />
-      {/* Eye shine */}
-      <Circle cx={eyeLx - iR*0.32} cy={eyeY - iR*0.36} r={s*0.030} fill="white" />
-      <Circle cx={eyeRx - iR*0.32} cy={eyeY - iR*0.36} r={s*0.030} fill="white" />
-      <Circle cx={eyeLx + iR*0.28} cy={eyeY + iR*0.06} r={s*0.016} fill="rgba(255,255,255,0.65)" />
-      <Circle cx={eyeRx + iR*0.28} cy={eyeY + iR*0.06} r={s*0.016} fill="rgba(255,255,255,0.65)" />
-
-      {/* Balanced: glasses */}
-      {isBalanced && (
-        <>
-          <Circle cx={eyeLx} cy={eyeY} r={eR*1.10} fill="none"
-            stroke="#C0D0FF" strokeWidth={s*0.018} strokeOpacity="0.88" />
-          <Circle cx={eyeRx} cy={eyeY} r={eR*1.10} fill="none"
-            stroke="#C0D0FF" strokeWidth={s*0.018} strokeOpacity="0.88" />
-          <Path
-            d={`M ${eyeLx + eR*1.10} ${eyeY - eR*0.05} L ${eyeRx - eR*1.10} ${eyeY - eR*0.05}`}
-            stroke="#C0D0FF" strokeWidth={s*0.013} strokeOpacity="0.80"
-          />
-          <Path d={`M ${eyeLx - eR*1.10} ${eyeY} L ${eyeLx - eR*1.42} ${eyeY + eR*0.24}`}
-            stroke="#C0D0FF" strokeWidth={s*0.012} strokeLinecap="round" strokeOpacity="0.72" />
-          <Path d={`M ${eyeRx + eR*1.10} ${eyeY} L ${eyeRx + eR*1.42} ${eyeY + eR*0.24}`}
-            stroke="#C0D0FF" strokeWidth={s*0.012} strokeLinecap="round" strokeOpacity="0.72" />
-          {/* Determined brows */}
-          <Path d={`M ${eyeLx - eR*0.72} ${eyeY - eR*0.86} L ${eyeLx + eR*0.58} ${eyeY - eR*0.68}`}
-            stroke="#0A0A60" strokeWidth={s*0.030} strokeLinecap="round" />
-          <Path d={`M ${eyeRx - eR*0.58} ${eyeY - eR*0.68} L ${eyeRx + eR*0.72} ${eyeY - eR*0.86}`}
-            stroke="#0A0A60" strokeWidth={s*0.030} strokeLinecap="round" />
-        </>
-      )}
-
-      {/* ── Wide welcoming smile (all themes) ── */}
-      <Path
-        d={`M ${cx - s*0.165} ${bCy + bRy*0.20} Q ${cx} ${bCy + bRy*0.52} ${cx + s*0.165} ${bCy + bRy*0.20}`}
-        stroke={cfg.smile} strokeWidth={s * 0.026} fill="none" strokeLinecap="round"
+      {/* ── Ground shadow ────────────────────────────────────── */}
+      <Ellipse
+        cx={cx} cy={cy + bRy * 1.08}
+        rx={bRx * 0.85} ry={bRy * 0.10}
+        fill={`url(#${p}shadow)`}
       />
 
-      {/* Soft: blush cheeks */}
-      {isSoft && (
-        <>
-          <Ellipse cx={eyeLx - eR*0.62} cy={bCy + bRy*0.06} rx={eR*0.80} ry={eR*0.50}
-            fill={cfg.blush!} fillOpacity={0.50} />
-          <Ellipse cx={eyeRx + eR*0.62} cy={bCy + bRy*0.06} rx={eR*0.80} ry={eR*0.50}
-            fill={cfg.blush!} fillOpacity={0.50} />
-        </>
-      )}
+      {/* ── Feet (rounded, visible below body) ──────────────── */}
+      <Ellipse
+        cx={cx - s*0.13} cy={cy + bRy * 0.88}
+        rx={s*0.100} ry={s*0.060}
+        fill={`url(#${p}foot)`}
+        stroke={cfg.outline} strokeWidth={OL * 0.75}
+      />
+      <Ellipse
+        cx={cx + s*0.13} cy={cy + bRy * 0.88}
+        rx={s*0.100} ry={s*0.060}
+        fill={`url(#${p}foot)`}
+        stroke={cfg.outline} strokeWidth={OL * 0.75}
+      />
+
+      {/* ── Wings (drawn behind body) ────────────────────────── */}
+      <Path d={leftWing}  fill={`url(#${p}wing)`} stroke={cfg.outline} strokeWidth={OL * 0.85} strokeLinejoin="round" />
+      <Path d={rightWing} fill={`url(#${p}wing)`} stroke={cfg.outline} strokeWidth={OL * 0.85} strokeLinejoin="round" />
+      {/* Wing gloss */}
+      <Ellipse cx={wTipLx + s*0.10} cy={wTipY + s*0.04} rx={s*0.040} ry={s*0.024}
+        fill="rgba(255,255,255,0.35)"
+        transform={`rotate(-30 ${wTipLx + s*0.10} ${wTipY + s*0.04})`}
+      />
+      <Ellipse cx={wTipRx - s*0.10} cy={wTipY + s*0.04} rx={s*0.040} ry={s*0.024}
+        fill="rgba(255,255,255,0.35)"
+        transform={`rotate(30 ${wTipRx - s*0.10} ${wTipY + s*0.04})`}
+      />
+
+      {/* ── Head tufts (3 bumps on top) ──────────────────────── */}
+      <Circle cx={cx - s*0.090} cy={tuftY + s*0.010} r={s*0.055}
+        fill={cfg.tuftColor} stroke={cfg.outline} strokeWidth={OL * 0.70} />
+      <Circle cx={cx}          cy={tuftY - s*0.010} r={s*0.065}
+        fill={cfg.tuftColor} stroke={cfg.outline} strokeWidth={OL * 0.70} />
+      <Circle cx={cx + s*0.090} cy={tuftY + s*0.010} r={s*0.055}
+        fill={cfg.tuftColor} stroke={cfg.outline} strokeWidth={OL * 0.70} />
+
+      {/* ── Main body ────────────────────────────────────────── */}
+      <Ellipse
+        cx={cx} cy={cy}
+        rx={bRx} ry={bRy}
+        fill={`url(#${p}body)`}
+        stroke={cfg.outline}
+        strokeWidth={OL}
+      />
+
+      {/* Tummy highlight */}
+      <Ellipse
+        cx={cx} cy={cy + bRy * 0.26}
+        rx={bRx * 0.56} ry={bRy * 0.46}
+        fill={cfg.tummy}
+        fillOpacity={0.70}
+      />
 
       {/* Body gloss */}
       <Ellipse
-        cx={cx - bRx*0.16} cy={bCy - bRy*0.60}
-        rx={bRx*0.52} ry={bRy*0.16}
-        fill={cfg.gloss}
-        transform={`rotate(-16 ${cx - bRx*0.16} ${bCy - bRy*0.60})`}
+        cx={cx - bRx * 0.20} cy={cy - bRy * 0.55}
+        rx={bRx * 0.42} ry={bRy * 0.14}
+        fill="rgba(255,255,255,0.50)"
+        transform={`rotate(-18 ${cx - bRx*0.20} ${cy - bRy*0.55})`}
       />
-      <Ellipse
-        cx={cx - bRx*0.62} cy={bCy - bRy*0.22}
-        rx={bRx*0.18} ry={bRy*0.36}
-        fill={cfg.gloss}
-        transform={`rotate(-10 ${cx - bRx*0.62} ${bCy - bRy*0.22})`}
+
+      {/* ── Eye whites (large, Duo-style) ────────────────────── */}
+      <Circle cx={eyeLx} cy={eyeY} r={eR}
+        fill="white" stroke={cfg.outline} strokeWidth={OL * 0.90} />
+      <Circle cx={eyeRx} cy={eyeY} r={eR}
+        fill="white" stroke={cfg.outline} strokeWidth={OL * 0.90} />
+
+      {/* Iris */}
+      <Circle cx={eyeLx} cy={eyeY + eR * 0.08} r={iR} fill={cfg.irisColor} />
+      <Circle cx={eyeRx} cy={eyeY + eR * 0.08} r={iR} fill={cfg.irisColor} />
+
+      {/* Pupil */}
+      <Circle cx={eyeLx} cy={eyeY + eR * 0.10} r={pR} fill={cfg.pupil} />
+      <Circle cx={eyeRx} cy={eyeY + eR * 0.10} r={pR} fill={cfg.pupil} />
+
+      {/* Eye shine — big primary + small secondary (Duo look) */}
+      <Circle cx={eyeLx - iR * 0.28} cy={eyeY - iR * 0.30} r={s * 0.038} fill="white" />
+      <Circle cx={eyeRx - iR * 0.28} cy={eyeY - iR * 0.30} r={s * 0.038} fill="white" />
+      <Circle cx={eyeLx + iR * 0.26} cy={eyeY + iR * 0.10} r={s * 0.018} fill="rgba(255,255,255,0.75)" />
+      <Circle cx={eyeRx + iR * 0.26} cy={eyeY + iR * 0.10} r={s * 0.018} fill="rgba(255,255,255,0.75)" />
+
+      {/* ── Eyebrows (theme personality) ─────────────────────── */}
+      {cfg.browType === 'happy' && (
+        // Soft: gentle happy arched brows
+        <>
+          <Path
+            d={`M ${eyeLx - eR*0.68} ${eyeY - eR*0.98} Q ${eyeLx} ${eyeY - eR*1.32} ${eyeLx + eR*0.68} ${eyeY - eR*0.98}`}
+            stroke={cfg.eyebrowColor} strokeWidth={s*0.028} fill="none" strokeLinecap="round"
+          />
+          <Path
+            d={`M ${eyeRx - eR*0.68} ${eyeY - eR*0.98} Q ${eyeRx} ${eyeY - eR*1.32} ${eyeRx + eR*0.68} ${eyeY - eR*0.98}`}
+            stroke={cfg.eyebrowColor} strokeWidth={s*0.028} fill="none" strokeLinecap="round"
+          />
+        </>
+      )}
+      {cfg.browType === 'focused' && (
+        // Balanced: straight, slightly inward-tilted + glasses
+        <>
+          <Path d={`M ${eyeLx - eR*0.75} ${eyeY - eR*0.88} L ${eyeLx + eR*0.60} ${eyeY - eR*0.72}`}
+            stroke={cfg.eyebrowColor} strokeWidth={s*0.030} strokeLinecap="round" />
+          <Path d={`M ${eyeRx - eR*0.60} ${eyeY - eR*0.72} L ${eyeRx + eR*0.75} ${eyeY - eR*0.88}`}
+            stroke={cfg.eyebrowColor} strokeWidth={s*0.030} strokeLinecap="round" />
+          {/* Round glasses */}
+          <Circle cx={eyeLx} cy={eyeY} r={eR*1.14} fill="none"
+            stroke="#A0B8E8" strokeWidth={s*0.020} strokeOpacity="0.85" />
+          <Circle cx={eyeRx} cy={eyeY} r={eR*1.14} fill="none"
+            stroke="#A0B8E8" strokeWidth={s*0.020} strokeOpacity="0.85" />
+          <Path d={`M ${eyeLx + eR*1.14} ${eyeY} L ${eyeRx - eR*1.14} ${eyeY}`}
+            stroke="#A0B8E8" strokeWidth={s*0.015} strokeOpacity="0.75" />
+          <Path d={`M ${eyeLx - eR*1.14} ${eyeY + eR*0.10} L ${eyeLx - eR*1.48} ${eyeY + eR*0.40}`}
+            stroke="#A0B8E8" strokeWidth={s*0.014} strokeLinecap="round" strokeOpacity="0.68" />
+          <Path d={`M ${eyeRx + eR*1.14} ${eyeY + eR*0.10} L ${eyeRx + eR*1.48} ${eyeY + eR*0.40}`}
+            stroke="#A0B8E8" strokeWidth={s*0.014} strokeLinecap="round" strokeOpacity="0.68" />
+        </>
+      )}
+      {cfg.browType === 'fierce' && (
+        // Hardcore: sharp angled V brows — intense but still cute
+        <>
+          <Path d={`M ${eyeLx - eR*0.78} ${eyeY - eR*1.08} L ${eyeLx + eR*0.62} ${eyeY - eR*0.72}`}
+            stroke={cfg.eyebrowColor} strokeWidth={s*0.036} strokeLinecap="round" />
+          <Path d={`M ${eyeRx - eR*0.62} ${eyeY - eR*0.72} L ${eyeRx + eR*0.78} ${eyeY - eR*1.08}`}
+            stroke={cfg.eyebrowColor} strokeWidth={s*0.036} strokeLinecap="round" />
+        </>
+      )}
+
+      {/* ── Beak (small, cute, defined) ───────────────────────── */}
+      <Path
+        d={`M ${beakCx - beakW*0.5} ${beakTy} Q ${beakCx} ${beakTy - s*0.012} ${beakCx + beakW*0.5} ${beakTy} Q ${beakCx + beakW*0.28} ${beakBy} ${beakCx} ${beakBy + s*0.008} Q ${beakCx - beakW*0.28} ${beakBy} ${beakCx - beakW*0.5} ${beakTy} Z`}
+        fill={cfg.beak}
+        stroke={cfg.beakDark}
+        strokeWidth={OL * 0.60}
+        strokeLinejoin="round"
+      />
+      {/* Beak centre line */}
+      <Path
+        d={`M ${beakCx} ${beakTy} L ${beakCx} ${beakBy}`}
+        stroke={cfg.beakDark} strokeWidth={OL * 0.40} strokeLinecap="round" opacity="0.55"
+      />
+
+      {/* ── Blush cheeks (soft theme only) ────────────────────── */}
+      {cfg.blush && (
+        <>
+          <Ellipse cx={eyeLx - eR*0.50} cy={eyeY + eR*0.85} rx={eR*0.80} ry={eR*0.46}
+            fill={cfg.blush} fillOpacity={0.50} />
+          <Ellipse cx={eyeRx + eR*0.50} cy={eyeY + eR*0.85} rx={eR*0.80} ry={eR*0.46}
+            fill={cfg.blush} fillOpacity={0.50} />
+        </>
+      )}
+
+      {/* ── Smile ─────────────────────────────────────────────── */}
+      <Path
+        d={
+          cfg.browType === 'happy'
+            ? `M ${cx - s*0.155} ${cy + bRy*0.34} Q ${cx} ${cy + bRy*0.60} ${cx + s*0.155} ${cy + bRy*0.34}`
+            : cfg.browType === 'fierce'
+            ? `M ${cx - s*0.110} ${cy + bRy*0.36} Q ${cx + s*0.040} ${cy + bRy*0.54} ${cx + s*0.150} ${cy + bRy*0.34}`
+            : `M ${cx - s*0.138} ${cy + bRy*0.32} Q ${cx} ${cy + bRy*0.54} ${cx + s*0.138} ${cy + bRy*0.32}`
+        }
+        stroke={cfg.smile}
+        strokeWidth={s * 0.030}
+        fill="none"
+        strokeLinecap="round"
       />
     </Svg>
   );
