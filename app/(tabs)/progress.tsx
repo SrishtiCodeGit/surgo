@@ -110,7 +110,7 @@ function StreakRing({
         </Text>
 
         {/* Surgo mascot */}
-        <WelcomeMascot themeKey={themeKey} size={mascotSz} />
+        <WelcomeMascot themeKey={themeKey} size={mascotSz} pose="motivating" />
 
         {/* Streak count below mascot */}
         <Text style={{
@@ -300,7 +300,7 @@ function SurgoChartBanner({
         }}>
           📊
         </Text>
-        <WelcomeMascot themeKey={themeKey} size={90} />
+        <WelcomeMascot themeKey={themeKey} size={90} pose="happy" />
       </View>
 
       {/* Speech bubble */}
