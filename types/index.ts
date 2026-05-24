@@ -100,11 +100,13 @@ export interface Task {
   goalId: string;
   userId: string;
   title: string;
-  dueDate: string;        // ISO date "YYYY-MM-DD"
+  dueDate: string;           // ISO date "YYYY-MM-DD"
   estimatedMinutes?: number;
   completedAt?: string;
   aiGenerated: boolean;
   isStretchTask: boolean;
+  scheduledTime?: string;    // "HH:MM" 24h — when this task is scheduled
+  scheduledEndTime?: string; // "HH:MM" 24h — computed from start + estimatedMinutes
 }
 
 // ─── Streak ───────────────────────────────────────────────────────────────────

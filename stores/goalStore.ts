@@ -31,6 +31,7 @@ interface GoalStore {
   addTasks: (tasks: Omit<Task, 'id'>[]) => Promise<void>;
   completeTask: (taskId: string) => Promise<void>;
   uncompleteTask: (taskId: string) => Promise<void>;
+  rescheduleTask: (taskId: string, scheduledTime: string, scheduledEndTime: string) => Promise<void>;
   replaceTasksForGoal: (goalId: string, date: string, tasks: Omit<Task, 'id'>[]) => Promise<void>;
 
   // Milestones
@@ -45,6 +46,7 @@ interface GoalStore {
 
   // Computed
   getTodaysTasks: () => Task[];
+  getTasksForDate: (date: string) => Task[];
   getTasksForGoal: (goalId: string) => Task[];
   getMilestonesForGoal: (goalId: string) => Milestone[];
   getGoalProgress: (goalId: string) => number;
@@ -150,6 +152,14 @@ export const useGoalStore = create<GoalStore>((set, get) => ({
     await persist(TASKS_KEY, tasks);
   },
 
+  rescheduleTask: async (taskId, scheduledTime, scheduledEndTime) => {
+    const tasks = get().tasks.map((t) =>
+      t.id === taskId ? { ...t, scheduledTime, scheduledEndTime } : t,
+    );
+    set({ tasks });
+    await persist(TASKS_KEY, tasks);
+  },
+
   replaceTasksForGoal: async (goalId, date, newTasks) => {
     // Remove existing incomplete tasks for this goal on this date
     const tasks = [
@@ -222,6 +232,10 @@ export const useGoalStore = create<GoalStore>((set, get) => ({
   getTodaysTasks: () => {
     const today = toDateString(new Date());
     return get().tasks.filter((t) => t.dueDate === today);
+  },
+
+  getTasksForDate: (date) => {
+    return get().tasks.filter((t) => t.dueDate === date);
   },
 
   getTasksForGoal: (goalId) => {

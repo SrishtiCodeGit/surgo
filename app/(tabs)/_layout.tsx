@@ -43,6 +43,16 @@ function IconDiet({ color }: { color: string }) {
   );
 }
 
+function IconCalendar({ color }: { color: string }) {
+  return (
+    <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+      <Path d="M3 9h18M8 2v4M16 2v4" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
+      <Path d="M4 6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6z" stroke={color} strokeWidth="1.8" />
+      <Path d="M8 13h.01M12 13h.01M16 13h.01M8 17h.01M12 17h.01" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
 function IconProfile({ color }: { color: string }) {
   return (
     <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
@@ -129,8 +139,8 @@ export default function TabLayout() {
         tabBarInactiveTintColor: theme.colors.textMuted,
         tabBarLabelStyle: {
           fontSize: 10,
-          fontWeight: '700',
-          letterSpacing: 0.4,
+          fontWeight: '400',
+          letterSpacing: 0.3,
           marginTop: 3,
         },
       }}
@@ -153,6 +163,17 @@ export default function TabLayout() {
           tabBarIcon: ({ color, focused }) => (
             <TabIcon focused={focused} theme={theme}>
               <IconGoals color={color} />
+            </TabIcon>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="calendar"
+        options={{
+          title: 'Calendar',
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon focused={focused} theme={theme}>
+              <IconCalendar color={color} />
             </TabIcon>
           ),
         }}

@@ -63,7 +63,34 @@ const TIME_OPTIONS = [
   { label: '3+ hours', minutes: 180, desc: 'All in',             hrs: '21+ hrs/week'  },
 ];
 
-type Step = 'list' | 'step1' | 'step2' | 'analyzing' | 'review';
+// ─── Preferred time slots ─────────────────────────────────────────────────────
+
+export interface TimeSlot {
+  key: string;
+  label: string;
+  icon: string;
+  startTime: string; // "HH:MM" 24h
+  desc: string;
+}
+
+const TIME_SLOTS: TimeSlot[] = [
+  { key: 'morning',  label: 'Morning',  icon: '🌅', startTime: '06:00', desc: '6:00 – 9:00 AM'  },
+  { key: 'midday',   label: 'Midday',   icon: '☀️', startTime: '12:00', desc: '12:00 – 2:00 PM' },
+  { key: 'evening',  label: 'Evening',  icon: '🌆', startTime: '17:00', desc: '5:00 – 7:00 PM'  },
+  { key: 'night',    label: 'Night',    icon: '🌙', startTime: '20:00', desc: '8:00 – 10:00 PM' },
+];
+
+// ─── Time helpers ─────────────────────────────────────────────────────────────
+
+function addMinutes(timeStr: string, mins: number): string {
+  const [h, m] = timeStr.split(':').map(Number);
+  const total = h * 60 + m + mins;
+  const nh = Math.floor(total / 60) % 24;
+  const nm = total % 60;
+  return `${String(nh).padStart(2, '0')}:${String(nm).padStart(2, '0')}`;
+}
+
+type Step = 'list' | 'step1' | 'step2' | 'step3' | 'analyzing' | 'review';
 
 // ─── Surgo speech bubble ──────────────────────────────────────────────────────
 
@@ -122,25 +149,29 @@ export default function GoalsScreen() {
   const { theme, themeKey } = useTheme();
   const { goals, tasks, load, isLoaded, addGoal, addTasks, addMilestones, deleteGoal } = useGoalStore();
 
-  const [step, setStep]                   = useState<Step>('list');
-  const [title, setTitle]                 = useState('');
-  const [category, setCategory]           = useState<GoalCategory>('fitness');
-  const [deadlineDays, setDeadlineDays]   = useState(30);
-  const [minutesPerDay, setMinutesPerDay] = useState(30);
-  const [analysis, setAnalysis]           = useState<GoalAnalysis | null>(null);
-  const [saving, setSaving]               = useState(false);
+  const [step, setStep]                     = useState<Step>('list');
+  const [title, setTitle]                   = useState('');
+  const [category, setCategory]             = useState<GoalCategory>('fitness');
+  const [deadlineDays, setDeadlineDays]     = useState(30);
+  const [minutesPerDay, setMinutesPerDay]   = useState(30);
+  const [preferredSlot, setPreferredSlot]   = useState<TimeSlot>(TIME_SLOTS[0]);
+  const [analysis, setAnalysis]             = useState<GoalAnalysis | null>(null);
+  const [saving, setSaving]                 = useState(false);
 
   useEffect(() => { if (!isLoaded) load(); }, []);
 
   const resetForm = () => {
     setTitle(''); setCategory('fitness');
-    setDeadlineDays(30); setMinutesPerDay(30); setAnalysis(null);
+    setDeadlineDays(30); setMinutesPerDay(30);
+    setPreferredSlot(TIME_SLOTS[0]); setAnalysis(null);
   };
 
   const handleStep1Next = () => {
     if (!title.trim()) { Alert.alert('Hey!', 'Tell me your goal first 😊'); return; }
     setStep('step2');
   };
+
+  const handleStep2Next = () => setStep('step3');
 
   const handleAnalyze = async () => {
     const apiKey = process.env.EXPO_PUBLIC_GROQ_API_KEY;
@@ -172,13 +203,40 @@ export default function GoalsScreen() {
       });
       await addMilestones(analysis.milestones.map(m => ({ goalId: goal.id, title: m.title, targetDate: m.targetDate })));
       const today = new Date();
-      await addTasks(analysis.weekTasks.map(t => ({
-        goalId: goal.id, userId: 'local', title: t.title,
-        dueDate: toDateString(new Date(today.getTime() + (t.day - 1) * 86400000)),
-        estimatedMinutes: t.estimatedMinutes, aiGenerated: true, isStretchTask: false,
-      })));
+      // Stack tasks starting from the preferred time slot
+      let cursor = preferredSlot.startTime;
+      const tasksToAdd = analysis.weekTasks.map(t => {
+        const sTime = cursor;
+        const eTime = addMinutes(cursor, t.estimatedMinutes ?? minutesPerDay);
+        cursor = eTime; // next task starts where this one ends (reset per day below)
+        return {
+          goalId: goal.id, userId: 'local', title: t.title,
+          dueDate: toDateString(new Date(today.getTime() + (t.day - 1) * 86400000)),
+          estimatedMinutes: t.estimatedMinutes, aiGenerated: true, isStretchTask: false,
+          scheduledTime: sTime,
+          scheduledEndTime: eTime,
+        };
+      });
+      // Reset cursor per day so each day starts fresh at preferred time
+      const byDay: Record<number, typeof tasksToAdd> = {};
+      analysis.weekTasks.forEach((t, i) => {
+        if (!byDay[t.day]) byDay[t.day] = [];
+        byDay[t.day].push(tasksToAdd[i]);
+      });
+      const finalTasks: typeof tasksToAdd = [];
+      Object.values(byDay).forEach(dayTasks => {
+        let dayCursor = preferredSlot.startTime;
+        dayTasks.forEach(t => {
+          const mins = t.estimatedMinutes ?? minutesPerDay;
+          t.scheduledTime = dayCursor;
+          t.scheduledEndTime = addMinutes(dayCursor, mins);
+          dayCursor = t.scheduledEndTime;
+          finalTasks.push(t);
+        });
+      });
+      await addTasks(finalTasks);
       resetForm(); setStep('list');
-      Alert.alert('Goal locked in!', 'Check Today tab to start your first task.', [{ text: "Let's go!" }]);
+      Alert.alert('Goal locked in! 🗓️', `Your tasks are scheduled at ${preferredSlot.desc} every day. Check the Calendar tab!`, [{ text: "Let's go!" }]);
     } catch (err) {
       Alert.alert('Error', String(err));
     } finally { setSaving(false); }
@@ -397,7 +455,7 @@ export default function GoalsScreen() {
               <TouchableOpacity onPress={() => { resetForm(); setStep('list'); }} activeOpacity={0.7}>
                 <Text style={{ color: theme.colors.primary, fontSize: 15, fontWeight: '400' }}>← Back</Text>
               </TouchableOpacity>
-              <StepDots current={1} total={2} color={theme.colors.primary} />
+              <StepDots current={1} total={3} color={theme.colors.primary} />
             </View>
 
             {/* Surgo speech bubble */}
@@ -526,7 +584,7 @@ export default function GoalsScreen() {
             <TouchableOpacity onPress={() => setStep('step1')} activeOpacity={0.7}>
               <Text style={{ color: theme.colors.primary, fontSize: 15, fontWeight: '400' }}>← Back</Text>
             </TouchableOpacity>
-            <StepDots current={2} total={2} color={theme.colors.primary} />
+            <StepDots current={2} total={3} color={theme.colors.primary} />
           </View>
 
           {/* Surgo speech bubble */}
@@ -589,6 +647,112 @@ export default function GoalsScreen() {
                 </TouchableOpacity>
               );
             })}
+          </View>
+
+          <TouchableOpacity
+            onPress={handleStep2Next}
+            activeOpacity={0.85}
+            style={{
+              backgroundColor: theme.colors.primary,
+              paddingVertical: 17, borderRadius: 16, alignItems: 'center',
+              shadowColor: theme.colors.primary,
+              shadowOffset: { width: 0, height: 6 },
+              shadowOpacity: 0.32, shadowRadius: 14, elevation: 6,
+            }}
+          >
+            <Text style={{ color: theme.colors.textInverse, fontWeight: '500', fontSize: 16 }}>Next →</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // STEP 3 — Surgo asks: When's your best time?
+  // ───────────────────────────────────────────────────────────────────────────
+
+  if (step === 'step3') {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
+        <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 48 }}>
+
+          {/* Back + dots */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+            <TouchableOpacity onPress={() => setStep('step2')} activeOpacity={0.7}>
+              <Text style={{ color: theme.colors.primary, fontSize: 15, fontWeight: '400' }}>← Back</Text>
+            </TouchableOpacity>
+            <StepDots current={3} total={3} color={theme.colors.primary} />
+          </View>
+
+          {/* Surgo speech bubble */}
+          <SurgoBubble
+            themeKey={themeKey}
+            pose="happy"
+            headline="When's your best time to work?"
+            sub="I'll block it in your calendar so you never forget — you can always move it!"
+          />
+
+          {/* Time slot cards */}
+          <View style={{ gap: 12, marginBottom: 30 }}>
+            {TIME_SLOTS.map((slot) => {
+              const isSelected = preferredSlot.key === slot.key;
+              return (
+                <TouchableOpacity
+                  key={slot.key}
+                  onPress={() => setPreferredSlot(slot)}
+                  activeOpacity={0.8}
+                  style={{
+                    flexDirection: 'row', alignItems: 'center', gap: 16,
+                    backgroundColor: isSelected ? theme.colors.primary : theme.colors.surface,
+                    borderWidth: 1.5, borderColor: isSelected ? theme.colors.primary : theme.colors.border,
+                    borderRadius: 18, padding: 18,
+                    shadowColor: isSelected ? theme.colors.primary : '#000',
+                    shadowOffset: { width: 0, height: isSelected ? 4 : 1 },
+                    shadowOpacity: isSelected ? 0.18 : 0.04,
+                    shadowRadius: isSelected ? 12 : 4,
+                    elevation: isSelected ? 4 : 1,
+                  }}
+                >
+                  {/* Icon circle */}
+                  <View style={{
+                    width: 48, height: 48, borderRadius: 24,
+                    backgroundColor: isSelected ? 'rgba(255,255,255,0.20)' : theme.colors.primaryLight,
+                    alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <Text style={{ fontSize: 22 }}>{slot.icon}</Text>
+                  </View>
+
+                  {/* Labels */}
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: isSelected ? '#fff' : theme.colors.text, fontSize: 16, fontWeight: '500' }}>
+                      {slot.label}
+                    </Text>
+                    <Text style={{ color: isSelected ? 'rgba(255,255,255,0.70)' : theme.colors.textMuted, fontSize: 13, marginTop: 2 }}>
+                      {slot.desc}
+                    </Text>
+                  </View>
+
+                  {/* Selected check */}
+                  {isSelected && (
+                    <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: 'rgba(255,255,255,0.25)', alignItems: 'center', justifyContent: 'center' }}>
+                      <Text style={{ color: '#fff', fontSize: 13 }}>✓</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          {/* Info note */}
+          <View style={{
+            backgroundColor: theme.colors.primaryLight,
+            borderRadius: 14, padding: 14, marginBottom: 24,
+            flexDirection: 'row', gap: 10, alignItems: 'flex-start',
+          }}>
+            <Text style={{ fontSize: 16 }}>🗓️</Text>
+            <Text style={{ flex: 1, color: theme.colors.primary, fontSize: 12, lineHeight: 18 }}>
+              Tasks will be scheduled at <Text style={{ fontWeight: '500' }}>{preferredSlot.desc}</Text> daily. You can always drag and reschedule from the Calendar tab.
+            </Text>
           </View>
 
           <TouchableOpacity
