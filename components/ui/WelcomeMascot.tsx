@@ -1,6 +1,6 @@
 import { ThemeKey } from '@/types';
 import Svg, {
-  Circle, Ellipse, Path, Defs,
+  Circle, Ellipse, Path, Rect, Defs, ClipPath,
   RadialGradient as SvgRadialGrad,
   Stop,
 } from 'react-native-svg';
@@ -118,6 +118,10 @@ export function WelcomeMascot({
           <Stop offset="0%"   stopColor={cfg.gnd} />
           <Stop offset="100%" stopColor="rgba(0,0,0,0)" />
         </SvgRadialGrad>
+        {/* Body clip — keeps all clothing inside the body shape */}
+        <ClipPath id={`${p}bc`}>
+          <Ellipse cx={cx} cy={bCy} rx={bRx} ry={bRy} />
+        </ClipPath>
       </Defs>
 
       {/* Ground shadow */}
@@ -139,6 +143,104 @@ export function WelcomeMascot({
       <Ellipse cx={cx} cy={bCy} rx={bRx} ry={bRy} fill={`url(#${p}b)`} />
       <Ellipse cx={cx} cy={bCy + bRy*0.28} rx={bRx*0.68} ry={bRy*0.52}
         fill={cfg.body[0]} fillOpacity={0.30} />
+
+      {/* ── Clothes ── */}
+
+      {/* Balanced: white shirt */}
+      {isBalanced && (
+        <>
+          {/* Shirt body */}
+          <Rect
+            x={cx - bRx} y={bCy - bRy*0.08}
+            width={bRx*2} height={bRy*1.10}
+            fill="#F0F4FF"
+            clipPath={`url(#${p}bc)`}
+          />
+          {/* Subtle fold shadow along collar line */}
+          <Rect
+            x={cx - bRx} y={bCy - bRy*0.08}
+            width={bRx*2} height={bRy*0.07}
+            fill="rgba(60,80,200,0.10)"
+            clipPath={`url(#${p}bc)`}
+          />
+          {/* U-neck collar */}
+          <Path
+            d={`M ${cx - s*0.10} ${bCy - bRy*0.07} Q ${cx} ${bCy - bRy*0.07 + s*0.055} ${cx + s*0.10} ${bCy - bRy*0.07}`}
+            stroke="rgba(140,160,255,0.55)" strokeWidth={s*0.020} fill="none" strokeLinecap="round"
+          />
+          {/* Shirt centre seam */}
+          <Path
+            d={`M ${cx} ${bCy - bRy*0.07 + s*0.055} L ${cx} ${bCy + bRy*0.92}`}
+            stroke="rgba(180,200,255,0.28)" strokeWidth={s*0.012} strokeLinecap="round"
+            clipPath={`url(#${p}bc)`}
+          />
+        </>
+      )}
+
+      {/* Soft: pink t-shirt */}
+      {isSoft && (
+        <>
+          {/* Shirt body */}
+          <Rect
+            x={cx - bRx} y={bCy - bRy*0.08}
+            width={bRx*2} height={bRy*1.10}
+            fill="#FFB3CC"
+            clipPath={`url(#${p}bc)`}
+          />
+          {/* Fold shadow */}
+          <Rect
+            x={cx - bRx} y={bCy - bRy*0.08}
+            width={bRx*2} height={bRy*0.07}
+            fill="rgba(200,60,100,0.12)"
+            clipPath={`url(#${p}bc)`}
+          />
+          {/* U-neck collar */}
+          <Path
+            d={`M ${cx - s*0.10} ${bCy - bRy*0.07} Q ${cx} ${bCy - bRy*0.07 + s*0.055} ${cx + s*0.10} ${bCy - bRy*0.07}`}
+            stroke="rgba(220,80,130,0.45)" strokeWidth={s*0.020} fill="none" strokeLinecap="round"
+          />
+          {/* Shirt centre seam */}
+          <Path
+            d={`M ${cx} ${bCy - bRy*0.07 + s*0.055} L ${cx} ${bCy + bRy*0.92}`}
+            stroke="rgba(230,120,160,0.28)" strokeWidth={s*0.012} strokeLinecap="round"
+            clipPath={`url(#${p}bc)`}
+          />
+        </>
+      )}
+
+      {/* Hardcore: black striped tracksuit pants */}
+      {!isBalanced && !isSoft && (
+        <>
+          {/* Pants fill */}
+          <Rect
+            x={cx - bRx} y={bCy + bRy*0.22}
+            width={bRx*2} height={bRy*0.80}
+            fill="#111111"
+            clipPath={`url(#${p}bc)`}
+          />
+          {/* Horizontal white stripes */}
+          <Rect x={cx - bRx} y={bCy + bRy*0.34} width={bRx*2} height={bRy*0.055}
+            fill="white" opacity={0.30} clipPath={`url(#${p}bc)`} />
+          <Rect x={cx - bRx} y={bCy + bRy*0.52} width={bRx*2} height={bRy*0.055}
+            fill="white" opacity={0.30} clipPath={`url(#${p}bc)`} />
+          <Rect x={cx - bRx} y={bCy + bRy*0.70} width={bRx*2} height={bRy*0.055}
+            fill="white" opacity={0.30} clipPath={`url(#${p}bc)`} />
+          {/* Belt */}
+          <Rect
+            x={cx - bRx} y={bCy + bRy*0.20}
+            width={bRx*2} height={bRy*0.068}
+            fill="#1A1A1A"
+            clipPath={`url(#${p}bc)`}
+          />
+          {/* Belt buckle hint */}
+          <Rect
+            x={cx - s*0.028} y={bCy + bRy*0.215}
+            width={s*0.056} height={bRy*0.046}
+            fill="#555555" rx={s*0.006}
+            clipPath={`url(#${p}bc)`}
+          />
+        </>
+      )}
 
       {/* Arms */}
       <Circle cx={cx - bRx*1.00} cy={bCy - bRy*0.60} r={s*0.095} fill={`url(#${p}a)`} />
