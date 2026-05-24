@@ -6,7 +6,15 @@ import {
   TouchableOpacity,
   Alert,
   RefreshControl,
+  LayoutAnimation,
+  Platform,
+  UIManager,
 } from 'react-native';
+
+// Enable LayoutAnimation on Android
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 import Svg, { Circle, Path } from 'react-native-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -62,7 +70,14 @@ export default function TodayScreen() {
     setRefreshing(false);
   }, []);
 
-  const todaysTasks = getTodaysTasks();
+  const rawTasks = getTodaysTasks();
+
+  // Incomplete tasks first, completed tasks sink to bottom
+  const todaysTasks = [...rawTasks].sort((a, b) => {
+    if (!!a.completedAt === !!b.completedAt) return 0;
+    return a.completedAt ? 1 : -1;
+  });
+
   const completedCount = todaysTasks.filter((t) => !!t.completedAt).length;
   const totalCount = todaysTasks.length;
   const allDone = totalCount > 0 && completedCount === totalCount;
@@ -72,6 +87,13 @@ export default function TodayScreen() {
   const freezeCards = streak?.freezeCardsAvailable ?? 0;
 
   const handleCompleteTask = async (taskId: string) => {
+    // Animate the reorder before the state update lands
+    LayoutAnimation.configureNext({
+      duration: 350,
+      create: { type: 'easeInEaseOut', property: 'opacity' },
+      update: { type: 'spring',        springDamping: 0.8 },
+      delete: { type: 'easeInEaseOut', property: 'opacity' },
+    });
     await completeTask(taskId);
   };
 
