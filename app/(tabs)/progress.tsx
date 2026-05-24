@@ -1,11 +1,12 @@
 import { View, Text, ScrollView, Dimensions } from 'react-native';
-import Svg, { Circle, Path, G, Text as SvgText } from 'react-native-svg';
+import Svg, { Circle, Path, G, Text as SvgText, Line } from 'react-native-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useEffect } from 'react';
 import { useTheme } from '@/context/ThemeContext';
 import { useStreakStore } from '@/stores/streakStore';
 import { useGoalStore } from '@/stores/goalStore';
 import { StreakDay } from '@/types';
+import { WelcomeMascot } from '@/components/ui/WelcomeMascot';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 const CARD_W = SCREEN_W - 40;
@@ -248,10 +249,112 @@ function Heatmap({ days, primary }: { days: (StreakDay | null)[]; primary: strin
   );
 }
 
+// ─── Surgo chart pointer banner ──────────────────────────────────────────────
+
+function SurgoChartBanner({
+  themeKey,
+  primary,
+}: {
+  themeKey: 'soft' | 'balanced' | 'hardcore';
+  primary: string;
+}) {
+  const stickColor = primary;
+
+  return (
+    <View style={{
+      flexDirection: 'row',
+      alignItems: 'flex-end',
+      marginBottom: 6,
+      paddingHorizontal: 4,
+    }}>
+      {/* Mascot */}
+      <WelcomeMascot themeKey={themeKey} size={90} />
+
+      {/* Pointer stick — diagonal line from Surgo's arm area up-right to bubble */}
+      <Svg width={52} height={90} style={{ marginBottom: 8 }}>
+        {/* Stick shaft */}
+        <Path
+          d="M 10 72 L 44 22"
+          stroke={stickColor}
+          strokeWidth={4}
+          strokeLinecap="round"
+          opacity={0.85}
+        />
+        {/* Arrowhead at tip */}
+        <Path
+          d="M 44 22 L 34 26 M 44 22 L 40 32"
+          stroke={stickColor}
+          strokeWidth={3}
+          strokeLinecap="round"
+          opacity={0.85}
+        />
+        {/* Star at stick tip */}
+        <Path
+          d="M 44 12 L 46 18 L 52 18 L 47 22 L 49 28 L 44 24 L 39 28 L 41 22 L 36 18 L 42 18 Z"
+          fill="#FFD700"
+          opacity={0.92}
+        />
+        {/* Handle ball at bottom of stick */}
+        <Circle cx={10} cy={72} r={5} fill={stickColor} opacity={0.50} />
+      </Svg>
+
+      {/* Speech bubble */}
+      <View style={{
+        flex: 1,
+        backgroundColor: '#FFFFFF',
+        borderRadius: 16,
+        borderBottomLeftRadius: 4,
+        padding: 14,
+        marginLeft: 6,
+        marginBottom: 8,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.07,
+        shadowRadius: 10,
+        elevation: 2,
+        borderWidth: 1,
+        borderColor: 'rgba(0,0,0,0.06)',
+      }}>
+        {/* Bubble tail pointing left toward stick */}
+        <View style={{
+          position: 'absolute',
+          left: -7,
+          bottom: 18,
+          width: 0, height: 0,
+          borderTopWidth: 7,
+          borderTopColor: 'transparent',
+          borderBottomWidth: 7,
+          borderBottomColor: 'transparent',
+          borderRightWidth: 7,
+          borderRightColor: '#FFFFFF',
+        }} />
+        <Text style={{
+          color: D.dark,
+          fontSize: 13,
+          fontWeight: '800',
+          lineHeight: 19,
+          letterSpacing: -0.2,
+        }}>
+          See your progress here! 📊
+        </Text>
+        <Text style={{
+          color: D.muted,
+          fontSize: 11,
+          fontWeight: '500',
+          marginTop: 4,
+          lineHeight: 16,
+        }}>
+          Look how far you've come ✨
+        </Text>
+      </View>
+    </View>
+  );
+}
+
 // ─── Main screen ──────────────────────────────────────────────────────────────
 
 export default function ProgressScreen() {
-  const { theme }                              = useTheme();
+  const { theme, themeKey }                    = useTheme();
   const { streak, isLoaded, loadStreak }       = useStreakStore();
   const { goals, isLoaded: goalsLoaded, load } = useGoalStore();
 
@@ -334,6 +437,9 @@ export default function ProgressScreen() {
             </View>
           </View>
         )}
+
+        {/* ── Surgo pointing at chart ───────────────────────────────── */}
+        <SurgoChartBanner themeKey={themeKey} primary={primary} />
 
         {/* ── 7-day bar chart ───────────────────────────────────────── */}
         {card(
