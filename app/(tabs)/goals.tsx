@@ -39,8 +39,8 @@ const CATEGORIES: { key: GoalCategory; label: string; emoji: string }[] = [
   { key: 'learning',      label: 'Learning',      emoji: '📚' },
   { key: 'finance',       label: 'Finance',       emoji: '💰' },
   { key: 'health',        label: 'Health',        emoji: '🏥' },
-  { key: 'relationships', label: 'Relationships', emoji: '❤️' },
-  { key: 'creativity',    label: 'Creativity',    emoji: '🎨' },
+  { key: 'relationships', label: 'Love',          emoji: '❤️' },
+  { key: 'creativity',    label: 'Creative',      emoji: '🎨' },
   { key: 'other',         label: 'Other',         emoji: '⭐' },
 ];
 
@@ -53,12 +53,12 @@ const DEADLINES = [
 ];
 
 const TIME_OPTIONS = [
-  { label: '15 min',   minutes: 15,  desc: 'Quick daily habit' },
-  { label: '30 min',   minutes: 30,  desc: 'Solid commitment' },
-  { label: '1 hour',   minutes: 60,  desc: 'Serious progress' },
-  { label: '1.5 hrs',  minutes: 90,  desc: 'Strong dedication' },
-  { label: '2 hours',  minutes: 120, desc: 'High performer' },
-  { label: '3+ hours', minutes: 180, desc: 'All in' },
+  { label: '15 min',   minutes: 15,  desc: 'Quick daily habit',  hrs: '1.75' },
+  { label: '30 min',   minutes: 30,  desc: 'Solid commitment',   hrs: '3.5'  },
+  { label: '1 hour',   minutes: 60,  desc: 'Serious progress',   hrs: '7'    },
+  { label: '1.5 hrs',  minutes: 90,  desc: 'Strong dedication',  hrs: '10.5' },
+  { label: '2 hours',  minutes: 120, desc: 'High performer',     hrs: '14'   },
+  { label: '3+ hours', minutes: 180, desc: 'All in',             hrs: '21+'  },
 ];
 
 type Step = 'list' | 'step1' | 'step2' | 'analyzing' | 'review';
@@ -66,16 +66,16 @@ type Step = 'list' | 'step1' | 'step2' | 'analyzing' | 'review';
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function GoalsScreen() {
-  const { theme } = useTheme();
+  const { theme, themeKey } = useTheme();
   const { goals, tasks, load, isLoaded, addGoal, addTasks, addMilestones, deleteGoal } = useGoalStore();
 
-  const [step, setStep]               = useState<Step>('list');
-  const [title, setTitle]             = useState('');
-  const [category, setCategory]       = useState<GoalCategory>('fitness');
+  const [step, setStep]                 = useState<Step>('list');
+  const [title, setTitle]               = useState('');
+  const [category, setCategory]         = useState<GoalCategory>('fitness');
   const [deadlineDays, setDeadlineDays] = useState(30);
   const [minutesPerDay, setMinutesPerDay] = useState(30);
-  const [analysis, setAnalysis]       = useState<GoalAnalysis | null>(null);
-  const [saving, setSaving]           = useState(false);
+  const [analysis, setAnalysis]         = useState<GoalAnalysis | null>(null);
+  const [saving, setSaving]             = useState(false);
 
   useEffect(() => { if (!isLoaded) load(); }, []);
 
@@ -85,8 +85,6 @@ export default function GoalsScreen() {
     setAnalysis(null);
   };
 
-  // ── Step 1 → Step 2 ──────────────────────────────────────────────────────
-
   const handleStep1Next = () => {
     if (!title.trim()) {
       Alert.alert('Enter your goal', 'What do you want to achieve?');
@@ -95,35 +93,26 @@ export default function GoalsScreen() {
     setStep('step2');
   };
 
-  // ── Step 2 → Analyzing ────────────────────────────────────────────────────
-
   const handleAnalyze = async () => {
     const apiKey = process.env.EXPO_PUBLIC_GROQ_API_KEY;
     if (!apiKey) {
-      // No API key — skip to review with placeholder data
       setAnalysis(buildPlaceholderAnalysis());
       setStep('review');
       return;
     }
-
     setStep('analyzing');
     try {
-      const targetDate = toDateString(
-        new Date(Date.now() + deadlineDays * 24 * 60 * 60 * 1000),
-      );
-      const result = await analyzeGoal(
-        title.trim(), targetDate, deadlineDays, minutesPerDay, theme.key,
-      );
+      const targetDate = toDateString(new Date(Date.now() + deadlineDays * 24 * 60 * 60 * 1000));
+      const result = await analyzeGoal(title.trim(), targetDate, deadlineDays, minutesPerDay, theme.key);
       setAnalysis(result);
       setStep('review');
     } catch (err) {
-      console.error(err);
       const msg = String(err);
       const isQuota   = msg.includes('429') || msg.includes('quota') || msg.includes('rate_limit');
       const isInvalid = msg.includes('401') || msg.includes('403') || msg.includes('invalid_api_key');
       const detail =
-        isQuota   ? 'Groq free tier limit hit — resets in minutes. Try again shortly. (console.groq.com to check)' :
-        isInvalid ? 'Groq API key is invalid. Check EXPO_PUBLIC_GROQ_API_KEY in .env.local.' :
+        isQuota   ? 'Groq free tier limit hit — resets in minutes.' :
+        isInvalid ? 'Groq API key is invalid. Check EXPO_PUBLIC_GROQ_API_KEY.' :
         msg.slice(0, 180);
       setAnalysis(buildPlaceholderAnalysis());
       setStep('review');
@@ -131,58 +120,30 @@ export default function GoalsScreen() {
     }
   };
 
-  // ── Review → Save ─────────────────────────────────────────────────────────
-
   const handleConfirm = async () => {
     if (!analysis) return;
     setSaving(true);
     try {
-      const targetDate = toDateString(
-        new Date(Date.now() + deadlineDays * 24 * 60 * 60 * 1000),
-      );
-
+      const targetDate = toDateString(new Date(Date.now() + deadlineDays * 24 * 60 * 60 * 1000));
       const goal = await addGoal({
-        userId: 'local',
-        title: title.trim(),
-        category,
-        targetDate,
-        isActive: true,
-        minutesPerDay,
+        userId: 'local', title: title.trim(), category,
+        targetDate, isActive: true, minutesPerDay,
         overview: analysis.overview,
         achievabilityNote: analysis.achievabilityNote,
         timeBreakdown: analysis.timeBreakdown,
       });
-
-      await addMilestones(
-        analysis.milestones.map((m) => ({
-          goalId: goal.id,
-          title: m.title,
-          targetDate: m.targetDate,
-        })),
-      );
-
+      await addMilestones(analysis.milestones.map((m) => ({
+        goalId: goal.id, title: m.title, targetDate: m.targetDate,
+      })));
       const today = new Date();
-      await addTasks(
-        analysis.weekTasks.map((t) => ({
-          goalId: goal.id,
-          userId: 'local',
-          title: t.title,
-          dueDate: toDateString(
-            new Date(today.getTime() + (t.day - 1) * 24 * 60 * 60 * 1000),
-          ),
-          estimatedMinutes: t.estimatedMinutes,
-          aiGenerated: true,
-          isStretchTask: false,
-        })),
-      );
-
+      await addTasks(analysis.weekTasks.map((t) => ({
+        goalId: goal.id, userId: 'local', title: t.title,
+        dueDate: toDateString(new Date(today.getTime() + (t.day - 1) * 24 * 60 * 60 * 1000)),
+        estimatedMinutes: t.estimatedMinutes, aiGenerated: true, isStretchTask: false,
+      })));
       resetForm();
       setStep('list');
-      Alert.alert(
-        `${theme.emoji.win} Goal Created!`,
-        `Your AI plan is ready. Check the Today tab to start your first task.`,
-        [{ text: "Let's go!" }],
-      );
+      Alert.alert(`${theme.emoji.win} Goal Created!`, `Your AI plan is ready. Check Today tab to start.`, [{ text: "Let's go!" }]);
     } catch (err) {
       Alert.alert('Error saving goal', String(err));
     } finally {
@@ -190,85 +151,123 @@ export default function GoalsScreen() {
     }
   };
 
-  // ── Placeholder when no API key ───────────────────────────────────────────
-
   function buildPlaceholderAnalysis(): GoalAnalysis {
     return {
-      overview: `You want to achieve: "${title}". This is a great goal. With ${minutesPerDay} minutes per day over ${deadlineDays} days, you have ${minutesPerDay * deadlineDays} total minutes to invest.`,
+      overview: `You want to achieve: "${title}". With ${minutesPerDay} minutes per day over ${deadlineDays} days, you have ${minutesPerDay * deadlineDays} total minutes to invest.`,
       achievabilityNote: `This goal is achievable with consistent daily effort.`,
       timeBreakdown: `Spend your ${minutesPerDay} minutes per day focused entirely on this goal.`,
-      keyActivities: [
-        { activity: 'Daily focused work', timePerWeek: `${minutesPerDay * 7} mins/week`, why: 'Consistency is the key to any goal.', howTo: 'Show up every day and do the work.' },
-      ],
+      keyActivities: [{ activity: 'Daily focused work', timePerWeek: `${minutesPerDay * 7} mins/week`, why: 'Consistency is the key.', howTo: 'Show up every day.' }],
       milestones: [
         { title: '25% complete', targetDate: toDateString(new Date(Date.now() + deadlineDays * 0.25 * 86400000)) },
-        { title: '50% complete', targetDate: toDateString(new Date(Date.now() + deadlineDays * 0.5 * 86400000)) },
+        { title: '50% complete', targetDate: toDateString(new Date(Date.now() + deadlineDays * 0.5  * 86400000)) },
         { title: '75% complete', targetDate: toDateString(new Date(Date.now() + deadlineDays * 0.75 * 86400000)) },
-        { title: 'Goal achieved!', targetDate: toDateString(new Date(Date.now() + deadlineDays * 86400000)) },
+        { title: 'Goal achieved!',targetDate: toDateString(new Date(Date.now() + deadlineDays * 86400000)) },
       ],
       weekTasks: [1,2,3,4,5,6,7].map((day) => ({
-        title: `Day ${day}: Work on "${title}"`,
-        day,
-        estimatedMinutes: minutesPerDay,
+        title: `Day ${day}: Work on "${title}"`, day, estimatedMinutes: minutesPerDay,
       })),
       todayTask: { title: `Start working on: ${title}`, why: 'The first step is the most important.' },
     };
   }
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // Render
+  // GOAL LIST
   // ─────────────────────────────────────────────────────────────────────────────
 
-  // ── Goal list ─────────────────────────────────────────────────────────────
   if (step === 'list') {
+    const activeCount = goals.filter(g => g.isActive).length;
+
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
-        <ScrollView contentContainerStyle={{ padding: 20 }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-            <Text style={{ color: theme.colors.text, fontSize: 28, fontWeight: '800' }}>Goals</Text>
+        <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>
+
+          {/* ── Header ── */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+            <View>
+              <Text style={{ color: theme.colors.text, fontSize: 30, fontWeight: '900', letterSpacing: -0.8 }}>
+                My Goals
+              </Text>
+              <Text style={{ color: theme.colors.textMuted, fontSize: 13, fontWeight: '500', marginTop: 2 }}>
+                {activeCount > 0 ? `${activeCount} active goal${activeCount !== 1 ? 's' : ''}` : 'Nothing yet — start your first'}
+              </Text>
+            </View>
             <TouchableOpacity
               onPress={() => setStep('step1')}
-              style={{ backgroundColor: theme.colors.primary, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20 }}
+              style={{
+                backgroundColor: theme.colors.primary,
+                width: 44, height: 44, borderRadius: 22,
+                alignItems: 'center', justifyContent: 'center',
+                shadowColor: theme.colors.primary,
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.30,
+                shadowRadius: 10,
+                elevation: 5,
+              }}
             >
-              <Text style={{ color: theme.colors.textInverse, fontWeight: '700' }}>+ New</Text>
+              <Text style={{ color: theme.colors.textInverse, fontSize: 26, lineHeight: 30, fontWeight: '400' }}>+</Text>
             </TouchableOpacity>
           </View>
 
+          {/* Divider */}
+          <View style={{ height: 1, backgroundColor: theme.colors.border, marginBottom: 24, marginTop: 6 }} />
+
+          {/* ── Empty state ── */}
           {goals.length === 0 && (
-            <View style={{ backgroundColor: theme.colors.surface, borderColor: theme.colors.border, borderWidth: 1, borderRadius: 16, padding: 32, alignItems: 'center' }}>
-              <Text style={{ fontSize: 40, marginBottom: 12 }}>{theme.emoji.goal}</Text>
-              <Text style={{ color: theme.colors.text, fontSize: 18, fontWeight: '700', marginBottom: 8, textAlign: 'center' }}>No goals yet</Text>
-              <Text style={{ color: theme.colors.textMuted, fontSize: 14, textAlign: 'center', marginBottom: 24 }}>
-                Set your first resolution. AI will build your entire plan.
+            <View style={{
+              backgroundColor: theme.colors.surface,
+              borderRadius: 24,
+              padding: 36,
+              alignItems: 'center',
+              borderWidth: 1,
+              borderColor: theme.colors.border,
+              marginTop: 16,
+            }}>
+              <View style={{
+                width: 80, height: 80, borderRadius: 40,
+                backgroundColor: theme.colors.primaryLight,
+                alignItems: 'center', justifyContent: 'center',
+                marginBottom: 20,
+              }}>
+                <Text style={{ fontSize: 38 }}>{theme.emoji.goal}</Text>
+              </View>
+              <Text style={{ color: theme.colors.text, fontSize: 20, fontWeight: '800', marginBottom: 8, letterSpacing: -0.4 }}>
+                Dream it. Do it.
+              </Text>
+              <Text style={{ color: theme.colors.textMuted, fontSize: 14, textAlign: 'center', lineHeight: 21, marginBottom: 28 }}>
+                Set your first resolution and AI will build your entire daily plan — tasks, milestones, the works.
               </Text>
               <TouchableOpacity
                 onPress={() => setStep('step1')}
-                style={{ backgroundColor: theme.colors.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12 }}
+                style={{
+                  backgroundColor: theme.colors.primary,
+                  paddingHorizontal: 28, paddingVertical: 14,
+                  borderRadius: 14,
+                  shadowColor: theme.colors.primary,
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.28,
+                  shadowRadius: 10,
+                  elevation: 4,
+                }}
               >
-                <Text style={{ color: theme.colors.textInverse, fontWeight: '700' }}>+ Add your first goal</Text>
+                <Text style={{ color: theme.colors.textInverse, fontWeight: '800', fontSize: 15 }}>
+                  + Set Your First Goal
+                </Text>
               </TouchableOpacity>
             </View>
           )}
 
+          {/* ── Goal cards ── */}
           {goals.map((goal) => {
-            const goalTasks = tasks.filter((t) => t.goalId === goal.id);
-            const cat = CATEGORIES.find((c) => c.key === goal.category);
-            const catColor = CATEGORY_COLORS[goal.category] ?? theme.colors.primary;
-            const daysLeft = Math.max(0, Math.ceil(
-              (new Date(goal.targetDate).getTime() - Date.now()) / 86400000,
-            ));
-            // ETA shift display
-            const etaShift = goal.totalEtaShiftDays ?? 0;
-            const hasReview = goal.lastReviewDate != null;
-            const etaColor =
-              etaShift < 0 ? theme.colors.success
-              : etaShift > 0 ? theme.colors.danger
-              : theme.colors.textMuted;
-            const etaLabel =
-              etaShift < 0 ? `${Math.abs(etaShift)}d ahead` :
-              etaShift > 0 ? `+${etaShift}d behind` : 'on track';
-
+            const goalTasks  = tasks.filter((t) => t.goalId === goal.id);
+            const cat        = CATEGORIES.find((c) => c.key === goal.category);
+            const catColor   = CATEGORY_COLORS[goal.category] ?? theme.colors.primary;
+            const daysLeft   = Math.max(0, Math.ceil((new Date(goal.targetDate).getTime() - Date.now()) / 86400000));
+            const etaShift   = goal.totalEtaShiftDays ?? 0;
+            const hasReview  = goal.lastReviewDate != null;
+            const etaColor   = etaShift < 0 ? '#22C55E' : etaShift > 0 ? theme.colors.danger : theme.colors.textMuted;
+            const etaLabel   = etaShift < 0 ? `${Math.abs(etaShift)}d ahead` : etaShift > 0 ? `+${etaShift}d behind` : 'on track';
             const completedTasks = goalTasks.filter((t) => !!t.completedAt).length;
+            const progress   = goal.progress ?? 0;
 
             return (
               <TouchableOpacity
@@ -278,71 +277,99 @@ export default function GoalsScreen() {
                   { text: 'Cancel', style: 'cancel' },
                   { text: 'Delete', style: 'destructive', onPress: () => deleteGoal(goal.id) },
                 ])}
+                activeOpacity={0.82}
                 style={{
                   backgroundColor: theme.colors.surface,
                   borderRadius: 20,
                   marginBottom: 14,
                   overflow: 'hidden',
-                  flexDirection: 'row',
-                  shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 3 },
-                  shadowOpacity: 0.07,
-                  shadowRadius: 10,
+                  shadowColor: catColor,
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.12,
+                  shadowRadius: 14,
                   elevation: 3,
                   borderWidth: 1,
-                  borderColor: theme.colors.border,
+                  borderColor: catColor + '22',
                 }}
-                activeOpacity={0.8}
               >
-                {/* Category colour bar */}
-                <View style={{ width: 5, backgroundColor: catColor }} />
-
-                {/* Card content */}
-                <View style={{ flex: 1, padding: 16 }}>
-                  {/* Top row */}
-                  <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 12 }}>
-                    {/* Emoji pill */}
-                    <View style={{
-                      width: 42, height: 42, borderRadius: 12,
-                      backgroundColor: catColor + '18',
-                      alignItems: 'center', justifyContent: 'center',
-                      marginRight: 12,
-                    }}>
-                      <Text style={{ fontSize: 22 }}>{cat?.emoji}</Text>
+                {/* ── Coloured category header ── */}
+                <View style={{
+                  backgroundColor: catColor + '14',
+                  paddingHorizontal: 16,
+                  paddingVertical: 12,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 10,
+                }}>
+                  <View style={{
+                    width: 34, height: 34, borderRadius: 10,
+                    backgroundColor: catColor + '25',
+                    alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <Text style={{ fontSize: 17 }}>{cat?.emoji}</Text>
+                  </View>
+                  <Text style={{
+                    color: catColor, fontSize: 11,
+                    fontWeight: '800', letterSpacing: 1.4,
+                    textTransform: 'uppercase', flex: 1,
+                  }}>
+                    {cat?.label}
+                  </Text>
+                  {hasReview && (
+                    <View style={{ backgroundColor: etaColor + '20', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 }}>
+                      <Text style={{ color: etaColor, fontSize: 10, fontWeight: '700' }}>{etaLabel}</Text>
                     </View>
+                  )}
+                </View>
 
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ color: theme.colors.text, fontSize: 16, fontWeight: '700', lineHeight: 22 }} numberOfLines={2}>
-                        {goal.title}
-                      </Text>
-                      <Text style={{ color: theme.colors.textMuted, fontSize: 12, marginTop: 3 }}>
-                        {daysLeft}d left · {completedTasks}/{goalTasks.length} tasks
-                        {goal.minutesPerDay ? ` · ${goal.minutesPerDay} min/day` : ''}
-                      </Text>
-                    </View>
-
-                    {/* Progress + ETA badge */}
-                    <View style={{ alignItems: 'flex-end', gap: 5, marginLeft: 8 }}>
-                      <Text style={{ color: catColor, fontWeight: '800', fontSize: 17 }}>
-                        {goal.progress}%
-                      </Text>
-                      {hasReview && (
-                        <View style={{ backgroundColor: etaColor + '22', paddingHorizontal: 7, paddingVertical: 3, borderRadius: 7 }}>
-                          <Text style={{ color: etaColor, fontSize: 10, fontWeight: '700' }}>{etaLabel}</Text>
-                        </View>
-                      )}
-                    </View>
+                {/* ── Card body ── */}
+                <View style={{ padding: 16 }}>
+                  {/* Title + % */}
+                  <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 12, gap: 10 }}>
+                    <Text style={{
+                      flex: 1, color: theme.colors.text,
+                      fontSize: 16, fontWeight: '700', lineHeight: 22,
+                    }} numberOfLines={2}>
+                      {goal.title}
+                    </Text>
+                    <Text style={{ color: catColor, fontSize: 22, fontWeight: '900' }}>
+                      {progress}%
+                    </Text>
                   </View>
 
                   {/* Progress bar */}
-                  <View style={{ backgroundColor: theme.colors.border, height: 5, borderRadius: 3 }}>
+                  <View style={{
+                    backgroundColor: catColor + '18',
+                    height: 6, borderRadius: 3, marginBottom: 12,
+                  }}>
                     <View style={{
-                      backgroundColor: catColor,
-                      height: 5,
-                      borderRadius: 3,
-                      width: `${goal.progress}%`,
-                      opacity: 0.85,
+                      backgroundColor: catColor, height: 6,
+                      borderRadius: 3, width: `${progress}%`,
                     }} />
+                  </View>
+
+                  {/* Meta row */}
+                  <View style={{ flexDirection: 'row', gap: 16 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                      <Text style={{ fontSize: 11 }}>📅</Text>
+                      <Text style={{ color: theme.colors.textMuted, fontSize: 12, fontWeight: '500' }}>
+                        {daysLeft}d left
+                      </Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                      <Text style={{ fontSize: 11 }}>✅</Text>
+                      <Text style={{ color: theme.colors.textMuted, fontSize: 12, fontWeight: '500' }}>
+                        {completedTasks}/{goalTasks.length} tasks
+                      </Text>
+                    </View>
+                    {(goal.minutesPerDay ?? 0) > 0 && (
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                        <Text style={{ fontSize: 11 }}>⏱</Text>
+                        <Text style={{ color: theme.colors.textMuted, fontSize: 12, fontWeight: '500' }}>
+                          {goal.minutesPerDay}m/day
+                        </Text>
+                      </View>
+                    )}
                   </View>
                 </View>
               </TouchableOpacity>
@@ -353,97 +380,146 @@ export default function GoalsScreen() {
     );
   }
 
-  // ── Step 1: Goal info ─────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────────────────
+  // STEP 1 — What's your goal?
+  // ─────────────────────────────────────────────────────────────────────────────
+
   if (step === 'step1') {
+    const catColor = CATEGORY_COLORS[category];
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-          <ScrollView contentContainerStyle={{ padding: 20 }}>
-            <TouchableOpacity onPress={() => { resetForm(); setStep('list'); }} style={{ marginBottom: 20 }}>
-              <Text style={{ color: theme.colors.primary, fontSize: 16 }}>← Back</Text>
-            </TouchableOpacity>
+          <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 48 }} keyboardShouldPersistTaps="handled">
 
-            {/* Progress indicator */}
-            <StepIndicator current={1} total={2} theme={theme} />
+            {/* Back + step dots */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
+              <TouchableOpacity onPress={() => { resetForm(); setStep('list'); }} activeOpacity={0.7}>
+                <Text style={{ color: theme.colors.primary, fontSize: 15, fontWeight: '700' }}>← Back</Text>
+              </TouchableOpacity>
+              <StepDots current={1} total={2} color={theme.colors.primary} />
+            </View>
 
-            <Text style={{ color: theme.colors.text, fontSize: 24, fontWeight: '800', marginBottom: 4 }}>
+            {/* Heading */}
+            <Text style={{ color: theme.colors.text, fontSize: 28, fontWeight: '900', letterSpacing: -0.6, marginBottom: 6 }}>
               What's your goal?
             </Text>
-            <Text style={{ color: theme.colors.textMuted, fontSize: 14, marginBottom: 24 }}>
-              Be specific — the more detail you give, the better AI can coach you.
+            <Text style={{ color: theme.colors.textMuted, fontSize: 14, lineHeight: 20, marginBottom: 28 }}>
+              Be specific — the more detail you share, the better AI can coach you.
             </Text>
 
-            {/* Title input */}
-            <Text style={{ color: theme.colors.text, fontWeight: '700', marginBottom: 8 }}>Describe your goal</Text>
+            {/* Text input */}
             <TextInput
               value={title}
               onChangeText={setTitle}
-              placeholder="e.g. Run a 5K in under 30 minutes, Learn conversational Spanish, Save $10,000 for a trip..."
+              placeholder={`e.g. Run a 5K in under 30 minutes…`}
               placeholderTextColor={theme.colors.textMuted}
-              style={{
-                backgroundColor: theme.colors.surface,
-                borderColor: theme.colors.border,
-                borderWidth: 1.5,
-                borderRadius: 12,
-                padding: 14,
-                color: theme.colors.text,
-                fontSize: 15,
-                marginBottom: 24,
-                minHeight: 80,
-                textAlignVertical: 'top',
-              }}
               multiline
               numberOfLines={3}
+              style={{
+                backgroundColor: theme.colors.surface,
+                borderColor: title ? theme.colors.primary : theme.colors.border,
+                borderWidth: 1.5,
+                borderRadius: 16,
+                padding: 16,
+                color: theme.colors.text,
+                fontSize: 15,
+                lineHeight: 22,
+                minHeight: 90,
+                textAlignVertical: 'top',
+                marginBottom: 32,
+              }}
             />
 
-            {/* Category */}
-            <Text style={{ color: theme.colors.text, fontWeight: '700', marginBottom: 12 }}>Category</Text>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 24 }}>
-              {CATEGORIES.map((cat) => (
-                <TouchableOpacity
-                  key={cat.key}
-                  onPress={() => setCategory(cat.key)}
-                  style={{
-                    paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20,
-                    borderWidth: 1.5,
-                    borderColor: category === cat.key ? theme.colors.primary : theme.colors.border,
-                    backgroundColor: category === cat.key ? theme.colors.primaryLight : theme.colors.surface,
-                  }}
-                >
-                  <Text style={{ color: category === cat.key ? theme.colors.primary : theme.colors.textMuted, fontWeight: '600', fontSize: 13 }}>
-                    {cat.emoji} {cat.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+            {/* Category label */}
+            <Text style={{ color: theme.colors.text, fontSize: 13, fontWeight: '800', letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 14 }}>
+              Category
+            </Text>
+
+            {/* Category grid — 4 columns */}
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 32 }}>
+              {CATEGORIES.map((cat) => {
+                const isSelected = category === cat.key;
+                const cc = CATEGORY_COLORS[cat.key];
+                return (
+                  <TouchableOpacity
+                    key={cat.key}
+                    onPress={() => setCategory(cat.key)}
+                    style={{
+                      width: '22%',
+                      aspectRatio: 1,
+                      borderRadius: 16,
+                      backgroundColor: isSelected ? cc : cc + '12',
+                      borderWidth: 2,
+                      borderColor: isSelected ? cc : 'transparent',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 4,
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={{ fontSize: 22 }}>{cat.emoji}</Text>
+                    <Text style={{
+                      color: isSelected ? '#fff' : cc,
+                      fontSize: 8, fontWeight: '900',
+                      letterSpacing: 0.6, textTransform: 'uppercase',
+                    }}>
+                      {cat.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
 
-            {/* Deadline */}
-            <Text style={{ color: theme.colors.text, fontWeight: '700', marginBottom: 12 }}>Deadline</Text>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 32 }}>
-              {DEADLINES.map((d) => (
-                <TouchableOpacity
-                  key={d.days}
-                  onPress={() => setDeadlineDays(d.days)}
-                  style={{
-                    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
-                    borderWidth: 1.5,
-                    borderColor: deadlineDays === d.days ? theme.colors.primary : theme.colors.border,
-                    backgroundColor: deadlineDays === d.days ? theme.colors.primaryLight : theme.colors.surface,
-                  }}
-                >
-                  <Text style={{ color: deadlineDays === d.days ? theme.colors.primary : theme.colors.textMuted, fontWeight: '600' }}>
-                    {d.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+            {/* Deadline label */}
+            <Text style={{ color: theme.colors.text, fontSize: 13, fontWeight: '800', letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 14 }}>
+              Deadline
+            </Text>
+
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 36 }}>
+              {DEADLINES.map((d) => {
+                const isSelected = deadlineDays === d.days;
+                return (
+                  <TouchableOpacity
+                    key={d.days}
+                    onPress={() => setDeadlineDays(d.days)}
+                    style={{
+                      paddingHorizontal: 16, paddingVertical: 10,
+                      borderRadius: 12,
+                      backgroundColor: isSelected ? theme.colors.primary : theme.colors.surface,
+                      borderWidth: 1.5,
+                      borderColor: isSelected ? theme.colors.primary : theme.colors.border,
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={{
+                      color: isSelected ? theme.colors.textInverse : theme.colors.text,
+                      fontWeight: '700', fontSize: 13,
+                    }}>
+                      {d.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
 
+            {/* Next button */}
             <TouchableOpacity
               onPress={handleStep1Next}
-              style={{ backgroundColor: theme.colors.primary, padding: 16, borderRadius: 14, alignItems: 'center' }}
+              style={{
+                backgroundColor: theme.colors.primary,
+                paddingVertical: 17,
+                borderRadius: 16,
+                alignItems: 'center',
+                shadowColor: theme.colors.primary,
+                shadowOffset: { width: 0, height: 5 },
+                shadowOpacity: 0.30,
+                shadowRadius: 12,
+                elevation: 5,
+              }}
+              activeOpacity={0.85}
             >
               <Text style={{ color: theme.colors.textInverse, fontWeight: '800', fontSize: 16 }}>
-                Next → How much time?
+                Next  →
               </Text>
             </TouchableOpacity>
           </ScrollView>
@@ -452,64 +528,101 @@ export default function GoalsScreen() {
     );
   }
 
-  // ── Step 2: Time per day ──────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────────────────
+  // STEP 2 — How much time per day?
+  // ─────────────────────────────────────────────────────────────────────────────
+
   if (step === 'step2') {
+    const cat = CATEGORIES.find(c => c.key === category);
+    const catColor = CATEGORY_COLORS[category];
+
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
-        <ScrollView contentContainerStyle={{ padding: 20 }}>
-          <TouchableOpacity onPress={() => setStep('step1')} style={{ marginBottom: 20 }}>
-            <Text style={{ color: theme.colors.primary, fontSize: 16 }}>← Back</Text>
-          </TouchableOpacity>
+        <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 48 }}>
 
-          <StepIndicator current={2} total={2} theme={theme} />
+          {/* Back + step dots */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
+            <TouchableOpacity onPress={() => setStep('step1')} activeOpacity={0.7}>
+              <Text style={{ color: theme.colors.primary, fontSize: 15, fontWeight: '700' }}>← Back</Text>
+            </TouchableOpacity>
+            <StepDots current={2} total={2} color={theme.colors.primary} />
+          </View>
 
-          <Text style={{ color: theme.colors.text, fontSize: 24, fontWeight: '800', marginBottom: 4 }}>
-            How much time per day?
+          {/* Heading */}
+          <Text style={{ color: theme.colors.text, fontSize: 28, fontWeight: '900', letterSpacing: -0.6, marginBottom: 6 }}>
+            Time per day?
           </Text>
-          <Text style={{ color: theme.colors.textMuted, fontSize: 14, marginBottom: 8 }}>
-            Be honest — AI will build your plan around this. Better to under-commit and over-deliver.
+          <Text style={{ color: theme.colors.textMuted, fontSize: 14, lineHeight: 20, marginBottom: 20 }}>
+            Be honest — better to under-commit and over-deliver.
           </Text>
 
-          {/* Goal summary pill */}
-          <View style={{ backgroundColor: theme.colors.primaryLight, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, marginBottom: 24, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <Text style={{ fontSize: 16 }}>{CATEGORIES.find(c => c.key === category)?.emoji}</Text>
-            <Text style={{ color: theme.colors.primary, fontWeight: '600', fontSize: 13, flex: 1 }} numberOfLines={1}>
-              {title} · {DEADLINES.find(d => d.days === deadlineDays)?.label}
+          {/* Goal recap pill */}
+          <View style={{
+            flexDirection: 'row', alignItems: 'center', gap: 10,
+            backgroundColor: catColor + '12',
+            borderRadius: 14, paddingHorizontal: 14, paddingVertical: 11,
+            marginBottom: 28,
+            borderWidth: 1, borderColor: catColor + '22',
+          }}>
+            <Text style={{ fontSize: 18 }}>{cat?.emoji}</Text>
+            <Text style={{ color: catColor, fontWeight: '700', fontSize: 13, flex: 1 }} numberOfLines={1}>
+              {title}
             </Text>
+            <View style={{ backgroundColor: catColor + '20', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 }}>
+              <Text style={{ color: catColor, fontSize: 11, fontWeight: '700' }}>
+                {DEADLINES.find(d => d.days === deadlineDays)?.label}
+              </Text>
+            </View>
           </View>
 
           {/* Time options */}
-          <View style={{ gap: 10, marginBottom: 32 }}>
+          <View style={{ gap: 10, marginBottom: 28 }}>
             {TIME_OPTIONS.map((opt) => {
               const isSelected = minutesPerDay === opt.minutes;
-              const weeklyHours = ((opt.minutes * 7) / 60).toFixed(1);
               return (
                 <TouchableOpacity
                   key={opt.minutes}
                   onPress={() => setMinutesPerDay(opt.minutes)}
                   style={{
+                    flexDirection: 'row', alignItems: 'center',
                     backgroundColor: isSelected ? theme.colors.primary : theme.colors.surface,
-                    borderColor: isSelected ? theme.colors.primary : theme.colors.border,
                     borderWidth: 1.5,
-                    borderRadius: 14,
+                    borderColor: isSelected ? theme.colors.primary : theme.colors.border,
+                    borderRadius: 16,
                     padding: 16,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
+                    gap: 14,
                   }}
                   activeOpacity={0.8}
                 >
-                  <View>
-                    <Text style={{ color: isSelected ? theme.colors.textInverse : theme.colors.text, fontWeight: '700', fontSize: 17 }}>
+                  {/* Time badge */}
+                  <View style={{
+                    backgroundColor: isSelected ? 'rgba(255,255,255,0.18)' : theme.colors.primaryLight,
+                    borderRadius: 10,
+                    paddingHorizontal: 10, paddingVertical: 6,
+                    minWidth: 64, alignItems: 'center',
+                  }}>
+                    <Text style={{
+                      color: isSelected ? theme.colors.textInverse : theme.colors.primary,
+                      fontSize: 15, fontWeight: '900',
+                    }}>
                       {opt.label}
                     </Text>
-                    <Text style={{ color: isSelected ? theme.colors.textInverse + 'cc' : theme.colors.textMuted, fontSize: 12, marginTop: 2 }}>
-                      {opt.desc} · {weeklyHours} hrs/week
+                  </View>
+
+                  {/* Description */}
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: isSelected ? theme.colors.textInverse : theme.colors.text, fontWeight: '700', fontSize: 14 }}>
+                      {opt.desc}
+                    </Text>
+                    <Text style={{ color: isSelected ? 'rgba(255,255,255,0.65)' : theme.colors.textMuted, fontSize: 12, marginTop: 2 }}>
+                      {opt.hrs} hrs/week
                     </Text>
                   </View>
+
+                  {/* Check */}
                   {isSelected && (
-                    <View style={{ backgroundColor: theme.colors.textInverse + '30', width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' }}>
-                      <Text style={{ color: theme.colors.textInverse, fontWeight: '800' }}>✓</Text>
+                    <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.25)', alignItems: 'center', justifyContent: 'center' }}>
+                      <Text style={{ color: '#fff', fontSize: 12, fontWeight: '900' }}>✓</Text>
                     </View>
                   )}
                 </TouchableOpacity>
@@ -518,19 +631,29 @@ export default function GoalsScreen() {
           </View>
 
           {/* AI hint */}
-          <View style={{ backgroundColor: theme.colors.surfaceAlt, borderRadius: 12, padding: 14, marginBottom: 24, gap: 6 }}>
-            <Text style={{ color: theme.colors.text, fontWeight: '700', fontSize: 13 }}>✨ What AI will do next</Text>
-            <Text style={{ color: theme.colors.textMuted, fontSize: 13 }}>
-              • Analyse if your goal is achievable in {deadlineDays} days with {minutesPerDay} mins/day{'\n'}
-              • Tell you exactly what activities to do and why{'\n'}
-              • Show how to split your {minutesPerDay} minutes per day{'\n'}
-              • Generate a full week of specific daily tasks
+          <View style={{
+            backgroundColor: theme.colors.surfaceAlt,
+            borderRadius: 14, padding: 16, marginBottom: 28,
+            borderWidth: 1, borderColor: theme.colors.border,
+            gap: 6,
+          }}>
+            <Text style={{ color: theme.colors.text, fontWeight: '800', fontSize: 13 }}>✨ What happens next</Text>
+            <Text style={{ color: theme.colors.textMuted, fontSize: 13, lineHeight: 20 }}>
+              AI will check if your goal is achievable in {deadlineDays} days, tell you exactly what to do and why, and generate a full week of daily tasks.
             </Text>
           </View>
 
           <TouchableOpacity
             onPress={handleAnalyze}
-            style={{ backgroundColor: theme.colors.primary, padding: 16, borderRadius: 14, alignItems: 'center' }}
+            style={{
+              backgroundColor: theme.colors.primary,
+              paddingVertical: 17, borderRadius: 16,
+              alignItems: 'center',
+              shadowColor: theme.colors.primary,
+              shadowOffset: { width: 0, height: 5 },
+              shadowOpacity: 0.30, shadowRadius: 12, elevation: 5,
+            }}
+            activeOpacity={0.85}
           >
             <Text style={{ color: theme.colors.textInverse, fontWeight: '800', fontSize: 16 }}>
               ✨ Build My AI Plan
@@ -541,61 +664,105 @@ export default function GoalsScreen() {
     );
   }
 
-  // ── Analyzing (loading) ───────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────────────────
+  // ANALYZING
+  // ─────────────────────────────────────────────────────────────────────────────
+
   if (step === 'analyzing') {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background, justifyContent: 'center', alignItems: 'center', padding: 32 }}>
-        <ActivityIndicator size="large" color={theme.colors.primary} style={{ marginBottom: 24 }} />
-        <Text style={{ color: theme.colors.text, fontSize: 20, fontWeight: '800', textAlign: 'center', marginBottom: 8 }}>
-          Building your plan...
-        </Text>
-        <Text style={{ color: theme.colors.textMuted, fontSize: 14, textAlign: 'center' }}>
-          AI is analysing your goal, calculating what it takes, and generating your first week of tasks.
-        </Text>
+      <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background, justifyContent: 'center', alignItems: 'center', padding: 40 }}>
+        <View style={{
+          backgroundColor: theme.colors.surface,
+          borderRadius: 28, padding: 36,
+          alignItems: 'center', width: '100%',
+          borderWidth: 1, borderColor: theme.colors.border,
+          shadowColor: theme.colors.primary,
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.12, shadowRadius: 24, elevation: 6,
+        }}>
+          <View style={{
+            width: 72, height: 72, borderRadius: 36,
+            backgroundColor: theme.colors.primaryLight,
+            alignItems: 'center', justifyContent: 'center',
+            marginBottom: 20,
+          }}>
+            <Text style={{ fontSize: 32 }}>✨</Text>
+          </View>
+          <ActivityIndicator size="large" color={theme.colors.primary} style={{ marginBottom: 20 }} />
+          <Text style={{ color: theme.colors.text, fontSize: 20, fontWeight: '800', textAlign: 'center', marginBottom: 8, letterSpacing: -0.4 }}>
+            Building your plan…
+          </Text>
+          <Text style={{ color: theme.colors.textMuted, fontSize: 14, textAlign: 'center', lineHeight: 21 }}>
+            AI is analysing your goal, figuring out what it takes, and creating your first week of tasks.
+          </Text>
+        </View>
       </SafeAreaView>
     );
   }
 
-  // ── Review AI plan ────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────────────────
+  // REVIEW
+  // ─────────────────────────────────────────────────────────────────────────────
+
   if (step === 'review' && analysis) {
     const todayTasks = analysis.weekTasks.filter((t) => t.day === 1);
+    const cat = CATEGORIES.find(c => c.key === category);
+    const catColor = CATEGORY_COLORS[category];
+
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
-        <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 48 }}>
-          <TouchableOpacity onPress={() => setStep('step2')} style={{ marginBottom: 20 }}>
-            <Text style={{ color: theme.colors.primary, fontSize: 16 }}>← Edit</Text>
+        <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 56 }}>
+
+          {/* Back */}
+          <TouchableOpacity onPress={() => setStep('step2')} style={{ marginBottom: 20 }} activeOpacity={0.7}>
+            <Text style={{ color: theme.colors.primary, fontSize: 15, fontWeight: '700' }}>← Edit</Text>
           </TouchableOpacity>
 
-          {/* Header */}
-          <View style={{ backgroundColor: theme.colors.primary, borderRadius: 16, padding: 18, marginBottom: 20 }}>
-            <Text style={{ color: theme.colors.textInverse, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 4 }}>
-              ✨ Your AI Plan
-            </Text>
-            <Text style={{ color: theme.colors.textInverse, fontSize: 20, fontWeight: '800', marginBottom: 8 }}>
+          {/* Hero header */}
+          <View style={{
+            backgroundColor: theme.colors.primary,
+            borderRadius: 22, padding: 22, marginBottom: 20,
+            shadowColor: theme.colors.primary,
+            shadowOffset: { width: 0, height: 8 },
+            shadowOpacity: 0.28, shadowRadius: 20, elevation: 6,
+          }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+              <View style={{ backgroundColor: 'rgba(255,255,255,0.18)', borderRadius: 10, width: 36, height: 36, alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ fontSize: 18 }}>{cat?.emoji}</Text>
+              </View>
+              <Text style={{ color: 'rgba(255,255,255,0.80)', fontSize: 11, fontWeight: '800', letterSpacing: 1.4, textTransform: 'uppercase' }}>
+                ✨ Your AI Plan
+              </Text>
+            </View>
+            <Text style={{ color: '#fff', fontSize: 20, fontWeight: '800', lineHeight: 26, marginBottom: 8 }}>
               {title}
             </Text>
-            <Text style={{ color: theme.colors.textInverse + 'cc', fontSize: 13 }}>
-              {minutesPerDay} min/day · {DEADLINES.find(d => d.days === deadlineDays)?.label} · {theme.name} pace
-            </Text>
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              {[
+                `${minutesPerDay} min/day`,
+                DEADLINES.find(d => d.days === deadlineDays)?.label ?? '',
+                theme.name,
+              ].map((tag, i) => (
+                <View key={i} style={{ backgroundColor: 'rgba(255,255,255,0.18)', paddingHorizontal: 9, paddingVertical: 4, borderRadius: 8 }}>
+                  <Text style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}>{tag}</Text>
+                </View>
+              ))}
+            </View>
           </View>
 
-          {/* Overview */}
-          <SectionCard title="📋 Overview" theme={theme}>
+          <ReviewCard emoji="📋" title="Overview" theme={theme}>
             <Text style={{ color: theme.colors.text, fontSize: 14, lineHeight: 22 }}>{analysis.overview}</Text>
-          </SectionCard>
+          </ReviewCard>
 
-          {/* Achievability */}
-          <SectionCard title="🎯 Achievability" theme={theme}>
+          <ReviewCard emoji="🎯" title="Achievability" theme={theme}>
             <Text style={{ color: theme.colors.text, fontSize: 14, lineHeight: 22 }}>{analysis.achievabilityNote}</Text>
-          </SectionCard>
+          </ReviewCard>
 
-          {/* Time breakdown */}
-          <SectionCard title={`⏱ How to use your ${minutesPerDay} minutes/day`} theme={theme}>
+          <ReviewCard emoji="⏱" title={`Using your ${minutesPerDay} min/day`} theme={theme}>
             <Text style={{ color: theme.colors.text, fontSize: 14, lineHeight: 22 }}>{analysis.timeBreakdown}</Text>
-          </SectionCard>
+          </ReviewCard>
 
-          {/* Key activities */}
-          <SectionCard title="🔑 What you need to do" theme={theme}>
+          <ReviewCard emoji="🔑" title="What you need to do" theme={theme}>
             {analysis.keyActivities.map((act, i) => (
               <View key={i} style={{ marginBottom: i < analysis.keyActivities.length - 1 ? 16 : 0 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
@@ -604,66 +771,69 @@ export default function GoalsScreen() {
                     <Text style={{ color: theme.colors.primary, fontSize: 11, fontWeight: '600' }}>{act.timePerWeek}</Text>
                   </View>
                 </View>
-                <Text style={{ color: theme.colors.primary, fontSize: 12, fontWeight: '600', marginBottom: 3 }}>
-                  Why: {act.why}
-                </Text>
-                <Text style={{ color: theme.colors.textMuted, fontSize: 13, lineHeight: 19 }}>
-                  How: {act.howTo}
-                </Text>
+                <Text style={{ color: theme.colors.primary, fontSize: 12, fontWeight: '600', marginBottom: 3 }}>Why: {act.why}</Text>
+                <Text style={{ color: theme.colors.textMuted, fontSize: 13, lineHeight: 19 }}>How: {act.howTo}</Text>
                 {i < analysis.keyActivities.length - 1 && (
                   <View style={{ height: 1, backgroundColor: theme.colors.border, marginTop: 14 }} />
                 )}
               </View>
             ))}
-          </SectionCard>
+          </ReviewCard>
 
-          {/* Milestones */}
-          <SectionCard title="🏁 Milestones" theme={theme}>
+          <ReviewCard emoji="🏁" title="Milestones" theme={theme}>
             {analysis.milestones.map((m, i) => (
-              <View key={i} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: i < analysis.milestones.length - 1 ? 10 : 0 }}>
-                <View style={{ width: 18, height: 18, borderRadius: 9, borderWidth: 2, borderColor: theme.colors.primary, marginRight: 10 }} />
+              <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: i < analysis.milestones.length - 1 ? 12 : 0 }}>
+                <View style={{ width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: theme.colors.primary, backgroundColor: theme.colors.primaryLight }} />
                 <View style={{ flex: 1 }}>
                   <Text style={{ color: theme.colors.text, fontSize: 13, fontWeight: '600' }}>{m.title}</Text>
-                  <Text style={{ color: theme.colors.textMuted, fontSize: 11 }}>
+                  <Text style={{ color: theme.colors.textMuted, fontSize: 11, marginTop: 1 }}>
                     By {new Date(m.targetDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                   </Text>
                 </View>
               </View>
             ))}
-          </SectionCard>
+          </ReviewCard>
 
-          {/* Today's tasks preview */}
-          <SectionCard title={`📅 Today's tasks (${todayTasks.length})`} theme={theme}>
+          <ReviewCard emoji="📅" title={`Today's tasks (${todayTasks.length})`} theme={theme}>
             {todayTasks.map((t, i) => (
-              <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: i < todayTasks.length - 1 ? 10 : 0, gap: 8 }}>
+              <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: i < todayTasks.length - 1 ? 10 : 0 }}>
                 <View style={{ width: 18, height: 18, borderRadius: 9, borderWidth: 2, borderColor: theme.colors.border, marginTop: 2 }} />
                 <View style={{ flex: 1 }}>
                   <Text style={{ color: theme.colors.text, fontSize: 13, fontWeight: '600' }}>{t.title}</Text>
                   {t.estimatedMinutes > 0 && (
-                    <Text style={{ color: theme.colors.textMuted, fontSize: 11 }}>~{t.estimatedMinutes} min</Text>
+                    <Text style={{ color: theme.colors.textMuted, fontSize: 11, marginTop: 1 }}>~{t.estimatedMinutes} min</Text>
                   )}
                 </View>
               </View>
             ))}
-            <Text style={{ color: theme.colors.textMuted, fontSize: 12, marginTop: 10 }}>
+            <Text style={{ color: theme.colors.textMuted, fontSize: 12, marginTop: 12 }}>
               + {analysis.weekTasks.length - todayTasks.length} more tasks across the next 7 days
             </Text>
-          </SectionCard>
+          </ReviewCard>
 
-          {/* Confirm button */}
+          {/* Confirm */}
           <TouchableOpacity
             onPress={handleConfirm}
             disabled={saving}
-            style={{ backgroundColor: saving ? theme.colors.border : theme.colors.primary, padding: 18, borderRadius: 14, alignItems: 'center', marginTop: 8 }}
+            style={{
+              backgroundColor: saving ? theme.colors.border : theme.colors.primary,
+              paddingVertical: 18, borderRadius: 16,
+              alignItems: 'center', marginTop: 8,
+              shadowColor: saving ? 'transparent' : theme.colors.primary,
+              shadowOffset: { width: 0, height: 5 },
+              shadowOpacity: 0.28, shadowRadius: 14, elevation: 5,
+            }}
+            activeOpacity={0.85}
           >
             {saving ? (
               <ActivityIndicator color={theme.colors.textInverse} />
             ) : (
               <Text style={{ color: theme.colors.textInverse, fontWeight: '800', fontSize: 16 }}>
-                {theme.emoji.goal} Start This Goal
+                {theme.emoji.goal}  Start This Goal
               </Text>
             )}
           </TouchableOpacity>
+
         </ScrollView>
       </SafeAreaView>
     );
@@ -672,28 +842,43 @@ export default function GoalsScreen() {
   return null;
 }
 
-// ─── Shared sub-components ────────────────────────────────────────────────────
+// ─── Sub-components ───────────────────────────────────────────────────────────
 
-function StepIndicator({ current, total, theme }: { current: number; total: number; theme: any }) {
+function StepDots({ current, total, color }: { current: number; total: number; color: string }) {
   return (
-    <View style={{ flexDirection: 'row', gap: 6, marginBottom: 20 }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
       {Array.from({ length: total }).map((_, i) => (
         <View
           key={i}
           style={{
-            flex: 1, height: 4, borderRadius: 2,
-            backgroundColor: i < current ? theme.colors.primary : theme.colors.border,
+            width:  i + 1 === current ? 20 : 8,
+            height: 8,
+            borderRadius: 4,
+            backgroundColor: i + 1 <= current ? color : color + '28',
           }}
         />
       ))}
+      <Text style={{ color, fontSize: 11, fontWeight: '700', marginLeft: 4 }}>
+        {current}/{total}
+      </Text>
     </View>
   );
 }
 
-function SectionCard({ title, children, theme }: { title: string; children: React.ReactNode; theme: any }) {
+function ReviewCard({ emoji, title, children, theme }: { emoji: string; title: string; children: React.ReactNode; theme: any }) {
   return (
-    <View style={{ backgroundColor: theme.colors.surface, borderColor: theme.colors.border, borderWidth: 1, borderRadius: 14, padding: 16, marginBottom: 14 }}>
-      <Text style={{ color: theme.colors.text, fontWeight: '800', fontSize: 14, marginBottom: 12 }}>{title}</Text>
+    <View style={{
+      backgroundColor: theme.colors.surface,
+      borderColor: theme.colors.border,
+      borderWidth: 1,
+      borderRadius: 18,
+      padding: 18,
+      marginBottom: 12,
+    }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+        <Text style={{ fontSize: 16 }}>{emoji}</Text>
+        <Text style={{ color: theme.colors.text, fontWeight: '800', fontSize: 14 }}>{title}</Text>
+      </View>
       {children}
     </View>
   );
