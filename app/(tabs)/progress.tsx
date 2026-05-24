@@ -299,13 +299,10 @@ function Heatmap({ days, primary }: { days: (StreakDay | null)[]; primary: strin
 
 function SurgoChartBanner({
   themeKey,
-  primary,
 }: {
   themeKey: 'soft' | 'balanced' | 'hardcore';
   primary: string;
 }) {
-  const stickColor = primary;
-
   return (
     <View style={{
       flexDirection: 'row',
@@ -313,36 +310,21 @@ function SurgoChartBanner({
       marginBottom: 6,
       paddingHorizontal: 4,
     }}>
-      {/* Mascot */}
-      <WelcomeMascot themeKey={themeKey} size={90} />
-
-      {/* Pointer stick — diagonal line from Surgo's arm area up-right to bubble */}
-      <Svg width={52} height={90} style={{ marginBottom: 8 }}>
-        {/* Stick shaft */}
-        <Path
-          d="M 10 72 L 44 22"
-          stroke={stickColor}
-          strokeWidth={4}
-          strokeLinecap="round"
-          opacity={0.85}
-        />
-        {/* Arrowhead at tip */}
-        <Path
-          d="M 44 22 L 34 26 M 44 22 L 40 32"
-          stroke={stickColor}
-          strokeWidth={3}
-          strokeLinecap="round"
-          opacity={0.85}
-        />
-        {/* Star at stick tip */}
-        <Path
-          d="M 44 12 L 46 18 L 52 18 L 47 22 L 49 28 L 44 24 L 39 28 L 41 22 L 36 18 L 42 18 Z"
-          fill="#FFD700"
-          opacity={0.92}
-        />
-        {/* Handle ball at bottom of stick */}
-        <Circle cx={10} cy={72} r={5} fill={stickColor} opacity={0.50} />
-      </Svg>
+      {/* Mascot with 📊 peeking out behind from the right */}
+      <View style={{ width: 90, height: 90 }}>
+        {/* 📊 sits behind Surgo — rendered first so mascot paints over it */}
+        <Text style={{
+          position: 'absolute',
+          right: -16,
+          bottom: 6,
+          fontSize: 42,
+          opacity: 0.88,
+          zIndex: 0,
+        }}>
+          📊
+        </Text>
+        <WelcomeMascot themeKey={themeKey} size={90} />
+      </View>
 
       {/* Speech bubble */}
       <View style={{
@@ -351,7 +333,7 @@ function SurgoChartBanner({
         borderRadius: 16,
         borderBottomLeftRadius: 4,
         padding: 14,
-        marginLeft: 6,
+        marginLeft: 10,
         marginBottom: 8,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
@@ -361,7 +343,7 @@ function SurgoChartBanner({
         borderWidth: 1,
         borderColor: 'rgba(0,0,0,0.06)',
       }}>
-        {/* Bubble tail pointing left toward stick */}
+        {/* Bubble tail pointing left toward Surgo */}
         <View style={{
           position: 'absolute',
           left: -7,
@@ -381,7 +363,7 @@ function SurgoChartBanner({
           lineHeight: 19,
           letterSpacing: -0.2,
         }}>
-          See your progress here! 📊
+          See your progress here!
         </Text>
         <Text style={{
           color: D.muted,
