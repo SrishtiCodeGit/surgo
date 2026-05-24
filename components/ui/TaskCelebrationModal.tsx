@@ -173,7 +173,7 @@ export function TaskCelebrationModal({ visible, remaining, total, onDismiss }: P
         >
           {/* Mascot */}
           <Animated.View style={{ transform: [{ translateY: mascotY }], marginBottom: 10 }}>
-            <WelcomeMascot themeKey={themeKey} size={110} />
+            <WelcomeMascot themeKey={themeKey} size={110} pose={allDone ? 'motivating' : 'thumbsUp'} />
           </Animated.View>
 
           {/* All-done ring glow */}
