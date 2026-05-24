@@ -25,9 +25,9 @@ export function TaskCard({ task, onComplete }: TaskCardProps) {
   const isCompleted = !!task.completedAt;
   const cat = categoriseTask(task.title);
 
-  // When completed: go grey. When pending: use category colour.
-  const accentColor = isCompleted ? theme.colors.success : cat.color;
-  const cardBg      = isCompleted ? theme.colors.surface  : cat.bg;
+  const accentColor = isCompleted ? '#22C55E' : cat.color;
+  const cardBg      = isCompleted ? '#FFFFFF'  : cat.bg;
+  const borderColor = isCompleted ? 'rgba(0,0,0,0.10)' : cat.color + '55';
 
   return (
     <TouchableOpacity
@@ -36,26 +36,29 @@ export function TaskCard({ task, onComplete }: TaskCardProps) {
         playComplete();
         onComplete(task.id);
       }}
-      activeOpacity={0.75}
+      activeOpacity={0.82}
       style={{
         backgroundColor: cardBg,
-        borderRadius:    14,
-        marginBottom:    8,
+        borderRadius:    16,
+        marginBottom:    10,
         flexDirection:   'row',
         alignItems:      'stretch',
         overflow:        'hidden',
         opacity:         isCompleted ? 0.55 : 1,
-        borderWidth:     1,
-        borderColor:     isCompleted ? theme.colors.border : cat.color + '30',
-        shadowColor:     '#000',
-        shadowOffset:    { width: 0, height: 1 },
-        shadowOpacity:   0.05,
-        shadowRadius:    6,
-        elevation:       1,
+        // Duolingo-style: thick border + hard offset shadow
+        borderWidth:     2,
+        borderColor:     borderColor,
+        borderBottomWidth: isCompleted ? 2 : 4,
+        borderBottomColor: isCompleted ? borderColor : cat.color + '80',
+        shadowColor:     accentColor,
+        shadowOffset:    { width: 0, height: 3 },
+        shadowOpacity:   0.18,
+        shadowRadius:    4,
+        elevation:       4,
       }}
     >
-      {/* Left accent bar */}
-      <View style={{ width: 4, backgroundColor: accentColor }} />
+      {/* Left accent bar — slightly wider */}
+      <View style={{ width: 5, backgroundColor: accentColor }} />
 
       {/* Content */}
       <View style={{
@@ -67,84 +70,87 @@ export function TaskCard({ task, onComplete }: TaskCardProps) {
         paddingLeft:      14,
         paddingRight:     14,
       }}>
-        {/* Checkbox */}
+        {/* Checkbox — rounder, Duo-style */}
         <View style={{
-          width:           22,
-          height:          22,
-          borderRadius:    6,
-          backgroundColor: isCompleted ? theme.colors.success : 'transparent',
-          borderColor:     isCompleted ? theme.colors.success : cat.color + '80',
-          borderWidth:     1.5,
+          width:           26,
+          height:          26,
+          borderRadius:    8,
+          backgroundColor: isCompleted ? '#22C55E' : 'transparent',
+          borderColor:     isCompleted ? '#22C55E' : cat.color,
+          borderWidth:     2.5,
           alignItems:      'center',
           justifyContent:  'center',
           flexShrink:      0,
+          shadowColor:     isCompleted ? '#22C55E' : cat.color,
+          shadowOffset:    { width: 0, height: 2 },
+          shadowOpacity:   isCompleted ? 0.30 : 0.12,
+          shadowRadius:    3,
         }}>
           {isCompleted && (
-            <Text style={{ color: '#fff', fontSize: 12, fontWeight: '900' }}>✓</Text>
+            <Text style={{ color: '#fff', fontSize: 13, fontWeight: '900', lineHeight: 16 }}>✓</Text>
           )}
         </View>
 
-        {/* Title + duration */}
+        {/* Title + meta */}
         <View style={{ flex: 1 }}>
           <Text style={{
-            color:              theme.colors.text,
+            color:              '#1C1C1E',
             fontSize:           15,
-            fontWeight:         '600',
+            fontWeight:         '700',
             lineHeight:         21,
             textDecorationLine: isCompleted ? 'line-through' : 'none',
           }}>
             {task.title}
           </Text>
 
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 3 }}>
-            {/* Category label */}
-            {!isCompleted && (
+          {!isCompleted && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7, marginTop: 4 }}>
+              {/* Category pill — chunky Duo style */}
               <View style={{
-                flexDirection:   'row',
-                alignItems:      'center',
-                gap:             3,
-                backgroundColor: cat.color + '18',
-                paddingHorizontal: 6,
-                paddingVertical:   2,
-                borderRadius:    5,
+                flexDirection:    'row',
+                alignItems:       'center',
+                gap:              4,
+                backgroundColor:  cat.color,
+                paddingHorizontal: 8,
+                paddingVertical:   3,
+                borderRadius:     20,
               }}>
                 <Text style={{ fontSize: 10 }}>{cat.emoji}</Text>
                 <Text style={{
-                  color:       cat.color,
-                  fontSize:    10,
-                  fontWeight:  '700',
-                  letterSpacing: 0.3,
+                  color:         '#fff',
+                  fontSize:      10,
+                  fontWeight:    '800',
+                  letterSpacing: 0.4,
                 }}>
                   {cat.label}
                 </Text>
               </View>
-            )}
 
-            {/* Time estimate */}
-            {(task.estimatedMinutes ?? 0) > 0 && !isCompleted && (
-              <Text style={{
-                color:         theme.colors.textMuted,
-                fontSize:      11,
-                fontWeight:    '600',
-                letterSpacing: 0.4,
-              }}>
-                {task.estimatedMinutes} min
-              </Text>
-            )}
-          </View>
+              {/* Time */}
+              {(task.estimatedMinutes ?? 0) > 0 && (
+                <Text style={{
+                  color:         'rgba(0,0,0,0.35)',
+                  fontSize:      11,
+                  fontWeight:    '600',
+                }}>
+                  {task.estimatedMinutes} min
+                </Text>
+              )}
+            </View>
+          )}
         </View>
 
         {/* AI badge */}
         {task.aiGenerated && !isCompleted && (
           <View style={{
-            backgroundColor:   cat.color + '20',
+            backgroundColor:   cat.color,
             paddingHorizontal: 7,
-            paddingVertical:   3,
-            borderRadius:      6,
+            paddingVertical:   4,
+            borderRadius:      8,
             flexShrink:        0,
           }}>
             <Text style={{
-              color:         cat.color,
+              color:         '#fff',
               fontSize:      9,
               fontWeight:    '900',
               letterSpacing: 1.2,
