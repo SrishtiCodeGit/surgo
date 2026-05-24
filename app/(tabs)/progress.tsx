@@ -99,17 +99,15 @@ function StreakRing({
         alignItems: 'center',
         justifyContent: 'center',
       }}>
-        {/* 🔥 only when streak is broken */}
-        {current === 0 && (
-          <Text style={{
-            fontSize: 38,
-            marginBottom: -18,
-            zIndex: 2,
-            textAlign: 'center',
-          }}>
-            🔥
-          </Text>
-        )}
+        {/* 🔥 always above Surgo's head */}
+        <Text style={{
+          fontSize: 38,
+          marginBottom: -18,
+          zIndex: 2,
+          textAlign: 'center',
+        }}>
+          🔥
+        </Text>
 
         {/* Surgo — angry when streak is 0, happy when streak is active */}
         <WelcomeMascot themeKey={themeKey} size={mascotSz} pose={current === 0 ? 'motivating' : 'happy'} />
