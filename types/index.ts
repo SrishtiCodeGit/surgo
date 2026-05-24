@@ -93,6 +93,20 @@ export interface Milestone {
   completedAt?: string;
 }
 
+// ─── Blocked Slots ────────────────────────────────────────────────────────────
+
+export type BlockedRepeat = 'daily' | 'weekdays' | 'weekends';
+
+export interface BlockedSlot {
+  id: string;
+  label: string;          // "Office", "Gym" …
+  emoji: string;          // "🏢"
+  color: string;          // hex accent
+  startTime: string;      // "HH:MM" 24h
+  endTime: string;        // "HH:MM" 24h
+  repeat: BlockedRepeat;  // recurrence rule
+}
+
 // ─── Tasks ────────────────────────────────────────────────────────────────────
 
 export interface Task {
