@@ -122,6 +122,11 @@ function hasConflict(startTime: string, durationMins: number, blocked: BlockedSl
   return blocked.find(b => s < toMins(b.endTime) && e > toMins(b.startTime)) ?? null;
 }
 
+/** Two time windows overlap when one starts before the other ends. */
+function timeOverlaps(s1: string, e1: string, s2: string, e2: string): boolean {
+  return toMins(s1) < toMins(e2) && toMins(e1) > toMins(s2);
+}
+
 // 30-min increments inside each broad window
 const SLOT_TIMES: Record<string, string[]> = {
   morning: ['06:00','06:30','07:00','07:30','08:00','08:30'],
@@ -130,7 +135,22 @@ const SLOT_TIMES: Record<string, string[]> = {
   night:   ['20:00','20:30','21:00','21:30'],
 };
 
-type Step = 'list' | 'step1' | 'step2' | 'step3' | 'analyzing' | 'review';
+type Step = 'list' | 'step1' | 'step2' | 'step3' | 'analyzing' | 'review' | 'conflict';
+
+// ─── Local types ──────────────────────────────────────────────────────────────
+
+type PendingTask = {
+  goalId: string; userId: string; title: string; dueDate: string;
+  estimatedMinutes: number; aiGenerated: boolean; isStretchTask: boolean;
+  scheduledTime: string; scheduledEndTime: string;
+};
+
+type ConflictDetail = {
+  date: string;
+  newTaskTitle: string;
+  existingTask: import('@/types').Task;
+  existingGoal: import('@/types').Goal;
+};
 
 // ─── Surgo speech bubble ──────────────────────────────────────────────────────
 
@@ -187,18 +207,20 @@ function SurgoBubble({
 
 export default function GoalsScreen() {
   const { theme, themeKey } = useTheme();
-  const { goals, tasks, load, isLoaded, addGoal, addTasks, addMilestones, deleteGoal } = useGoalStore();
+  const { goals, tasks, load, isLoaded, addGoal, addTasks, addMilestones, deleteGoal, rescheduleTask } = useGoalStore();
   const { slots: allSlots, isLoaded: slotsLoaded, load: loadSlots, getSlotsForDay } = useBlockedSlotStore();
 
-  const [step, setStep]                     = useState<Step>('list');
-  const [title, setTitle]                   = useState('');
-  const [category, setCategory]             = useState<GoalCategory>('fitness');
-  const [deadlineDays, setDeadlineDays]     = useState(30);
-  const [minutesPerDay, setMinutesPerDay]   = useState(30);
-  const [preferredSlot, setPreferredSlot]   = useState<TimeSlot>(TIME_SLOTS[0]);
-  const [exactStartTime, setExactStartTime] = useState(TIME_SLOTS[0].startTime);
-  const [analysis, setAnalysis]             = useState<GoalAnalysis | null>(null);
-  const [saving, setSaving]                 = useState(false);
+  const [step, setStep]                         = useState<Step>('list');
+  const [title, setTitle]                       = useState('');
+  const [category, setCategory]                 = useState<GoalCategory>('fitness');
+  const [deadlineDays, setDeadlineDays]         = useState(30);
+  const [minutesPerDay, setMinutesPerDay]       = useState(30);
+  const [preferredSlot, setPreferredSlot]       = useState<TimeSlot>(TIME_SLOTS[0]);
+  const [exactStartTime, setExactStartTime]     = useState(TIME_SLOTS[0].startTime);
+  const [analysis, setAnalysis]                 = useState<GoalAnalysis | null>(null);
+  const [saving, setSaving]                     = useState(false);
+  const [pendingTasks, setPendingTasks]         = useState<PendingTask[]>([]);
+  const [conflictData, setConflictData]         = useState<ConflictDetail[]>([]);
 
   useEffect(() => { if (!isLoaded) load(); }, []);
   useEffect(() => { if (!slotsLoaded) loadSlots(); }, []);
@@ -236,6 +258,58 @@ export default function GoalsScreen() {
     }
   };
 
+  /** Build scheduled tasks for the new goal (block-aware). */
+  const buildFinalTasks = (goalId: string): PendingTask[] => {
+    const today = new Date();
+    const byDay: Record<number, Array<{ title: string; day: number; estimatedMinutes: number }>> = {};
+    analysis!.weekTasks.forEach(t => {
+      if (!byDay[t.day]) byDay[t.day] = [];
+      byDay[t.day].push(t);
+    });
+
+    const result: PendingTask[] = [];
+    Object.entries(byDay).forEach(([dayStr, dayTasks]) => {
+      const dayNum  = Number(dayStr);
+      const dayDate = new Date(today.getTime() + (dayNum - 1) * 86400000);
+      const dow     = dayDate.getDay();
+      const blocked = getSlotsForDay(dow);
+      let cursor    = exactStartTime;
+
+      dayTasks.forEach(t => {
+        const mins      = t.estimatedMinutes ?? minutesPerDay;
+        const freeStart = findNextFreeSlot(cursor, mins, blocked);
+        const freeEnd   = addMinutes(freeStart, mins);
+        result.push({
+          goalId, userId: 'local', title: t.title,
+          dueDate: toDateString(dayDate),
+          estimatedMinutes: mins, aiGenerated: true, isStretchTask: false,
+          scheduledTime: freeStart, scheduledEndTime: freeEnd,
+        });
+        cursor = freeEnd;
+      });
+    });
+    return result;
+  };
+
+  /** Detect clashes between new tasks and already-scheduled existing tasks. */
+  const detectConflicts = (newTasks: PendingTask[]): ConflictDetail[] => {
+    const result: ConflictDetail[] = [];
+    for (const nt of newTasks) {
+      const sameDayExisting = tasks.filter(t =>
+        t.dueDate === nt.dueDate && t.scheduledTime && t.scheduledEndTime,
+      );
+      for (const ex of sameDayExisting) {
+        if (timeOverlaps(nt.scheduledTime, nt.scheduledEndTime, ex.scheduledTime!, ex.scheduledEndTime!)) {
+          const exGoal = goals.find(g => g.id === ex.goalId);
+          if (exGoal) {
+            result.push({ date: nt.dueDate, newTaskTitle: nt.title, existingTask: ex, existingGoal: exGoal });
+          }
+        }
+      }
+    }
+    return result;
+  };
+
   const handleConfirm = async () => {
     if (!analysis) return;
     setSaving(true);
@@ -249,51 +323,102 @@ export default function GoalsScreen() {
         timeBreakdown: analysis.timeBreakdown,
       });
       await addMilestones(analysis.milestones.map(m => ({ goalId: goal.id, title: m.title, targetDate: m.targetDate })));
-      const today = new Date();
 
-      // Group AI tasks by day, preserving original task objects indexed by position
-      const byDay: Record<number, Array<{ title: string; day: number; estimatedMinutes: number; idx: number }>> = {};
-      analysis.weekTasks.forEach((t, idx) => {
-        if (!byDay[t.day]) byDay[t.day] = [];
-        byDay[t.day].push({ ...t, idx });
-      });
+      const built    = buildFinalTasks(goal.id);
+      const clashes  = detectConflicts(built);
 
-      const finalTasks: Array<{
-        goalId: string; userId: string; title: string; dueDate: string;
-        estimatedMinutes: number; aiGenerated: boolean; isStretchTask: boolean;
-        scheduledTime: string; scheduledEndTime: string;
-      }> = [];
+      if (clashes.length > 0) {
+        // Save the goal/milestones but hold tasks — show conflict resolution
+        setPendingTasks(built);
+        setConflictData(clashes);
+        setStep('conflict');
+        setSaving(false);
+        return;
+      }
 
-      Object.entries(byDay).forEach(([dayStr, dayTasks]) => {
-        const dayNum   = Number(dayStr);
-        const dayDate  = new Date(today.getTime() + (dayNum - 1) * 86400000);
-        const dow      = dayDate.getDay(); // 0=Sun…6=Sat
-        const blocked  = getSlotsForDay(dow);
-        let dayCursor  = exactStartTime;   // exact time user chose
-
-        dayTasks.forEach(t => {
-          const mins      = t.estimatedMinutes ?? minutesPerDay;
-          // Shift cursor past any blocked window that overlaps this task
-          const freeStart = findNextFreeSlot(dayCursor, mins, blocked);
-          const freeEnd   = addMinutes(freeStart, mins);
-          finalTasks.push({
-            goalId: goal.id, userId: 'local', title: t.title,
-            dueDate: toDateString(dayDate),
-            estimatedMinutes: mins, aiGenerated: true, isStretchTask: false,
-            scheduledTime: freeStart,
-            scheduledEndTime: freeEnd,
-          });
-          dayCursor = freeEnd;
-        });
-      });
-
-      await addTasks(finalTasks);
+      await addTasks(built);
       resetForm(); setStep('list');
       Alert.alert(
         'Goal locked in! 🗓️',
-        `Tasks start at ${fmt12(exactStartTime)} each day${allSlots.length > 0 ? ', routed around your blocked times' : ''}. Check the Calendar tab!`,
+        `Tasks start at ${fmt12(exactStartTime)}${allSlots.length > 0 ? ', routed around your blocked times' : ''}. Check the Calendar tab!`,
         [{ text: "Let's go!" }],
       );
+    } catch (err) {
+      Alert.alert('Error', String(err));
+    } finally { setSaving(false); }
+  };
+
+  /** Push new tasks to start after existing ones on each day, then save. */
+  const handleRescheduleNew = async () => {
+    setSaving(true);
+    try {
+      const rescheduled: PendingTask[] = [];
+      const byDate: Record<string, PendingTask[]> = {};
+      pendingTasks.forEach(t => { (byDate[t.dueDate] ??= []).push(t); });
+
+      Object.entries(byDate).forEach(([date, newDayTasks]) => {
+        // Latest end time of existing tasks that day
+        const existingEnds = tasks
+          .filter(t => t.dueDate === date && t.scheduledEndTime)
+          .map(t => toMins(t.scheduledEndTime!));
+        const latestEnd = existingEnds.length > 0 ? minsToTime(Math.max(...existingEnds)) : exactStartTime;
+
+        const dow     = new Date(date).getDay();
+        const blocked = getSlotsForDay(dow);
+        let cursor    = latestEnd;
+
+        newDayTasks.forEach(t => {
+          const freeStart = findNextFreeSlot(cursor, t.estimatedMinutes, blocked);
+          const freeEnd   = addMinutes(freeStart, t.estimatedMinutes);
+          rescheduled.push({ ...t, scheduledTime: freeStart, scheduledEndTime: freeEnd });
+          cursor = freeEnd;
+        });
+      });
+
+      await addTasks(rescheduled);
+      resetForm(); setStep('list');
+      Alert.alert('Sorted! 🗓️', `New tasks pushed after existing ones. Check the Calendar tab!`, [{ text: "Let's go!" }]);
+    } catch (err) {
+      Alert.alert('Error', String(err));
+    } finally { setSaving(false); }
+  };
+
+  /** Save new tasks as-is, then push conflicting existing tasks after them. */
+  const handleRescheduleExisting = async () => {
+    setSaving(true);
+    try {
+      await addTasks(pendingTasks);
+
+      // Per-date: push existing conflicting tasks after the last new task
+      const byDate: Record<string, PendingTask[]> = {};
+      pendingTasks.forEach(t => { (byDate[t.dueDate] ??= []).push(t); });
+
+      for (const [date, newDayTasks] of Object.entries(byDate)) {
+        const latestNew = newDayTasks.reduce(
+          (max, t) => toMins(t.scheduledEndTime) > toMins(max) ? t.scheduledEndTime : max,
+          '00:00',
+        );
+        const dow       = new Date(date).getDay();
+        const blocked   = getSlotsForDay(dow);
+        let cursor      = latestNew;
+
+        // Unique existing conflicting tasks for this day (sorted by original start)
+        const dayConflicts = conflictData
+          .filter(c => c.date === date)
+          .filter((c, i, arr) => arr.findIndex(x => x.existingTask.id === c.existingTask.id) === i)
+          .sort((a, b) => toMins(a.existingTask.scheduledTime!) - toMins(b.existingTask.scheduledTime!));
+
+        for (const c of dayConflicts) {
+          const mins      = c.existingTask.estimatedMinutes ?? 30;
+          const freeStart = findNextFreeSlot(cursor, mins, blocked);
+          const freeEnd   = addMinutes(freeStart, mins);
+          await rescheduleTask(c.existingTask.id, freeStart, freeEnd);
+          cursor = freeEnd;
+        }
+      }
+
+      resetForm(); setStep('list');
+      Alert.alert('Sorted! 🗓️', `Existing tasks rescheduled around your new goal. Check the Calendar tab!`, [{ text: "Let's go!" }]);
     } catch (err) {
       Alert.alert('Error', String(err));
     } finally { setSaving(false); }
@@ -877,6 +1002,127 @@ export default function GoalsScreen() {
             <Text style={{ color: theme.colors.textInverse, fontWeight: '500', fontSize: 16 }}>
               Build My Plan
             </Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // CONFLICT — time collision detected
+  // ───────────────────────────────────────────────────────────────────────────
+
+  if (step === 'conflict') {
+    // Deduplicate: unique conflicting existing goals
+    const conflictingGoals = conflictData
+      .filter((c, i, arr) => arr.findIndex(x => x.existingGoal.id === c.existingGoal.id) === i)
+      .map(c => c.existingGoal);
+    const datesAffected = [...new Set(conflictData.map(c => c.date))].length;
+    const newGoalTitle  = title.trim();
+    const existingGoalTitle = conflictingGoals[0]?.title ?? 'existing goal';
+    const cc = CATEGORY_COLORS[category];
+
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
+        <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 56 }}>
+
+          {/* Surgo bubble */}
+          <SurgoBubble
+            themeKey={themeKey}
+            pose="sad"
+            headline="Whoa — time collision! 🚧"
+            sub={`"${newGoalTitle}" overlaps with "${existingGoalTitle}" on ${datesAffected} day${datesAffected !== 1 ? 's' : ''}. One of them needs to move.`}
+          />
+
+          {/* Conflict summary card */}
+          <View style={{
+            backgroundColor: theme.colors.danger + '0D',
+            borderRadius: 18, padding: 18, marginBottom: 20,
+            borderWidth: 1, borderColor: theme.colors.danger + '30',
+          }}>
+            <Text style={{ color: theme.colors.danger, fontSize: 12, fontWeight: '500', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 14 }}>
+              Conflicts detected
+            </Text>
+            {conflictData
+              .filter((c, i, arr) => arr.findIndex(x => x.existingTask.id === c.existingTask.id) === i)
+              .slice(0, 5)
+              .map((c, i) => (
+                <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 10 }}>
+                  <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: theme.colors.danger, marginTop: 5 }} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: theme.colors.text, fontSize: 13, fontWeight: '400' }}>
+                      <Text style={{ fontWeight: '500' }}>{fmt12(c.existingTask.scheduledTime!)}</Text>
+                      {' '}— "{c.existingTask.title}"
+                    </Text>
+                    <Text style={{ color: theme.colors.textMuted, fontSize: 11, marginTop: 1 }}>
+                      from {c.existingGoal.title} · {new Date(c.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </Text>
+                  </View>
+                </View>
+              ))}
+            {conflictData.length > 5 && (
+              <Text style={{ color: theme.colors.textMuted, fontSize: 12, marginTop: 4 }}>
+                + {conflictData.length - 5} more conflicts…
+              </Text>
+            )}
+          </View>
+
+          <Text style={{ color: theme.colors.text, fontSize: 14, fontWeight: '500', marginBottom: 14, textAlign: 'center' }}>
+            Which should move?
+          </Text>
+
+          {/* Option A — move new goal */}
+          <TouchableOpacity
+            onPress={handleRescheduleNew}
+            disabled={saving}
+            activeOpacity={0.85}
+            style={{
+              backgroundColor: cc + '14',
+              borderRadius: 18, padding: 18, marginBottom: 12,
+              borderWidth: 1.5, borderColor: cc + '40',
+              flexDirection: 'row', alignItems: 'center', gap: 14,
+              opacity: saving ? 0.5 : 1,
+            }}
+          >
+            <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: cc + '28', alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ fontSize: 20 }}>🆕</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: cc, fontSize: 14, fontWeight: '500' }}>Move my new goal</Text>
+              <Text style={{ color: theme.colors.textMuted, fontSize: 12, marginTop: 2, lineHeight: 17 }}>
+                "{newGoalTitle}" tasks will be pushed to after the existing ones each day.
+              </Text>
+            </View>
+          </TouchableOpacity>
+
+          {/* Option B — move existing goal */}
+          <TouchableOpacity
+            onPress={handleRescheduleExisting}
+            disabled={saving}
+            activeOpacity={0.85}
+            style={{
+              backgroundColor: theme.colors.primary + '0F',
+              borderRadius: 18, padding: 18, marginBottom: 24,
+              borderWidth: 1.5, borderColor: theme.colors.primary + '40',
+              flexDirection: 'row', alignItems: 'center', gap: 14,
+              opacity: saving ? 0.5 : 1,
+            }}
+          >
+            <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: theme.colors.primary + '20', alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ fontSize: 20 }}>📅</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: theme.colors.primary, fontSize: 14, fontWeight: '500' }}>Move "{existingGoalTitle}"</Text>
+              <Text style={{ color: theme.colors.textMuted, fontSize: 12, marginTop: 2, lineHeight: 17 }}>
+                Existing tasks will be pushed to after your new goal's tasks each day.
+              </Text>
+            </View>
+          </TouchableOpacity>
+
+          {saving && <ActivityIndicator color={theme.colors.primary} style={{ marginBottom: 16 }} />}
+
+          <TouchableOpacity onPress={() => setStep('review')} activeOpacity={0.7}>
+            <Text style={{ color: theme.colors.textMuted, fontSize: 13, textAlign: 'center' }}>← Back to plan</Text>
           </TouchableOpacity>
         </ScrollView>
       </SafeAreaView>
