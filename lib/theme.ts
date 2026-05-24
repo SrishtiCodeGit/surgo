@@ -42,7 +42,7 @@ const softTheme: Theme = {
 };
 
 // ─── Balanced "Focus" ─────────────────────────────────────────────────────────
-// Sky blue. Clean, clear, calming productivity.
+// Rich indigo + cyan. Clean, sharp, premium productivity.
 
 const balancedTheme: Theme = {
   key: 'balanced',
@@ -51,10 +51,10 @@ const balancedTheme: Theme = {
   colors: {
     background: '#FFFFFF',      // pure white
     surface: '#FFFFFF',
-    surfaceAlt: '#EFF6FF',      // blue-50 tint
-    primary: '#3B82F6',         // blue-500 — lighter, sky blue
-    primaryLight: '#DBEAFE',    // blue-100
-    accent: '#38BDF8',          // sky-400
+    surfaceAlt: '#F0F2FF',      // barely-blue for accent surfaces
+    primary: '#4F46E5',         // rich indigo
+    primaryLight: '#E6E5FF',    // pale indigo
+    accent: '#06B6D4',          // electric cyan
     text: '#1A1A1A',            // near-black — cleaner on white
     textMuted: '#6272A4',       // blue-grey
     textInverse: '#FFFFFF',
