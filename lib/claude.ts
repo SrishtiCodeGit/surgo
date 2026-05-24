@@ -102,10 +102,21 @@ export async function analyzeGoal(
   daysRemaining: number,
   minutesPerDay: number,
   pace: ThemeKey,
+  preferredTime?: string,
+  blockedSlots?: Array<{ label: string; startTime: string; endTime: string; repeat: string }>,
 ): Promise<GoalAnalysis> {
 
   const dailyTasks = tasksPerDay(minutesPerDay, pace);
   const weeklyMinutes = minutesPerDay * 7;
+
+  // Build blocked-time context for the AI
+  const blockedContext = blockedSlots && blockedSlots.length > 0
+    ? `\nUser's recurring blocked times (they are NOT free during these windows):\n${blockedSlots.map(s =>
+        `  • ${s.label}: ${s.startTime}–${s.endTime} (${s.repeat})`).join('\n')}\n`
+    : '';
+  const timeContext = preferredTime
+    ? `User prefers to work at: ${preferredTime}\n`
+    : '';
 
   const system = `You are Surgo — a friendly, encouraging goal buddy inside the Surgo app.
 ${toneLine(pace)}
@@ -114,6 +125,11 @@ Respond with ONLY valid JSON — no markdown, no code fences, no explanation.`;
 
   const user = `Goal: "${goalTitle}"
 Deadline: ${daysRemaining} days · ${minutesPerDay} min/day · ${pace} pace
+${timeContext}${blockedContext}
+IMPORTANT scheduling rules:
+- Do NOT suggest tasks during the user's blocked times above.
+- Fit tasks only within their free windows around their preferred time.
+- If blocked time significantly reduces free time, mention it briefly in "overview".
 
 Build a friendly coaching plan. Keep every text field SHORT (1–2 sentences max, plain language).
 

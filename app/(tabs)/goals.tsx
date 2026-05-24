@@ -15,7 +15,8 @@ import { useState, useEffect } from 'react';
 import { router } from 'expo-router';
 import { useTheme } from '@/context/ThemeContext';
 import { useGoalStore } from '@/stores/goalStore';
-import { GoalCategory } from '@/types';
+import { useBlockedSlotStore } from '@/stores/blockedSlotStore';
+import { GoalCategory, BlockedSlot } from '@/types';
 import { analyzeGoal, GoalAnalysis } from '@/lib/claude';
 import { toDateString } from '@/lib/streak';
 import { WelcomeMascot } from '@/components/ui/WelcomeMascot';
@@ -70,25 +71,64 @@ export interface TimeSlot {
   label: string;
   icon: string;
   startTime: string; // "HH:MM" 24h
+  endTime: string;   // "HH:MM" 24h — window boundary
   desc: string;
 }
 
 const TIME_SLOTS: TimeSlot[] = [
-  { key: 'morning',  label: 'Morning',  icon: '🌅', startTime: '06:00', desc: '6:00 – 9:00 AM'  },
-  { key: 'midday',   label: 'Midday',   icon: '☀️', startTime: '12:00', desc: '12:00 – 2:00 PM' },
-  { key: 'evening',  label: 'Evening',  icon: '🌆', startTime: '17:00', desc: '5:00 – 7:00 PM'  },
-  { key: 'night',    label: 'Night',    icon: '🌙', startTime: '20:00', desc: '8:00 – 10:00 PM' },
+  { key: 'morning',  label: 'Morning',  icon: '🌅', startTime: '06:00', endTime: '09:00', desc: '6:00 – 9:00 AM'  },
+  { key: 'midday',   label: 'Midday',   icon: '☀️', startTime: '12:00', endTime: '14:00', desc: '12:00 – 2:00 PM' },
+  { key: 'evening',  label: 'Evening',  icon: '🌆', startTime: '17:00', endTime: '19:00', desc: '5:00 – 7:00 PM'  },
+  { key: 'night',    label: 'Night',    icon: '🌙', startTime: '20:00', endTime: '22:00', desc: '8:00 – 10:00 PM' },
 ];
 
 // ─── Time helpers ─────────────────────────────────────────────────────────────
 
+const toMins = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
+const minsToTime = (n: number) =>
+  `${String(Math.floor(n / 60) % 24).padStart(2, '0')}:${String(n % 60).padStart(2, '0')}`;
+const fmt12 = (t: string) => {
+  const [h, m] = t.split(':').map(Number);
+  return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${h >= 12 ? 'PM' : 'AM'}`;
+};
+
 function addMinutes(timeStr: string, mins: number): string {
-  const [h, m] = timeStr.split(':').map(Number);
-  const total = h * 60 + m + mins;
-  const nh = Math.floor(total / 60) % 24;
-  const nm = total % 60;
-  return `${String(nh).padStart(2, '0')}:${String(nm).padStart(2, '0')}`;
+  return minsToTime(toMins(timeStr) + mins);
 }
+
+/** Push cursor past any blocked windows that overlap the [cursor, cursor+taskMins) interval. */
+function findNextFreeSlot(cursor: string, taskMins: number, blocked: BlockedSlot[]): string {
+  let start = toMins(cursor);
+  let changed = true;
+  while (changed) {
+    changed = false;
+    const end = start + taskMins;
+    for (const b of blocked) {
+      const bs = toMins(b.startTime);
+      const be = toMins(b.endTime);
+      if (start < be && end > bs) { // overlap
+        start = be;
+        changed = true;
+      }
+    }
+  }
+  return minsToTime(start);
+}
+
+/** Returns true if the given time window conflicts with any blocked slot. */
+function hasConflict(startTime: string, durationMins: number, blocked: BlockedSlot[]): BlockedSlot | null {
+  const s = toMins(startTime);
+  const e = s + durationMins;
+  return blocked.find(b => s < toMins(b.endTime) && e > toMins(b.startTime)) ?? null;
+}
+
+// 30-min increments inside each broad window
+const SLOT_TIMES: Record<string, string[]> = {
+  morning: ['06:00','06:30','07:00','07:30','08:00','08:30'],
+  midday:  ['12:00','12:30','13:00','13:30'],
+  evening: ['17:00','17:30','18:00','18:30','19:00'],
+  night:   ['20:00','20:30','21:00','21:30'],
+};
 
 type Step = 'list' | 'step1' | 'step2' | 'step3' | 'analyzing' | 'review';
 
@@ -148,6 +188,7 @@ function SurgoBubble({
 export default function GoalsScreen() {
   const { theme, themeKey } = useTheme();
   const { goals, tasks, load, isLoaded, addGoal, addTasks, addMilestones, deleteGoal } = useGoalStore();
+  const { slots: allSlots, isLoaded: slotsLoaded, load: loadSlots, getSlotsForDay } = useBlockedSlotStore();
 
   const [step, setStep]                     = useState<Step>('list');
   const [title, setTitle]                   = useState('');
@@ -155,15 +196,17 @@ export default function GoalsScreen() {
   const [deadlineDays, setDeadlineDays]     = useState(30);
   const [minutesPerDay, setMinutesPerDay]   = useState(30);
   const [preferredSlot, setPreferredSlot]   = useState<TimeSlot>(TIME_SLOTS[0]);
+  const [exactStartTime, setExactStartTime] = useState(TIME_SLOTS[0].startTime);
   const [analysis, setAnalysis]             = useState<GoalAnalysis | null>(null);
   const [saving, setSaving]                 = useState(false);
 
   useEffect(() => { if (!isLoaded) load(); }, []);
+  useEffect(() => { if (!slotsLoaded) loadSlots(); }, []);
 
   const resetForm = () => {
     setTitle(''); setCategory('fitness');
     setDeadlineDays(30); setMinutesPerDay(30);
-    setPreferredSlot(TIME_SLOTS[0]); setAnalysis(null);
+    setPreferredSlot(TIME_SLOTS[0]); setExactStartTime(TIME_SLOTS[0].startTime); setAnalysis(null);
   };
 
   const handleStep1Next = () => {
@@ -179,7 +222,11 @@ export default function GoalsScreen() {
     setStep('analyzing');
     try {
       const targetDate = toDateString(new Date(Date.now() + deadlineDays * 86400000));
-      const result = await analyzeGoal(title.trim(), targetDate, deadlineDays, minutesPerDay, theme.key);
+      const result = await analyzeGoal(
+        title.trim(), targetDate, deadlineDays, minutesPerDay, theme.key,
+        fmt12(exactStartTime),
+        allSlots.map(s => ({ label: s.label, startTime: s.startTime, endTime: s.endTime, repeat: s.repeat })),
+      );
       setAnalysis(result); setStep('review');
     } catch (err) {
       const msg = String(err);
@@ -203,40 +250,50 @@ export default function GoalsScreen() {
       });
       await addMilestones(analysis.milestones.map(m => ({ goalId: goal.id, title: m.title, targetDate: m.targetDate })));
       const today = new Date();
-      // Stack tasks starting from the preferred time slot
-      let cursor = preferredSlot.startTime;
-      const tasksToAdd = analysis.weekTasks.map(t => {
-        const sTime = cursor;
-        const eTime = addMinutes(cursor, t.estimatedMinutes ?? minutesPerDay);
-        cursor = eTime; // next task starts where this one ends (reset per day below)
-        return {
-          goalId: goal.id, userId: 'local', title: t.title,
-          dueDate: toDateString(new Date(today.getTime() + (t.day - 1) * 86400000)),
-          estimatedMinutes: t.estimatedMinutes, aiGenerated: true, isStretchTask: false,
-          scheduledTime: sTime,
-          scheduledEndTime: eTime,
-        };
-      });
-      // Reset cursor per day so each day starts fresh at preferred time
-      const byDay: Record<number, typeof tasksToAdd> = {};
-      analysis.weekTasks.forEach((t, i) => {
+
+      // Group AI tasks by day, preserving original task objects indexed by position
+      const byDay: Record<number, Array<{ title: string; day: number; estimatedMinutes: number; idx: number }>> = {};
+      analysis.weekTasks.forEach((t, idx) => {
         if (!byDay[t.day]) byDay[t.day] = [];
-        byDay[t.day].push(tasksToAdd[i]);
+        byDay[t.day].push({ ...t, idx });
       });
-      const finalTasks: typeof tasksToAdd = [];
-      Object.values(byDay).forEach(dayTasks => {
-        let dayCursor = preferredSlot.startTime;
+
+      const finalTasks: Array<{
+        goalId: string; userId: string; title: string; dueDate: string;
+        estimatedMinutes: number; aiGenerated: boolean; isStretchTask: boolean;
+        scheduledTime: string; scheduledEndTime: string;
+      }> = [];
+
+      Object.entries(byDay).forEach(([dayStr, dayTasks]) => {
+        const dayNum   = Number(dayStr);
+        const dayDate  = new Date(today.getTime() + (dayNum - 1) * 86400000);
+        const dow      = dayDate.getDay(); // 0=Sun…6=Sat
+        const blocked  = getSlotsForDay(dow);
+        let dayCursor  = exactStartTime;   // exact time user chose
+
         dayTasks.forEach(t => {
-          const mins = t.estimatedMinutes ?? minutesPerDay;
-          t.scheduledTime = dayCursor;
-          t.scheduledEndTime = addMinutes(dayCursor, mins);
-          dayCursor = t.scheduledEndTime;
-          finalTasks.push(t);
+          const mins      = t.estimatedMinutes ?? minutesPerDay;
+          // Shift cursor past any blocked window that overlaps this task
+          const freeStart = findNextFreeSlot(dayCursor, mins, blocked);
+          const freeEnd   = addMinutes(freeStart, mins);
+          finalTasks.push({
+            goalId: goal.id, userId: 'local', title: t.title,
+            dueDate: toDateString(dayDate),
+            estimatedMinutes: mins, aiGenerated: true, isStretchTask: false,
+            scheduledTime: freeStart,
+            scheduledEndTime: freeEnd,
+          });
+          dayCursor = freeEnd;
         });
       });
+
       await addTasks(finalTasks);
       resetForm(); setStep('list');
-      Alert.alert('Goal locked in! 🗓️', `Your tasks are scheduled at ${preferredSlot.desc} every day. Check the Calendar tab!`, [{ text: "Let's go!" }]);
+      Alert.alert(
+        'Goal locked in! 🗓️',
+        `Tasks start at ${fmt12(exactStartTime)} each day${allSlots.length > 0 ? ', routed around your blocked times' : ''}. Check the Calendar tab!`,
+        [{ text: "Let's go!" }],
+      );
     } catch (err) {
       Alert.alert('Error', String(err));
     } finally { setSaving(false); }
@@ -672,6 +729,11 @@ export default function GoalsScreen() {
   // ───────────────────────────────────────────────────────────────────────────
 
   if (step === 'step3') {
+    const exactTimes    = SLOT_TIMES[preferredSlot.key] ?? [];
+    // Check conflict against ALL blocked slots (the goal spans the whole week)
+    const conflict      = hasConflict(exactStartTime, minutesPerDay, allSlots);
+    const conflictLabel = conflict ? `${conflict.emoji} ${conflict.label}` : null;
+
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
         <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 48 }}>
@@ -684,58 +746,63 @@ export default function GoalsScreen() {
             <StepDots current={3} total={3} color={theme.colors.primary} />
           </View>
 
-          {/* Surgo speech bubble */}
+          {/* Surgo speech bubble — changes if conflict detected */}
           <SurgoBubble
             themeKey={themeKey}
-            pose="happy"
-            headline="When's your best time to work?"
-            sub="I'll block it in your calendar so you never forget — you can always move it!"
+            pose={conflict ? 'sad' : 'happy'}
+            headline={conflict
+              ? `That time clashes with ${conflictLabel}!`
+              : "When's your best time to work?"}
+            sub={conflict
+              ? `No worries — I'll automatically route your tasks around ${conflictLabel} when building your schedule. Or pick a different time below.`
+              : "I'll schedule your tasks right into your calendar — pick the slot that feels natural."}
           />
 
-          {/* Time slot cards */}
-          <View style={{ gap: 12, marginBottom: 30 }}>
+          {/* ── Broad window cards ── */}
+          <Text style={{ color: theme.colors.textMuted, fontSize: 11, fontWeight: '400', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>
+            Window
+          </Text>
+          <View style={{ gap: 10, marginBottom: 22 }}>
             {TIME_SLOTS.map((slot) => {
               const isSelected = preferredSlot.key === slot.key;
               return (
                 <TouchableOpacity
                   key={slot.key}
-                  onPress={() => setPreferredSlot(slot)}
+                  onPress={() => {
+                    setPreferredSlot(slot);
+                    setExactStartTime(slot.startTime); // reset exact time to window start
+                  }}
                   activeOpacity={0.8}
                   style={{
-                    flexDirection: 'row', alignItems: 'center', gap: 16,
+                    flexDirection: 'row', alignItems: 'center', gap: 14,
                     backgroundColor: isSelected ? theme.colors.primary : theme.colors.surface,
                     borderWidth: 1.5, borderColor: isSelected ? theme.colors.primary : theme.colors.border,
-                    borderRadius: 18, padding: 18,
+                    borderRadius: 16, padding: 16,
                     shadowColor: isSelected ? theme.colors.primary : '#000',
                     shadowOffset: { width: 0, height: isSelected ? 4 : 1 },
                     shadowOpacity: isSelected ? 0.18 : 0.04,
-                    shadowRadius: isSelected ? 12 : 4,
+                    shadowRadius: isSelected ? 10 : 4,
                     elevation: isSelected ? 4 : 1,
                   }}
                 >
-                  {/* Icon circle */}
                   <View style={{
-                    width: 48, height: 48, borderRadius: 24,
+                    width: 44, height: 44, borderRadius: 22,
                     backgroundColor: isSelected ? 'rgba(255,255,255,0.20)' : theme.colors.primaryLight,
                     alignItems: 'center', justifyContent: 'center',
                   }}>
-                    <Text style={{ fontSize: 22 }}>{slot.icon}</Text>
+                    <Text style={{ fontSize: 20 }}>{slot.icon}</Text>
                   </View>
-
-                  {/* Labels */}
                   <View style={{ flex: 1 }}>
-                    <Text style={{ color: isSelected ? '#fff' : theme.colors.text, fontSize: 16, fontWeight: '500' }}>
+                    <Text style={{ color: isSelected ? '#fff' : theme.colors.text, fontSize: 15, fontWeight: '500' }}>
                       {slot.label}
                     </Text>
-                    <Text style={{ color: isSelected ? 'rgba(255,255,255,0.70)' : theme.colors.textMuted, fontSize: 13, marginTop: 2 }}>
+                    <Text style={{ color: isSelected ? 'rgba(255,255,255,0.70)' : theme.colors.textMuted, fontSize: 12, marginTop: 1 }}>
                       {slot.desc}
                     </Text>
                   </View>
-
-                  {/* Selected check */}
                   {isSelected && (
-                    <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: 'rgba(255,255,255,0.25)', alignItems: 'center', justifyContent: 'center' }}>
-                      <Text style={{ color: '#fff', fontSize: 13 }}>✓</Text>
+                    <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.25)', alignItems: 'center', justifyContent: 'center' }}>
+                      <Text style={{ color: '#fff', fontSize: 12 }}>✓</Text>
                     </View>
                   )}
                 </TouchableOpacity>
@@ -743,15 +810,56 @@ export default function GoalsScreen() {
             })}
           </View>
 
-          {/* Info note */}
+          {/* ── Exact time picker ── */}
+          <Text style={{ color: theme.colors.textMuted, fontSize: 11, fontWeight: '400', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>
+            Exact start time
+          </Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 22 }}>
+            <View style={{ flexDirection: 'row', gap: 8, paddingRight: 8 }}>
+              {exactTimes.map((t) => {
+                const isSel  = exactStartTime === t;
+                const clash  = hasConflict(t, minutesPerDay, allSlots);
+                return (
+                  <TouchableOpacity
+                    key={t}
+                    onPress={() => setExactStartTime(t)}
+                    style={{
+                      paddingHorizontal: 14, paddingVertical: 10,
+                      borderRadius: 12,
+                      backgroundColor: isSel ? theme.colors.primary : clash ? theme.colors.danger + '14' : theme.colors.surface,
+                      borderWidth: 1.5,
+                      borderColor: isSel ? theme.colors.primary : clash ? theme.colors.danger + '60' : theme.colors.border,
+                      alignItems: 'center', gap: 3,
+                    }}
+                  >
+                    <Text style={{
+                      color: isSel ? '#fff' : clash ? theme.colors.danger : theme.colors.text,
+                      fontSize: 13, fontWeight: isSel ? '500' : '400',
+                    }}>
+                      {fmt12(t)}
+                    </Text>
+                    {clash && !isSel && (
+                      <Text style={{ color: theme.colors.danger, fontSize: 8 }}>blocked</Text>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </ScrollView>
+
+          {/* Info / conflict strip */}
           <View style={{
-            backgroundColor: theme.colors.primaryLight,
+            backgroundColor: conflict ? theme.colors.danger + '10' : theme.colors.primaryLight,
             borderRadius: 14, padding: 14, marginBottom: 24,
             flexDirection: 'row', gap: 10, alignItems: 'flex-start',
+            borderWidth: 1, borderColor: conflict ? theme.colors.danger + '30' : 'transparent',
           }}>
-            <Text style={{ fontSize: 16 }}>🗓️</Text>
-            <Text style={{ flex: 1, color: theme.colors.primary, fontSize: 12, lineHeight: 18 }}>
-              Tasks will be scheduled at <Text style={{ fontWeight: '500' }}>{preferredSlot.desc}</Text> daily. You can always drag and reschedule from the Calendar tab.
+            <Text style={{ fontSize: 16 }}>{conflict ? '⚠️' : '🗓️'}</Text>
+            <Text style={{ flex: 1, color: conflict ? theme.colors.danger : theme.colors.primary, fontSize: 12, lineHeight: 18 }}>
+              {conflict
+                ? `Starting at ${fmt12(exactStartTime)} overlaps ${conflictLabel}. Tasks will be pushed to after ${fmt12(conflict.endTime)} automatically.`
+                : `Tasks will start at ${fmt12(exactStartTime)} each day. You can always reschedule from the Calendar tab.`
+              }
             </Text>
           </View>
 
