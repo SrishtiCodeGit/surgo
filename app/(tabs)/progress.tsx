@@ -5,7 +5,7 @@ import { useEffect } from 'react';
 import { useTheme } from '@/context/ThemeContext';
 import { useStreakStore } from '@/stores/streakStore';
 import { useGoalStore } from '@/stores/goalStore';
-import { StreakDay } from '@/types';
+import { StreakDay, ThemeKey } from '@/types';
 import { WelcomeMascot } from '@/components/ui/WelcomeMascot';
 
 const { width: SCREEN_W } = Dimensions.get('window');
@@ -62,42 +62,88 @@ const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 // ─── Streak ring ─────────────────────────────────────────────────────────────
 
 function StreakRing({
-  current, longest, primary,
-}: { current: number; longest: number; primary: string }) {
-  const size   = 170;
-  const sw     = 16;
-  const r      = (size - sw) / 2;
-  const circ   = 2 * Math.PI * r;
-  const pct    = longest > 0 ? Math.min(current / longest, 1) : current > 0 ? 1 : 0;
-  const offset = circ * (1 - pct);
+  current, longest, primary, themeKey,
+}: { current: number; longest: number; primary: string; themeKey: ThemeKey }) {
+  const size     = 210;
+  const sw       = 18;
+  const outerSw  = 6;            // second outer decorative ring
+  const r        = (size - sw) / 2;
+  const outerR   = r + sw / 2 + outerSw / 2 + 6;   // outside the main ring
+  const circ     = 2 * Math.PI * r;
+  const outerCirc= 2 * Math.PI * outerR;
+  const pct      = longest > 0 ? Math.min(current / longest, 1) : current > 0 ? 1 : 0;
+  const offset   = circ     * (1 - pct);
+  const outerOff = outerCirc * (1 - pct);
+  const mascotSz = 112;
 
   return (
     <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+      {/* Two rings drawn as one SVG */}
       <Svg width={size} height={size}>
-        {/* Track */}
-        <Circle cx={size/2} cy={size/2} r={r}
-          stroke={D.missed} strokeWidth={sw} fill="none" />
-        {/* Progress arc */}
-        <Circle cx={size/2} cy={size/2} r={r}
+        {/* ── Outer decorative ring (track) ── */}
+        <Circle
+          cx={size / 2} cy={size / 2} r={outerR}
+          stroke={D.missed} strokeWidth={outerSw} fill="none"
+          opacity={0.5}
+        />
+        {/* ── Outer decorative ring (progress) ── */}
+        <Circle
+          cx={size / 2} cy={size / 2} r={outerR}
+          stroke={primary} strokeWidth={outerSw} fill="none"
+          strokeDasharray={outerCirc}
+          strokeDashoffset={outerOff}
+          strokeLinecap="round"
+          rotation="-90"
+          origin={`${size / 2},${size / 2}`}
+          opacity={0.40}
+        />
+
+        {/* ── Main ring (track) ── */}
+        <Circle
+          cx={size / 2} cy={size / 2} r={r}
+          stroke={D.missed} strokeWidth={sw} fill="none"
+        />
+        {/* ── Main ring (progress arc) ── */}
+        <Circle
+          cx={size / 2} cy={size / 2} r={r}
           stroke={current > 0 ? primary : D.missed}
           strokeWidth={sw} fill="none"
           strokeDasharray={circ}
           strokeDashoffset={offset}
           strokeLinecap="round"
           rotation="-90"
-          origin={`${size/2},${size/2}`}
+          origin={`${size / 2},${size / 2}`}
         />
       </Svg>
-      {/* Centre label */}
+
+      {/* Surgo + fire — centred inside rings */}
       <View style={{
         position: 'absolute',
-        alignItems: 'center', justifyContent: 'center',
+        alignItems: 'center',
+        justifyContent: 'center',
       }}>
-        <Text style={{ color: D.dark, fontSize: 42, fontWeight: '800', letterSpacing: -2 }}>
-          {current}
+        {/* 🔥 flames above Surgo's head */}
+        <Text style={{
+          fontSize: 38,
+          marginBottom: -18,
+          zIndex: 2,
+          textAlign: 'center',
+        }}>
+          🔥
         </Text>
-        <Text style={{ color: D.muted, fontSize: 12, fontWeight: '600', marginTop: -4 }}>
-          day streak
+
+        {/* Surgo mascot */}
+        <WelcomeMascot themeKey={themeKey} size={mascotSz} />
+
+        {/* Streak count below mascot */}
+        <Text style={{
+          color: D.dark,
+          fontSize: 15,
+          fontWeight: '800',
+          letterSpacing: -0.4,
+          marginTop: -10,
+        }}>
+          {current} {current === 1 ? 'day' : 'days'}
         </Text>
       </View>
     </View>
@@ -418,7 +464,7 @@ export default function ProgressScreen() {
         {/* ── Streak ring ───────────────────────────────────────────── */}
         {card(
           <View style={{ alignItems: 'center' }}>
-            <StreakRing current={current} longest={longest} primary={primary} />
+            <StreakRing current={current} longest={longest} primary={primary} themeKey={themeKey} />
             <View style={{ flexDirection: 'row', gap: 28, marginTop: 16 }}>
               <View style={{ alignItems: 'center' }}>
                 <Text style={{ color: D.dark, fontSize: 20, fontWeight: '800' }}>{longest}</Text>
